@@ -1,0 +1,94 @@
+@import "./_variables.scss";
+
+.treegrid {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 1px solid $form-border;
+    font-size: 12px;
+    line-height: 26px;
+    color: $form-font-color;
+    overflow: hidden;
+
+    .treegrid-body-row {
+        height: 36px;
+        box-sizing: border-box;
+
+        &:not(:first-of-type) {
+            border-top: 0px;
+        }
+
+        &.locked {
+            color: $disabled-font-color;
+        }
+    }
+}
+
+.treegrid-body-wrapper {
+    overflow: auto;
+}
+
+.treegrid-header, .treegrid-body {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.treegrid-header-row {
+    height: 40px;
+    box-sizing: border-box;
+    background-color: $table-stripe;
+    border-bottom: 1px solid $form-border;
+}
+
+.treegrid-header-cell, .treegrid-body-cell {
+    box-sizing: border-box;
+    text-align: left;
+    vertical-align: middle;
+    word-break: break-all;
+}
+
+.treegrid-header-cell {
+    font-weight: bold;
+}
+
+.treegrid-cell-inner {
+    padding: 0 12px;
+    font-size: 14px;
+
+    .far {
+        margin-right: 6px;
+        cursor: pointer;
+    }
+
+    .edit {
+        font-size: 16px;
+
+        &.fa-pencil-alt {
+            cursor: pointer;
+        }
+    }
+}
+
+.treegrid-tree-header-inner {
+    padding-left: 32px;
+}
+
+.treegrid-empty-row {
+    height: 60px;
+}
+
+.treegrid-empty-content {
+    text-align: center;
+}
+
+.treegrid-center-cell {
+    text-align: center;
+}
+
+.treegrid-tree-icon {
+    margin-right: 6px;
+    cursor: pointer;
+}

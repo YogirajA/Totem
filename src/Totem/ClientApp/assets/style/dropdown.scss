@@ -1,0 +1,13 @@
+@import "./_variables.scss";
+
+.dropdown-item {
+    color: $font-color;
+    &:hover, &:focus {
+        color: $font-color;
+        background-color: $highlight-color;
+    }
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+}

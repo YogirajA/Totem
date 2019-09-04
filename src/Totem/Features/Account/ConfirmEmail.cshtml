@@ -1,0 +1,19 @@
+@page
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = "Confirm email";
+}
+
+<h2>@ViewData["Title"]</h2>
+<div>
+    <p>
+        <div asp-validation-summary="All" class="text-danger"></div>
+    </p>
+
+    @if (Model.ModelState.ErrorCount == 0)
+    {
+        <p>
+            Thank you for confirming your email.
+        </p>
+    }
+</div>

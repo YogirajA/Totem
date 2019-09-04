@@ -1,0 +1,63 @@
+@import './_variables.scss';
+@import './dropdown.scss';
+
+#contract-list .treegrid {
+  width: 100%;
+  min-width: 790px;
+
+  .is-required {
+    color: $form-border;
+  }
+
+  .header {
+    font-weight: 700;
+    border: 1px solid $form-border;
+
+    th {
+      padding: 12px;
+      width: 140px;
+    }
+  }
+
+  tbody {
+    border-top: none;
+
+    .cell {
+      padding: 5px 12px;
+    }
+  }
+
+  th.menu-header {
+    .treegrid-cell-inner {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+
+      .grid-btn {
+        font-size: 14px;
+        margin: auto;
+        margin-right: 12px;
+      }
+
+      .ellipsis-menu {
+        display: inline-block;
+        position: relative;
+        text-align: right;
+        flex: 1;
+
+        .dropdown-toggle::after {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .empty-row-div {
+    color: #ccc;
+    height: 100px;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 90px;
+  }
+}

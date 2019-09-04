@@ -1,0 +1,141 @@
+@page
+@model Totem.Features.Users.IndexModel
+@{
+    ViewData["Title"] = "Users";
+}
+@Html.AntiForgeryToken()
+
+<div class="flex-container">
+    <h2 class="flex-expand">Users</h2>
+    <a class="btn btn-primary" asp-page="/Users/Create"><i class="fas fa-plus"></i>Add User</a>
+</div>
+@await Html.PartialAsync("_StatusMessage", Model.StatusMessage)
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>
+            @Html.DisplayNameFor(x => x.UserDetails.FirstOrDefault().Id)
+        </th>
+        <th>
+            @Html.DisplayNameFor(x => x.UserDetails.FirstOrDefault().Username)
+        </th>
+        <th>
+            @Html.DisplayNameFor(x => x.UserDetails.FirstOrDefault().Email)
+        </th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.UserDetails)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(x => item.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(x => item.Username)
+            </td>
+            <td>
+                @Html.DisplayFor(x => item.Email)
+            </td>
+            <td>
+                <a class="" asp-page="/Users/Edit" asp-route-userId="@item.Id">Edit</a> |
+                <span class="link delete-link" data-id="@item.Id" data-username="@item.Username">
+                    Delete
+                </span>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div class="pagination">
+    <a asp-page="/Users/Index" asp-route-currentpage="1" class="btn btn-default @(Model.UserDetails.ShowFirstPage ? "" : "disabled")"><i class="fas fa-fast-backward"></i></a>
+    <a asp-page="/Users/Index" asp-route-currentpage="@(Model.CurrentPage - 1)" class="btn btn-default @(Model.UserDetails.ShowPreviousPage ? "" : "disabled")"><i class="fas fa-step-backward"></i></a>
+    <a asp-page="/Users/Index" asp-route-currentpage="@(Model.CurrentPage + 1)" class="btn btn-default @(Model.UserDetails.ShowNextPage ? "" : "disabled")"><i class="fas fa-step-forward"></i></a>
+    <a asp-page="/Users/Index" asp-route-currentpage="@(Model.UserDetails.TotalPages)" class="btn btn-default @(Model.UserDetails.ShowLastPage ? "" : "disabled")"><i class="fas fa-fast-forward"></i></a>
+</div>
+
+<div style="display: none">
+    <div id="confirm-delete" title="Delete User">
+        <p>
+            Are you sure you want to delete the user?
+            This action cannot be undone.
+        </p>
+        <p><strong>Id:</strong> <span id="delete-id"></span></p>
+        <p><strong>Username:</strong> <span id="delete-username"></span></p>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            $("#confirm-delete").dialog({
+                dialogClass: "no-close",
+                autoOpen: false,
+                modal: true,
+                width: "500px",
+                buttons: [
+                    {
+                        text: "OK",
+                        class: "btn btn-primary",
+                        click: function () {
+                            $(this).dialog("close");
+                            var userId = $("#confirm-delete").data('id');
+                            $.ajax({
+                                url: '/Users/Delete',
+                                type: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify(userId),
+                                beforeSend: function (xhr) {
+                                    xhr.setRequestHeader("RequestVerificationToken",
+                                        $('input:hidden[name="__RequestVerificationToken"]').val());
+                                },
+                                success: function () {
+                                    window.location =
+                                        '/Users'; // Just doing the RedirectToAction doesn't update the data
+                                },
+                                failure: function () {
+                                    alert('Unable to delete user.');
+                                }
+                            });
+                        }
+                    },
+                    {
+                        text: "Cancel",
+                        class: "btn btn-success",
+                        click: function () { $(this).dialog("close"); }
+                    }
+                ],
+                open: function () { // Focus on the "Cancel" button instead of "OK"
+                    $(this).siblings('.ui-dialog-buttonpane').find('button:eq(1)').focus();
+                }
+            });
+
+            $(".delete-link").click(function () {
+                var data = $(this)[0].dataset;
+                populateModalBody(data);
+                $.ajax({
+                    url: "/Users/Delete",
+                    type: "GET",
+                    data: {
+                        userId: data.id
+                    },
+                    contentType: "application/json",
+                    success: function (result) {
+                    }
+                });
+            });
+
+            function populateModalBody(data) {
+                var $confirmModal = $("#confirm-delete");
+                $confirmModal.dialog("open");
+                $confirmModal.data('id', data.id);
+                $("#delete-id").html(data.id);
+                $("#delete-username").html(data.username);
+            }
+        });
+    </script>
+}

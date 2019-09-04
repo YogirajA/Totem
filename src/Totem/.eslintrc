@@ -1,0 +1,15 @@
+{
+    "env": {
+        "jest": true
+    },
+    "extends": ["plugin:vue/recommended", "airbnb", "prettier"],
+    "plugins": ["prettier"],
+    "rules": {
+        "prettier/prettier": ["error"],
+        "react/react-in-jsx-scope": 0,
+        "react/jsx-filename-extension": 0,
+        "react/no-unknown-property": 0,
+        "vue/max-attributes-per-line": 0,
+        "vue/html-self-closing": 0
+    }
+}

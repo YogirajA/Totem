@@ -1,0 +1,9 @@
+<Project>
+    <PropertyGroup>
+        <Product>Contract Tester</Product>
+        <VersionPrefix>1.0.0</VersionPrefix>
+        <VersionSuffix>dev</VersionSuffix>
+        <Copyright>© 2019 Headspring</Copyright>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+</Project>

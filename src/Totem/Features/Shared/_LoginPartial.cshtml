@@ -1,0 +1,35 @@
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <form asp-area="" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post" id="logoutForm" class="navbar-right">
+        <ul class="nav navbar-nav navbar-right">
+            <li class="navbar-user">
+                <span class="navbar-user">@UserManager.GetUserName(User)</span>|
+            </li>
+            <li class="navbar-user">
+                <a class="navbar-user" asp-page="/Contracts/Index">Contracts</a>|
+            </li>
+            <li class="navbar-user">
+                <a class="navbar-user" asp-page="/Users/Index">Users</a>|
+            </li>
+            <li>
+                <button type="submit" class="btn btn-link navbar-btn navbar-link">Logout</button>
+            </li>
+        </ul>
+    </form>
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        @if (!UserManager.Users.Any())
+        {
+            <li><a class="navbar-link" asp-page="/Account/Register">Create an account</a></li>
+        }
+        else
+        {
+            <li><a class="navbar-link" asp-page="/Account/Login">Login</a></li>
+        }
+    </ul>
+}

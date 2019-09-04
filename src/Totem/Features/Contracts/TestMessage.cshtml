@@ -1,0 +1,106 @@
+﻿@using Totem.Features.Contracts
+@model TestMessage.ViewModel
+@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    ViewData["Title"] = "Test Sample Message";
+}
+
+<h2>Test Sample Message</h2>
+
+<hr />
+<div class="row">
+    <div class="col-md-6 col-lg-4">
+        <h4>Contract</h4>
+        <dl class="dl-horizontal">
+            <dt>
+                @Html.DisplayNameFor(model => model.ContractDescription)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.ContractDescription)
+            </dd>
+            <dt>
+                @Html.DisplayNameFor(model => model.ContractObject)
+            </dt>
+            <dd>
+                @Html.Raw(@ContractDisplay.ContractDetails(Model.ContractObject))
+            </dd>
+        </dl>
+    </div>
+    <div class="col-md-6 col-lg-8">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="flex-container">
+                    <h4>Test Message</h4><span class="link sidenote">Fill with sample text</span>
+                </div>
+                <div class="pull-left">
+                    <form asp-controller="Contracts" asp-action="TestMessage">
+                        <input type="hidden" asp-for="ContractId" name="ContractId"/>
+                        <div class="form-group flex-container">
+                            <textarea name="sampleMessage" asp-for="TestMessage" class="flex-expand tall"></textarea>
+                        </div>
+                        <div class="form-group button-list">
+                            <button asp-for="TestMessage" type="submit" class="btn btn-primary">Submit</button>
+                            <div id="clear-test" class="btn btn-success">Reset</div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-12">
+                @if (!String.IsNullOrEmpty(Model.TestMessageValid))
+                {
+                    if (Model.TestMessageValid == "Valid")
+                    {
+                        <h4 class="result-message success">Message is @Model.TestMessageValid</h4>
+                    }
+                    else
+                    {
+                        <h4 class="result-message error">Message is @Model.TestMessageValid</h4>
+                        <div class="result-message error">
+                            @foreach (var item in Model.MessageErrors)
+                            {
+                                <div>@item</div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        @if (SignInManager.IsSignedIn(User))
+        {
+            @Html.ActionLink("Edit", "Edit", new { Model.ContractId }) @: |
+        }
+        <a asp-action="Index">Back to List</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('.sidenote').on('click', // get sample test message data
+                function() {
+                    var contract = {
+                        ContractId: "@Model.ContractId"
+                    };
+                    $.ajax({
+                        url: "/api/GenerateSampleData",
+                        type: "POST",
+                        data: JSON.stringify(contract),
+                        contentType: "application/json",
+                        success: function(data) {
+                            $('#TestMessage').val(data.body);
+                        }
+                    });
+                });
+            $('#clear-test').on('click',
+                function() {
+                    $('#TestMessage').val('');
+                    $('.result-message').remove();
+                });
+        });
+    </script>
+}

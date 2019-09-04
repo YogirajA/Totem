@@ -1,0 +1,127 @@
+@model Totem.Features.Contracts.Edit.Command
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h2>Modify Contract: @Model.ModifiedContract.Description</h2>
+
+<hr />
+<div class="row">
+    <form asp-action="Edit" class="col">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="InitialContract.Id" />
+        <input type="hidden" asp-for="InitialContract.Description" />
+        <input type="hidden" asp-for="InitialContract.VersionNumber" />
+        <input type="hidden" asp-for="InitialContract.ContractString" id="InitialContract_ContractString" />
+        <input type="hidden" asp-for="InitialContract.Namespace" />
+        <input type="hidden" asp-for="InitialContract.Type" />
+        <input type="hidden" asp-for="ModifiedContract.Id" />
+        <input type="hidden" asp-for="ModifiedContract.ContractString" id="ModifiedContract_ContractString" />
+        <div class="col-md-6 col-lg-4">
+            <div class="form-group">
+                <label asp-for="ModifiedContract.Description" class="control-label"></label>
+                <input asp-for="ModifiedContract.Description" class="form-control" />
+                <span asp-validation-for="ModifiedContract.Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ModifiedContract.Namespace" class="control-label"></label>
+                <input asp-for="ModifiedContract.Namespace" class="form-control" />
+                <span asp-validation-for="ModifiedContract.Namespace" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ModifiedContract.Type" class="control-label"></label>
+                <input asp-for="ModifiedContract.Type" class="form-control" />
+                <span asp-validation-for="ModifiedContract.Type" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="form-group">
+                <label>Contract Definition</label>
+                <div id="contract-list"></div>
+                <span asp-validation-for="ModifiedContract.ContractString" class="text-danger"></span>
+                <span class="text-danger" id="contract-string-validation"></span>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="form-group">
+                <label asp-for="ModifiedContract.VersionNumber" class="control-label"></label>
+                <input asp-for="ModifiedContract.VersionNumber" class="form-control" />
+                <span asp-validation-for="ModifiedContract.VersionNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group d-none">
+                <label asp-for="ModifiedContract.UpdateInst" class="control-label"></label>
+                <input asp-for="ModifiedContract.UpdateInst" class="form-control" />
+                <span asp-validation-for="ModifiedContract.UpdateInst" class="text-danger"></span>
+            </div>
+            <div class="form-group button-list">
+                <button type="submit" class="btn btn-primary" id="saveEdits" disabled><i class="far fa-save"></i>Save</button>
+                <a asp-action="Index" class="btn btn-success">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/dist/main.js" asp-append-version="true"></script>
+    <script>
+        $(function() {
+            setSaveButton(); // on page ready, disable the button (no changes yet)
+
+            // When any MVC form fields are changed
+            $(".form-control").on("change paste keyup",
+                function() {
+                    setSaveButton();
+                });
+
+            // When the update button on the "Edit Contract Manually" window is clicked
+            $("#updateContract").on("click",
+                function () {
+                    var newValue = $("#contract-raw")[0].value;
+                    $("#ModifiedContract_ContractString")[0].value = newValue;
+                    setSaveButton();
+                });
+
+            // When a save or delete button is clicked in the Vue UI
+            $(document).on("click", "#saveFieldBtn, #saveModelBtn, #deleteFieldBtn, #deleteModelBtn",
+                function () {
+                    setSaveButton();
+                });
+        });
+
+        function setSaveButton() {
+            if (valuesHaveChanged()) {
+                $("#saveEdits").attr("disabled", false);
+            } else {
+                $("#saveEdits").attr("disabled", true);
+            }
+        }
+
+        function valuesHaveChanged() {
+            var valuesChanged = false;
+
+            // reading as textContent parses the &quot; etc. properly
+            var initialDescription = $('<div>').html("@Model.InitialContract.Description")[0].textContent;
+            var initialContractString = $('<div>').html("@Model.InitialContract.ContractString")[0].textContent;
+            var initialVersion = $('<div>').html("@Model.InitialContract.VersionNumber")[0].textContent;
+            var initialNamespace = $('<div>').html("@Model.InitialContract.Namespace")[0].textContent;
+            var initialType = $('<div>').html("@Model.InitialContract.Type")[0].textContent;
+            var modifiedContractString = normalizeLineEndings($("#ModifiedContract_ContractString")[0].value);
+
+            if (initialDescription !== $("form").find("#ModifiedContract_Description")[0].value ||
+                initialContractString !== modifiedContractString ||
+                initialVersion !== $("form").find("#ModifiedContract_VersionNumber")[0].value ||
+                initialNamespace !== $("form").find("#ModifiedContract_Namespace")[0].value ||
+                initialType !== $("form").find("#ModifiedContract_Type")[0].value) {
+                valuesChanged = true;
+            }
+            return valuesChanged;
+        }
+
+        function normalizeLineEndings(string) {
+            var hasReturns = string.indexOf('\r\n') > -1;
+            return hasReturns ? string : string.replace(/\n/gm, '\r\n');
+        }
+    </script>
+}

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="roundhouse" Version="1.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="packages/roundhouse/0.9.1/tools/rh.exe" CopyToPublishDirectory="Always">
+      <Link>rh.exe</Link>
+    </None>
+    <None Include="Scripts/**/*.*" CopyToPublishDirectory="Always" />
+  </ItemGroup>
+
+</Project>

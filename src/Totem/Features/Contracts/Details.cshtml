@@ -1,0 +1,70 @@
+﻿@using Totem.Features.Contracts
+@model Details.ViewModel
+@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>Contract Details</h2>
+
+<div>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Description)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Id)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Id)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Namespace)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Namespace)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Type)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Type)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ContractObject)
+        </dt>
+        <dd>
+            @Html.Raw(ContractDisplay.ContractDetails(Model.ContractObject, true))
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.VersionNumber)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.VersionNumber)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.CreatedDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.CreatedDate)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.UpdateInst)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.UpdateInst)
+        </dd>
+    </dl>
+</div>
+<div>
+    @if (SignInManager.IsSignedIn(User))
+    {
+        @Html.ActionLink("Edit", "Edit", new {ContractId = Model.Id}) @: |
+    }
+    <a asp-action="Index">Back to List</a>
+</div>
