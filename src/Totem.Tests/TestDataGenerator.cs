@@ -117,15 +117,17 @@ namespace Totem.Tests
             };
         }
 
-        public static Contract SampleContract()
+        public static Contract SampleContract(bool displayOnContractList = false, Guid contractId = default, string versionNumber = default)
         {
-            return new Contract()
+            return new Contract
             {
+                Id = contractId == default ? Guid.NewGuid() : contractId,
                 Description = RandomString(10),
                 ContractString = SampleContractString,
                 Namespace = RandomString(10),
                 Type = RandomString(10),
-                VersionNumber = RandomString(19)
+                VersionNumber = versionNumber ?? "1.1.0",
+                DisplayOnContractList = displayOnContractList
             };
         }
 
@@ -137,13 +139,13 @@ namespace Totem.Tests
                 ContractString = SampleContractString,
                 Namespace = RandomString(10),
                 Type = RandomString(10),
-                VersionNumber = RandomString(19)
+                VersionNumber = "1.0.0"
             };
 
             modifyFieldsForContract?.Invoke(command);
 
             var addedContractId = await Send(command);
-            var addedContract = Query<Contract>(addedContractId);
+            var addedContract = Query<Contract>(addedContractId, command.VersionNumber);
 
             return addedContract;
         }

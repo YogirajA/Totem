@@ -6,6 +6,7 @@ help {
     write-help "build (default)" "Optimized for local development: updates databases instead of rebuilding them."
     write-help "build rebuild" "Builds a clean local copy, rebuilding databases instead of updating them."
     write-help "build ci 1234" "Continuous integration build, applying build counter to assembly versions."
+    write-help "build migratetest" "Updates test database with test environment scripts instead of rebuilding"
 }
 
 function publish($project) {
@@ -15,11 +16,11 @@ function publish($project) {
 }
 
 main {
-    validate-target "default" "rebuild" "ci"
+    validate-target "default" "rebuild" "ci" "migratetest"
 
     $targetFramework = "netcoreapp2.1"
     $configuration = 'Release'
-    $product = "Contract Tester"
+    $product = "Totem"
     $yearInitiated = 2019
     $owner = "Headspring"
     $publish = "$(resolve-path .)/publish"
@@ -42,6 +43,8 @@ main {
         task "Rebuild DEV/TEST Databases" { rebuild-database DEV TEST } src/Totem.DatabaseMigration
     } elseif ($target -eq "ci") {
         task "Rebuild TEST Database" { rebuild-database TEST } src/Totem.DatabaseMigration
+    } elseif ($target -eq "migratetest") {
+      task "Update TEST Database" { update-database TEST } src/Totem.DatabaseMigration
     }
 
     task "Test" { dotnet test --configuration $configuration --no-build } src/Totem.Tests

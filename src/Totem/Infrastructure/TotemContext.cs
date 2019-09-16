@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using Totem.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Totem.Models;
 
 namespace Totem.Infrastructure
 {
@@ -16,6 +16,11 @@ namespace Totem.Infrastructure
 
         public DbSet<Contract> Contract { get; set; }
         public DbSet<ContractSchema> ContractSchema { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Contract>().HasKey( nameof(Models.Contract.Id), nameof(Models.Contract.VersionNumber));
+        }
     }
 
     public static class DbSetExtensions

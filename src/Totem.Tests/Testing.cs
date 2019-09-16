@@ -45,7 +45,14 @@ namespace Totem.Tests
                 var serviceProvider = scope.ServiceProvider;
                 var database = serviceProvider.GetService<TotemContext>();
 
-                Validator(serviceProvider, message)?.Validate(message).ShouldBeSuccessful();
+                var validator = Validator(serviceProvider, message);
+
+                if (validator != null)
+                {
+                    var validationResult = await validator.ValidateAsync(message);
+                    validationResult.ShouldBeSuccessful();
+                }
+
                 await serviceProvider.GetService<IMediator>().Send(message);
             }
         }
@@ -57,16 +64,26 @@ namespace Totem.Tests
                 var serviceProvider = scope.ServiceProvider;
                 var database = serviceProvider.GetService<TotemContext>();
 
-                Validator(serviceProvider, message)?.Validate(message).ShouldBeSuccessful();
+                var validator = Validator(serviceProvider, message);
+
+                if (validator != null)
+                {
+                    var validationResult = await validator.ValidateAsync(message);
+                    validationResult.ShouldBeSuccessful();
+                }
+
                 var response = await serviceProvider.GetService<IMediator>().Send(message);
 
                 return response;
             }
         }
 
-        public static void CheckAutoMapperConfiguration()
+        public static AutoMapper.IConfigurationProvider MapperConfiguration()
         {
-            Mapper.Configuration.AssertConfigurationIsValid();
+            using (var scope = ScopeFactory.CreateScope())
+            {
+                return scope.ServiceProvider.GetService<AutoMapper.IConfigurationProvider>();
+            }
         }
 
         public static string Json(object value)
@@ -84,7 +101,6 @@ namespace Totem.Tests
             using (var scope = ScopeFactory.CreateScope())
             {
                 var serviceProvider = scope.ServiceProvider;
-
                 var database = serviceProvider.GetService<TotemContext>();
 
                 var validator = Validator(serviceProvider, message);
@@ -114,14 +130,14 @@ namespace Totem.Tests
             }
         }
 
-        public static TEntity Query<TEntity>(Guid id) where TEntity : class
+        public static TEntity Query<TEntity>(params object[] keyValues) where TEntity : class
         {
             using (var scope = ScopeFactory.CreateScope())
             {
                 var database = scope.ServiceProvider.GetService<TotemContext>();
                 var entity = database.Set<TEntity>();
 
-                var response = entity.Find(id);
+                var response = entity.Find(keyValues);
 
                 return response;
             }

@@ -59,27 +59,34 @@
                     @Html.DisplayFor(modelitem => item.UpdateInst)
                 </td>
                 <td>
-		    <div class="row-actions">
-	                    @Html.ActionLink("Test Sample Message", "TestMessage", "Contracts", new { ContractId = item.Id }) |
-	                    @if (isSignedIn)
-	                    {
-	                        @Html.ActionLink("Edit", "Edit", new { ContractId = item.Id }) @: |
-	                    }
-	                    @Html.ActionLink("Details", "Details", new { ContractId = item.Id }) |
-	                    @Html.ActionLink("Download", "Download", new { ContractId = item.Id })
-	                    @if (isSignedIn)
-	                    {
-	                        @: |
-	                        <span class="link delete-link"
-	                              data-id="@item.Id"
-	                              data-description="@item.Description"
-	                              data-namespace="@item.Namespace"
-	                              data-type="@item.Type"
-	                              data-contract="@item.ContractString"
-	                              data-version="@item.VersionNumber"
-	                              data-updated="@item.UpdateInst"
-	                              data-created="@item.CreatedDate">Delete</span>
-	                    }
+                    <div class="row-actions">
+                        @Html.ActionLink("Test Sample Message", "TestMessage", "Contracts", new {ContractId = item.Id, item.VersionNumber}) |
+                        @if (isSignedIn)
+                        {
+                            @Html.ActionLink("Edit", "Edit", new {ContractId = item.Id, item.VersionNumber}, new { @class = "edit-contract" })
+                            @: |
+                        }
+                        @Html.ActionLink("Details", "Details", new {ContractId = item.Id, item.VersionNumber}) |
+                        @if (isSignedIn)
+                        {
+                            @Html.ActionLink("Add Version", "Create", new {ContractId = item.Id, item.VersionNumber})
+                            @: |
+                        }
+                        @Html.ActionLink("History", "History", new {ContractId = item.Id}) |
+                        @Html.ActionLink("Download", "Download", new {ContractId = item.Id, item.VersionNumber})
+                        @if (isSignedIn)
+                        {
+                            @: |
+                            <span class="link delete-link"
+                                  data-id="@item.Id"
+                                  data-description="@item.Description"
+                                  data-namespace="@item.Namespace"
+                                  data-type="@item.Type"
+                                  data-contract="@item.ContractString"
+                                  data-version="@item.VersionNumber"
+                                  data-updated="@item.UpdateInst"
+                                  data-created="@item.CreatedDate">Delete</span>
+                        }
                     </div>
                 </td>
 
@@ -119,17 +126,17 @@
                         click: function() {
                             $(this).dialog("close");
                             var contractId = $("#confirm-delete").data('id');
+                            var version = $("#confirm-delete").data('version');
+                            var contract = { ContractId: contractId, VersionNumber: version };
                             $.ajax({
                                 type: 'POST',
-                                url: '/Contracts/Delete/' + contractId,
+                                url: '/Contracts/Delete',
                                 contentType: 'application/json',
+                                data: JSON.stringify(contract),
                                 beforeSend: function(xhr) {
                                     xhr.setRequestHeader("RequestVerificationToken",
                                         $('input:hidden[name="__RequestVerificationToken"]').val());
                                 },
-                                data: JSON.stringify({
-                                    id: contractId
-                                }),
                                 success: function() {
                                     window.location =
                                         '/Contracts'; // Just doing the RedirectToAction doesn't update the data
@@ -153,7 +160,7 @@
         $(".delete-link").click(function() {
             // Fetch the formatted contract details to show in the delete modal
             var data = $(this)[0].dataset;
-            var contract = { ContractId: data.id };
+            var contract = { ContractId: data.id, VersionNumber: data.version };
             $.ajax({
                 url: "/api/GetContractDetails",
                 type: "POST",
@@ -169,6 +176,7 @@
             var $confirmModal = $("#confirm-delete");
             $confirmModal.dialog("open");
             $confirmModal.data('id', data.id);
+            $confirmModal.data('version', data.version);
             $("#delete-description").html(data.description);
             $("#delete-namespace").html(data.namespace);
             $("#delete-type").html(data.type);

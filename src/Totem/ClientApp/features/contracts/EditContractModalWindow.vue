@@ -8,6 +8,7 @@
       clicked: updateData
     }"
     :cancel-btn="{
+      id: 'cancelBtn',
       text: 'Cancel',
       clicked: close
     }"
@@ -41,7 +42,11 @@ export default {
       this.$emit('updateData');
     },
     close() {
-      $('#contract-raw')[0].value = JSON.stringify(JSON.parse($('#ModifiedContract_ContractString').val()), null, 2);
+      $('#contract-raw')[0].value = JSON.stringify(
+        JSON.parse($('#ModifiedContract_ContractString').val()),
+        null,
+        2
+      );
       this.$emit('close');
       $('#contract-raw').scrollTop(0);
     }

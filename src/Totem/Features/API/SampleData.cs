@@ -20,6 +20,7 @@ namespace Totem.Features.API
         public class Command : IRequest<Result>
         {
             public Guid ContractId { get; set; }
+            public string VersionNumber { get; set; }
         }
 
         public class CommandHandler : IRequestHandler<Command, Result>
@@ -33,7 +34,7 @@ namespace Totem.Features.API
 
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
             {
-                var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId,
+                var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId && x.VersionNumber == request.VersionNumber,
                     cancellationToken: cancellationToken);
 
                 var sampleString = "{";

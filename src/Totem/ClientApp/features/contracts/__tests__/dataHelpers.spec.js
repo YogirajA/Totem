@@ -1,4 +1,10 @@
-import { reorderOptions, getDisplayType, deepCopy } from '../dataHelpers';
+import {
+  reorderOptions,
+  getDisplayType,
+  deepCopy,
+  findRowInTreeAndUpdate,
+  last
+} from '../dataHelpers';
 
 describe('Reorder Options', () => {
   it('should sort the an array alphabetically except for the "Define new" option at the end', () => {
@@ -77,5 +83,54 @@ describe('deepCopy', () => {
     const deepCopyObject = deepCopy(originalObject);
     deepCopyObject.properties[0].name = 'modifiedRow';
     expect(originalObject.properties[0].name).toBe('row2');
+  });
+});
+
+describe('findRowInTreeAndUpdate', () => {
+  it('returns undefined if the rowId is not found anywhere in the tree', () => {
+    const originalTrees = [{ rowId: 1, name: 'row1', properties: [{ rowId: 2, name: 'row2' }] }];
+    const newObject = { rowId: 3, name: 'row3' };
+
+    const updatedObject = findRowInTreeAndUpdate(originalTrees, newObject);
+    expect(updatedObject).toBe(undefined);
+  });
+
+  it('returns a modified tree if the rowId is found anywhere in the tree', () => {
+    const originalTrees = [
+      {
+        rowId: 1,
+        name: 'row1',
+        properties: [
+          { rowId: 2, name: 'row2', properties: [{ rowId: 4, name: 'row4' }] },
+          { rowId: 5, name: 'row5', properties: [{ rowId: 3, name: 'row3' }] }
+        ]
+      },
+      {
+        rowId: 6,
+        name: 'row6',
+        properties: [
+          { rowId: 7, name: 'row7', properties: [{ rowId: 8, name: 'row8' }] },
+          { rowId: 9, name: 'row9', properties: [{ rowId: 10, name: 'row10' }] }
+        ]
+      }
+    ];
+    const newObject = { rowId: 10, name: 'newRow10' };
+
+    const updatedObject = findRowInTreeAndUpdate(originalTrees, newObject);
+    expect(updatedObject[1].properties[1].properties[0].name).toBe('newRow10');
+  });
+});
+
+describe('last', () => {
+  it('returns the last item in an array', () => {
+    const array = [{ name: '1' }, { name: '2' }, { name: '3' }];
+    const item = last(array);
+    expect(item.name).toBe('3');
+  });
+
+  it('returns undefined if the array is empty', () => {
+    const array = [];
+    const item = last(array);
+    expect(item).toBe(undefined);
   });
 });

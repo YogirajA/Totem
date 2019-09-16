@@ -1,0 +1,189 @@
+@model IEnumerable<Totem.Features.Contracts.History.ViewModel>
+@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    var isSignedIn = SignInManager.IsSignedIn(User);
+    ViewData["Title"] = "Version History";
+}
+@Html.AntiForgeryToken()
+
+<div class="flex-container">
+    <h2 class="flex-expand">Version History</h2>
+    @if (isSignedIn)
+    {
+        <a class="btn btn-primary" asp-action="Create" asp-route-contractId="@Model.FirstOrDefault()?.Id"><i class="fas fa-plus"></i>Create New Version</a>
+    }
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ContractProperties)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.VersionNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UpdateInst)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var properties = "";
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                    @for (var i = 0; i < item.ContractProperties.Count; ++i)
+                    {
+                        if (i > 0)
+                        {
+                            properties += ", ";
+                        }
+                        properties += item.ContractProperties[i];
+                    }
+                    @properties
+                </td>
+                <td>
+                    @Html.DisplayFor(modelitem => item.VersionNumber)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelitem => item.UpdateInst)
+                </td>
+                <td>
+                    @Html.ActionLink("Test Sample Message", "TestMessage", "Contracts", new { ContractId = item.Id, item.VersionNumber }) |
+                    @if (isSignedIn)
+                    {
+                        @Html.ActionLink("Edit", "Edit", new { ContractId = item.Id, item.VersionNumber }) @: |
+                    }
+                    @Html.ActionLink("Details", "Details", new { ContractId = item.Id, item.VersionNumber }) |
+                    @if (isSignedIn)
+                    {
+                        @Html.ActionLink("Add Version", "Create", new {ContractId = item.Id, item.VersionNumber})
+                        @: |
+                    }
+                    @Html.ActionLink("Download", "Download", new { ContractId = item.Id, item.VersionNumber })
+                    @if (isSignedIn)
+                    {
+                        @: |
+                        <span class="link delete-link"
+                              data-id="@item.Id"
+                              data-description="@item.Description"
+                              data-namespace="@item.Namespace"
+                              data-type="@item.Type"
+                              data-contract="@item.ContractString"
+                              data-version="@item.VersionNumber"
+                              data-updated="@item.UpdateInst"
+                              data-created="@item.CreatedDate">Delete</span>
+                    }
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+<div style="display: none">
+    <div id="confirm-delete" title="Delete Contract">
+        <p>
+            Are you sure you want to delete the contract: <strong><span id="delete-description"></span></strong>?
+            This action cannot be undone.
+        </p>
+        <p><strong>Namespace:</strong> <span id="delete-namespace"></span></p>
+        <p><strong>Type:</strong> <span id="delete-type"></span></p>
+        <p><strong>Contract Details:</strong> <span id="delete-contract"></span></p>
+        <p><strong>Version:</strong> <span id="delete-version"></span></p>
+        <p><strong>Created Date:</strong> <span id="delete-created"></span></p>
+        <p><strong>Last Updated:</strong> <span id="delete-updated"></span></p>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <script>
+        $(function() {
+            $("#confirm-delete").dialog({
+                dialogClass: "no-close",
+                autoOpen: false,
+                modal: true,
+                width: "500px",
+                buttons: [
+                    {
+                        text: "OK",
+                        class: "btn btn-primary",
+                        click: function() {
+                            $(this).dialog("close");
+                            var contractId = $("#confirm-delete").data('id');
+                            var version = $("#confirm-delete").data('version');
+                            var contract = { ContractId: contractId, VersionNumber: version };
+                            $.ajax({
+                                type: 'POST',
+                                url: '/Contracts/Delete',
+                                contentType: 'application/json',
+                                data: JSON.stringify(contract),
+                                beforeSend: function(xhr) {
+                                    xhr.setRequestHeader("RequestVerificationToken",
+                                        $('input:hidden[name="__RequestVerificationToken"]').val());
+                                },
+                                success: function() {
+                                    window.location =
+                                        '/Contracts'; // Just doing the RedirectToAction doesn't update the data
+                                },
+                                failure: function() {
+                                    alert('Unable to delete contract.');
+                                }
+                            });
+                        }
+                    },
+                    {
+                        text: "Cancel",
+                        class: "btn btn-success",
+                        click: function() { $(this).dialog("close"); }
+                    }
+                ],
+                open: function() { // Focus on the "Cancel" button instead of "OK"
+                    $(this).siblings('.ui-dialog-buttonpane').find('button:eq(1)').focus();
+                }
+            });
+        $(".delete-link").click(function() {
+            // Fetch the formatted contract details to show in the delete modal
+            var data = $(this)[0].dataset;
+            var contract = { ContractId: data.id, VersionNumber: data.version };
+            $.ajax({
+                url: "/api/GetContractDetails",
+                type: "POST",
+                data: JSON.stringify(contract),
+                contentType: "application/json",
+                success: function(result) {
+                    populateModalBody(data, result.body);
+                }
+            });
+        });
+
+        function populateModalBody(data, contractDetails) {
+            var $confirmModal = $("#confirm-delete");
+            $confirmModal.dialog("open");
+            $confirmModal.data('id', data.id);
+            $confirmModal.data('version', data.version);
+            $("#delete-description").html(data.description);
+            $("#delete-namespace").html(data.namespace);
+            $("#delete-type").html(data.type);
+            $("#delete-contract").html(`<br>${contractDetails}`);
+            $("#delete-version").html(data.version);
+            $("#delete-updated").html(data.updated);
+            $("#delete-created").html(data.created);
+        }
+    });
+    </script>
+}

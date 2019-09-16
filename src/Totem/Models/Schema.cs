@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Json;
 using System.Linq;
@@ -67,34 +68,67 @@ namespace Totem.Models
         public static PopulatedSchema PopulateReferences(CaseInsensitiveDictionary<SchemaObject> schema)
         {
             var propertyList = schema["Contract"].Properties.ToList();
-            var error = false;
-            foreach (var property in propertyList)
-            {
-                if (property.Value.Type != null) continue;
-                if (property.Value.Reference == null)
-                {
-                    error = true;
-                    continue;
-                }
-                var referenceName = ParseReferenceName(property.Value.Reference);
-                schema.TryGetValue(referenceName, out var reference);
+            var errorDictionary = new Dictionary<string, bool>(){};
 
-                if (reference == null)
+            PopulateNestedReference(propertyList, errorDictionary, schema, schema["Contract"]);
+
+            var populatedSchema = new PopulatedSchema
+            {
+                SchemaDictionary = schema,
+                HasReferenceError = errorDictionary.ContainsValue(true)
+            };
+            return populatedSchema;
+        }
+
+        private static void PopulateNestedReference(List<KeyValuePair<string, SchemaObject>> propertyList, Dictionary<string, bool> error, CaseInsensitiveDictionary<SchemaObject> schema, SchemaObject objectToUpdate)
+        {
+            foreach (var (key, value) in propertyList)
+            {
+                var valueTypeMatched = false;
+                if (value.Type != null)
                 {
-                    error = true;
+                    valueTypeMatched = value.Type.EqualsCaseInsensitive(DataType.Object.Value);
+                    if(!valueTypeMatched)
+                        continue;
+                }
+                
+                if (valueTypeMatched)
+                {
+                    PopulateNestedReference(value.Properties.ToList(), error, schema, value);
                 }
                 else
                 {
-                    schema["Contract"].Properties[property.Key] = reference;
-                    schema["Contract"].Properties[property.Key].Reference = referenceName;
+                    if (value.Reference == null)
+                    {
+                        error.Add(key, true);
+                    }
+                    var referenceName = ParseReferenceName(value.Reference);
+                    schema.TryGetValue(referenceName, out var reference);
+
+                    if (reference == null)
+                    {
+                        error.Add(key, true);
+                    }
+                    else
+                    {
+                        if (objectToUpdate == null) continue;
+                        objectToUpdate.Properties[key] = new SchemaObject()
+                        {
+                            Type = reference.Type,
+                            Properties = reference.Properties,
+                            Items = reference.Items,
+                            MaxItems = reference.MaxItems,
+                            MinItems = reference.MinItems,
+                            MaxLength = reference.MaxLength,
+                            MinLength = reference.MinLength,
+                            Pattern = reference.Pattern,
+                            Format = reference.Format,
+                            Example = value.Example ?? reference.Example,
+                            Reference = referenceName
+                        };
+                    }
                 }
             }
-
-            return new PopulatedSchema
-            {
-                SchemaDictionary = schema,
-                HasReferenceError = error
-            };
         }
 
         public static string ParseReferenceName(string reference)

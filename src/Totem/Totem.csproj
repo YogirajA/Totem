@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="OdeToCode.AddFeatureFolders" Version="2.0.3" />
+    <PackageReference Include="semver" Version="2.0.4" />
     <PackageReference Include="System.Json" Version="4.5.0" />
   </ItemGroup>
 

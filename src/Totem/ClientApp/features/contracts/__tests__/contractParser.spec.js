@@ -5,7 +5,8 @@ import {
   createSchemaString,
   buildNewObject,
   findRow,
-  getExistingOptions
+  getExistingOptions,
+  buildNestedOptions
 } from '../contractParser';
 
 const sampleContractString = `{
@@ -496,5 +497,125 @@ describe('findRow', () => {
     ];
     const result = findRow(8, rows);
     expect(result.name).toBe('row8');
+  });
+});
+
+describe('buildNestedOptions', () => {
+  it('should attach only objects into the options array with isObject property as true', () => {
+    const propertiesArrayString = `
+      [
+        {
+            "type": "string",
+            "format": "date-time",
+            "example": "2019-01-01T18:14:29Z",
+            "name": "Timestamp",
+            "rowId": 10
+        }, {
+            "type": "object",
+            "properties": [{
+                "type": "integer",
+                "example": "123",
+                "modalRowId": 1,
+                "name": "Field1",
+                "rowId": 11
+            }],
+            "name": "FirstObject",
+            "rowId": 12
+        }, {
+            "type": "object",
+            "properties": [{
+                "type": "integer",
+                "example": "123",
+                "modalRowId": 1,
+                "name": "Field2",
+                "rowId": 13
+            }],
+            "name": "SecondObject",
+            "rowId": 14
+        }, {
+            "type": "object",
+            "properties": [{
+                "type": "integer",
+                "example": "123",
+                "modalRowId": 1,
+                "name": "Field3",
+                "rowId": 15
+            }],
+            "name": "ThirdObject",
+            "rowId": 16
+        }
+      ]`;
+
+    const propertiesArray = JSON.parse(propertiesArrayString);
+    const optionArray = [];
+
+    buildNestedOptions(propertiesArray, optionArray);
+
+    expect(optionArray.length).toBe(3);
+    expect(optionArray[0].displayName).toEqual('FirstObject');
+    expect(optionArray[0].isObject).toEqual(true);
+    expect(optionArray[1].displayName).toEqual('SecondObject');
+    expect(optionArray[1].isObject).toEqual(true);
+    expect(optionArray[2].displayName).toEqual('ThirdObject');
+    expect(optionArray[2].isObject).toEqual(true);
+  });
+
+  it('should attach nested objects ignoring primitives into the options array with isObject property as true', () => {
+    const propertiesArrayString = `
+      [
+        {
+            "type": "string",
+            "format": "date-time",
+            "example": "2019-01-01T18:14:29Z",
+            "name": "Timestamp",
+            "rowId": 10
+        }, {
+            "type": "object",
+            "properties": [{
+                "type": "object",
+                "properties": [{
+                    "type": "object",
+                    "properties": [{
+                        "type": "integer",
+                        "example": "123",
+                        "modalRowId": 1,
+                        "name": "Field1",
+                        "rowId": 11
+                    }, {
+                        "type": "integer",
+                        "example": "123",
+                        "modalRowId": 2,
+                        "name": "Field2",
+                        "rowId": 13
+                    }, {
+                        "type": "integer",
+                        "example": "123",
+                        "modalRowId": 3,
+                        "name": "Field3",
+                        "rowId": 15
+                    }],
+                    "name": "ThirdObject",
+                    "rowId": 16
+                }],
+                "name": "SecondObject",
+                "rowId": 14
+            }],
+            "name": "FirstObject",
+            "rowId": 12
+        }
+      ]`;
+
+    const propertiesArray = JSON.parse(propertiesArrayString);
+    const optionArray = [];
+
+    buildNestedOptions(propertiesArray, optionArray);
+
+    expect(optionArray.length).toBe(3);
+    expect(optionArray[0].displayName).toEqual('FirstObject');
+    expect(optionArray[0].isObject).toEqual(true);
+    expect(optionArray[1].displayName).toEqual('SecondObject');
+    expect(optionArray[1].isObject).toEqual(true);
+    expect(optionArray[2].displayName).toEqual('ThirdObject');
+    expect(optionArray[2].isObject).toEqual(true);
   });
 });

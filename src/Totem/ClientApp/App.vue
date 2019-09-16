@@ -1,10 +1,10 @@
 <template>
   <div id="contract-list">
     <ContractGrid
+      ref="rootContractGrid"
       :rows="rows"
       :hide-ellipsis-menu="false"
-      :partial-contract="partialContract"
-      :current-index="currentIndex"
+      :edit-stack="editStack"
       @editManually="showEditManuallyWindow"
       @showFieldWindow="showFieldWindow(...arguments)"
       @showModelWindow="showModelWindow(...arguments)"
@@ -21,8 +21,8 @@
       title="Add Model"
       :modal-rows="modalRows"
       :field-name="currentName"
-      :partial-contract="partialContract"
-      :current-index="currentIndex"
+      :parent-name="currentParentName"
+      :edit-stack="editStack"
       @showFieldWindow="showFieldWindow(...arguments)"
       @close="closeModal(...arguments)"
       @save="saveModel(...arguments)"
@@ -30,13 +30,14 @@
     />
     <AddNewFieldModalWindow
       v-show="isAddFieldWindowVisible"
+      ref="addNewFieldModalWindow"
       title="Add New Field"
       :name="currentName"
       :options="options"
-      :partial-contract="partialContract"
-      :current-index="currentIndex"
+      :edit-stack="editStack"
       :is-descending="isDescending"
       :modified-contract="modifiedContract"
+      :disable-delete="disableDelete"
       @close="closeModal(...arguments)"
       @save="saveField(...arguments)"
       @delete="deleteField(...arguments)"
@@ -47,6 +48,7 @@
 
 <script>
 import $ from 'jquery';
+import _ from 'lodash';
 import EditContractModalWindow from './features/contracts/EditContractModalWindow.vue';
 import AddNewFieldModalWindow from './features/contracts/AddNewFieldModalWindow.vue';
 import AddModelModalWindow from './features/contracts/AddModelModalWindow.vue';
@@ -59,7 +61,13 @@ import {
   updateNestedProperty,
   findRow
 } from './features/contracts/contractParser';
-import { reorderOptions, deepCopy } from './features/contracts/dataHelpers';
+import {
+  reorderOptions,
+  deepCopy,
+  getUniqueId,
+  findRowInTreeAndUpdate,
+  last
+} from './features/contracts/dataHelpers';
 
 export default {
   name: 'App',
@@ -73,20 +81,33 @@ export default {
     const modifiedContract = $('#ModifiedContract_ContractString').val();
     return {
       rows: parseContractArray(modifiedContract, 'contract-string-validation'),
-      partialContract: [],
+      parentName: '',
+      editStack: [],
       modalRows: [],
-      currentIndex: -1,
-      isDescending: false,
+      isDescending: false, // Descending = editStack is decreasing, returning to parent; not descending = adding new children
       modifiedContract,
       options: [],
       isEditManuallyWindowVisible: false,
       isAddFieldWindowVisible: false,
-      isAddModelWindowVisible: false
+      isAddModelWindowVisible: false,
+      disableDelete: false
     };
   },
   computed: {
     currentName() {
-      return this.currentIndex > -1 ? this.partialContract[this.currentIndex].name : '';
+      return this.editStack.length > 0 ? last(this.editStack).name : '';
+    },
+    currentParentName: {
+      get() {
+        return this.parentName;
+      },
+      set(val) {
+        if (val === '') {
+          this.parentName = this.editStack.length > 0 ? last(this.editStack).name : '';
+        } else {
+          this.parentName = val;
+        }
+      }
     }
   },
   created() {
@@ -122,43 +143,62 @@ export default {
 
     showFieldWindow(field) {
       // Show the edit field window
-      if (!this.isDescending) {
-        this.currentIndex += 1;
+      if (!_.isEmpty(field) && this.editStack.length === 0) {
+        this.disableDelete = this.rows.some(row => {
+          // Can not delete the only child of a parent model
+          if (
+            row.rowId === field.rowId + 1 &&
+            row.type === 'object' &&
+            row.properties.length === 1
+          ) {
+            return true;
+          }
+          return false;
+        });
       }
-      if (field) {
-        // Editing a row that exists in a table
+
+      if (!_.isEmpty(field)) {
+        // Editing a row that already exists
         const deepCopyField = deepCopy(field);
         if (deepCopyField.type === 'object' && deepCopyField.parentId !== undefined) {
           // Shouldn't happen here; ContractGrid should call showModalWindow instead
-        } else if (this.isDescending) {
-          // going back up the tree; values are already correct
         } else {
-          this.partialContract[this.currentIndex] = { ...deepCopyField };
+          this.editStack.push({ ...deepCopyField });
         }
       } else {
         // Adding a new field at the root
-        this.partialContract[this.currentIndex] = { parentId: null };
+        this.editStack.push({ parentId: null });
       }
       this.isEditManuallyWindowVisible = false;
       this.isAddFieldWindowVisible = true;
     },
 
-    showModelWindow(row) {
+    showModelWindow(row, isNewModel) {
       // If we push "row" as passed in, it maintains stale TreeGrid state (rows from cancelled edits)
       // so look up a clean row model from the root grid (if it exists)
-      let model = findRow(row.rowId, this.rows);
-      if (model === undefined) {
-        // Defining a new model
-        model = {
-          name: row.name,
-          properties: []
-        };
+      const previousModel = findRow(row.rowId, this.rows);
+      const parentId = this.editStack.length === 0 ? null : last(this.editStack).rowId;
+
+      const model = {
+        name: row.name || (previousModel && previousModel.name),
+        type: 'object',
+        properties: row.properties || (previousModel && previousModel.properties) || [],
+        rowId: row.rowId,
+        isNewModel,
+        parentId
+      };
+
+      if (previousModel && previousModel.modalRowId) {
+        // Editing an existing model row
+        model.modalRowId = row.modalRowId;
       }
-      this.currentIndex += 1;
-      const parentId =
-        this.currentIndex === 0 ? null : this.partialContract[this.currentIndex - 1].rowId;
-      model.parentId = parentId;
-      this.partialContract.push(deepCopy(model));
+      if (this.editStack.length > 0 && last(this.editStack).type !== 'object') {
+        // Changing a row from a field to a model, so remove the field from the history
+        this.editStack.pop();
+      }
+
+      this.currentParentName = model.name;
+      this.editStack.push(deepCopy(model));
       this.modalRows = deepCopy(model.properties);
       this.isEditManuallyWindowVisible = false;
       this.isAddFieldWindowVisible = false;
@@ -169,42 +209,91 @@ export default {
       if (modal === 'editManually') {
         this.isEditManuallyWindowVisible = false;
       } else if (modal === 'addField') {
-        if (this.currentIndex > -1 && !alreadyAdjusted) {
-          this.partialContract.splice(this.currentIndex, 1);
-          this.currentIndex -= 1;
+        if (this.editStack.length > 0 && !alreadyAdjusted) {
+          this.editStack.pop();
         }
         this.isAddFieldWindowVisible = false;
       } else if (modal === 'addModel') {
-        if (this.currentIndex > -1 && !alreadyAdjusted) {
-          this.partialContract.splice(this.currentIndex, 1);
-          this.currentIndex -= 1;
+        if (this.editStack.length === 0) {
+          // No parent objects to show, so reset and close the modal
+          this.isDescending = setDescendingFalse;
+          this.isAddModelWindowVisible = false;
+          this.modalRows = [];
+        } else {
+          // Update the modal window to show the parent's rows
+          this.isDescending = !setDescendingFalse;
+          if (last(this.editStack).properties) {
+            this.modalRows = deepCopy(last(this.editStack).properties);
+            this.currentParentName = last(this.editStack).name;
+          }
         }
-        this.isDescending = !setDescendingFalse;
-        this.isAddModelWindowVisible = false;
-        this.modalRows = [];
       }
     },
 
     saveField(object) {
       const field = deepCopy(object);
       const addingToAModel = this.isAddModelWindowVisible;
+
       if (addingToAModel) {
-        // Update the parent model
         const isEditing = field.rowId !== undefined;
         if (isEditing) {
           // Row already exists in modalRows, so update it
-          const parent = deepCopy(this.partialContract[this.currentIndex - 1].properties);
+          const parent = deepCopy(this.editStack[this.editStack.length - 2].properties);
           this.modalRows = updateNestedProperty(field, parent);
+          this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
         } else {
+          // Creating a new row in the model
           if (field.rowId === undefined) {
             field.rowId = null; // allows editing of the row before it has an ID assigned
           }
-          field["modalRowId"] = this.modalRows.length + 1;
-          this.modalRows.push(field);
+          field.modalRowId = getUniqueId();
+          if (this.modalRows.length > 0) {
+            const rows = deepCopy(this.modalRows);
+            rows.forEach(obj => {
+              if (obj.name === this.parentName) {
+                obj.properties.push(field);
+              }
+            });
+            const parentObject = rows.find(obj => obj.name === this.parentName);
+            if (parentObject) {
+              this.modalRows = deepCopy(parentObject.properties);
+            } else {
+              this.modalRows.push(field);
+            }
+
+            this.editStack[this.editStack.length - 2].properties.push(field);
+          } else {
+            this.modalRows.push(field);
+            this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
+          }
         }
-        this.partialContract[this.currentIndex - 1].properties = deepCopy(this.modalRows);
+      } else if (this.isDescending && this.editStack.length > 1) {
+        // Update the modal window to show the parent's rows
+        this.isAddModelWindowVisible = true;
+        if (field.rowId === undefined) {
+          field.rowId = null;
+        }
+
+        this.modalRows = this.modalRows.concat(
+          this.editStack[this.editStack.length - 2].properties
+        );
+        this.modalRows.push(field);
+        this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
       } else {
         // Update the root object
+        if (field.type === 'object') {
+          this.options.push({
+            displayName: field.name,
+            id: this.options.length,
+            value: {
+              id: this.options.length,
+              schemaName: field.name,
+              schemaString: createSchemaString(field)
+            }
+          });
+          this.options = reorderOptions(this.options);
+        }
+
         this.modifiedContract = updateContractString(field, this.rows, this.modifiedContract);
         $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
@@ -217,7 +306,8 @@ export default {
     saveModel(model, modelName = model.name) {
       const updatedModel = deepCopy(model);
       updatedModel.name = modelName;
-      if (updatedModel.parentId === undefined) {
+
+      if (updatedModel.isNewModel === true) {
         // Add the newly added model name to the dropdown options
         this.options.push({
           displayName: updatedModel.name,
@@ -229,22 +319,28 @@ export default {
           }
         });
         this.options = reorderOptions(this.options);
-      }
-      const removedModel = this.partialContract.splice(this.currentIndex, 1);
-      this.partialContract[this.currentIndex - 1] = Object.assign(
-        { ...removedModel[0] },
-        this.partialContract[this.currentIndex - 1]
-      );
-      if (this.currentIndex > 0) {
-        // Skip the previous field edit window
-        this.partialContract.splice(this.currentIndex - 1, 1);
-        this.currentIndex -= 2;
       } else {
-        this.currentIndex -= 1;
+        const existingOption = this.options.find(option => option.displayName === model.name);
+        if (existingOption) {
+          existingOption.displayName = updatedModel.name;
+          this.options = reorderOptions(this.options);
+        }
       }
-      this.closeModal('addModel', true, false);
-      if (this.currentIndex > -1) {
-        this.showFieldWindow(updatedModel, false);
+      this.editStack.pop();
+
+      if (this.editStack.length > 0 && last(this.editStack).properties) {
+        // Update the modal window to show the parent's rows
+        this.modalRows = deepCopy(last(this.editStack).properties);
+        updatedModel.modalRowId = getUniqueId();
+        const updatedParent = findRowInTreeAndUpdate(this.modalRows, updatedModel);
+        if (updatedParent) {
+          this.modalRows = deepCopy(updatedParent);
+        } else {
+          // Existing model row ID not found, so add as a new row
+          this.modalRows.push(updatedModel);
+        }
+        this.currentParentName = last(this.editStack).name;
+        last(this.editStack).properties = deepCopy(this.modalRows);
       } else {
         // update root contract
         this.modifiedContract = updateContractString(
@@ -252,17 +348,20 @@ export default {
           this.rows,
           this.modifiedContract
         );
-        this.options.find(option => option.displayName == model.name).displayName = updatedModel.name;
-        this.options = reorderOptions(this.options);
         $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
         this.isDescending = false;
+        if (updatedModel.rowId !== undefined) {
+          // setSaveButton is defined in Edit.cshtml
+          setSaveButton(); // eslint-disable-line no-undef
+        }
+        this.closeModal('addModel', true, false);
       }
     },
 
     deleteField() {
-      const deepCopyObject = deepCopy(this.partialContract[this.currentIndex]);
+      const deepCopyObject = deepCopy(last(this.editStack));
       const deepCopyRows = deepCopy(this.rows);
       const editingAModel = this.isAddModelWindowVisible;
       if (!editingAModel) {
@@ -278,9 +377,9 @@ export default {
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
       } else {
         // Update the parent model
-        const deepCopyParent = deepCopy(this.partialContract[this.currentIndex - 1].properties);
+        const deepCopyParent = deepCopy(this.editStack[this.editStack.length - 2].properties);
         this.modalRows = updateNestedProperty(deepCopyObject, deepCopyParent, true);
-        this.partialContract[this.currentIndex - 1].properties = deepCopy(this.modalRows);
+        this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
       }
       this.closeModal('addField', false, true);
     },
@@ -288,7 +387,11 @@ export default {
     deleteModel(model) {
       const deepCopyModel = deepCopy(model);
       const deepCopyRows = deepCopy(this.rows);
-      this.closeModal('addModel', false, true);
+
+      // Even if there were parent windows, close them all so that the deleted row can be removed properly
+      this.editStack = [];
+
+      // Update the root object
       this.modifiedContract = updateContractString(
         deepCopyModel,
         deepCopyRows,
@@ -298,6 +401,7 @@ export default {
       $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
       $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
       this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
+      this.closeModal('addModel', false, true);
     },
 
     updateContractManually() {

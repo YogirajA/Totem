@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Edit";
+
+    var deprecationDateValue = Model?.ModifiedContract.DeprecationDate?.ToString("yyyy-MM-dd");
 }
 
 <h2>Modify Contract: @Model.ModifiedContract.Description</h2>
@@ -16,8 +18,11 @@
         <input type="hidden" asp-for="InitialContract.ContractString" id="InitialContract_ContractString" />
         <input type="hidden" asp-for="InitialContract.Namespace" />
         <input type="hidden" asp-for="InitialContract.Type" />
+        <input type="hidden" asp-for="InitialContract.DisplayOnContractList" />
+        <input type="hidden" asp-for="UniqueDisplayedContractVersion" />
         <input type="hidden" asp-for="ModifiedContract.Id" />
         <input type="hidden" asp-for="ModifiedContract.ContractString" id="ModifiedContract_ContractString" />
+        <input type="hidden" asp-for="InitialContract.DeprecationDate" />
         <div class="col-md-6 col-lg-4">
             <div class="form-group">
                 <label asp-for="ModifiedContract.Description" class="control-label"></label>
@@ -48,6 +53,17 @@
                 <label asp-for="ModifiedContract.VersionNumber" class="control-label"></label>
                 <input asp-for="ModifiedContract.VersionNumber" class="form-control" />
                 <span asp-validation-for="ModifiedContract.VersionNumber" class="text-danger"></span>
+            </div>
+            <div class="form-check form-group">
+                <input asp-for="ModifiedContract.DisplayOnContractList" class="form-check-input" type="checkbox" disabled="@Model.UniqueDisplayedContractVersion"/>
+                <label asp-for="ModifiedContract.DisplayOnContractList" class="form-check-label"></label>
+                <span asp-validation-for="ModifiedContract.DisplayOnContractList" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ModifiedContract.DeprecationDate" class="control-label"></label>
+                <span>(optional)</span>
+                <input asp-for="ModifiedContract.DeprecationDate" class="form-control" value="@deprecationDateValue" type="date" />
+                <span asp-validation-for="ModifiedContract.DeprecationDate" class="text-danger"></span>
             </div>
             <div class="form-group d-none">
                 <label asp-for="ModifiedContract.UpdateInst" class="control-label"></label>
@@ -88,6 +104,12 @@
                 function () {
                     setSaveButton();
                 });
+
+            // Other inputs
+            $(document).on("change", "#ModifiedContract_DisplayOnContractList",
+                function () {
+                    setSaveButton();
+                });
         });
 
         function setSaveButton() {
@@ -107,13 +129,17 @@
             var initialVersion = $('<div>').html("@Model.InitialContract.VersionNumber")[0].textContent;
             var initialNamespace = $('<div>').html("@Model.InitialContract.Namespace")[0].textContent;
             var initialType = $('<div>').html("@Model.InitialContract.Type")[0].textContent;
+            var initialDisplayOnContractList = $('<div>').html("@Model.InitialContract.DisplayOnContractList")[0].textContent.toLowerCase();
+            var initialDeprecationDate = $('<div>').html("@Model.InitialContract.DeprecationDate")[0].textContent;
             var modifiedContractString = normalizeLineEndings($("#ModifiedContract_ContractString")[0].value);
 
             if (initialDescription !== $("form").find("#ModifiedContract_Description")[0].value ||
                 initialContractString !== modifiedContractString ||
                 initialVersion !== $("form").find("#ModifiedContract_VersionNumber")[0].value ||
                 initialNamespace !== $("form").find("#ModifiedContract_Namespace")[0].value ||
-                initialType !== $("form").find("#ModifiedContract_Type")[0].value) {
+                initialType !== $("form").find("#ModifiedContract_Type")[0].value ||
+                initialDeprecationDate !== $("form").find("#ModifiedContract_DeprecationDate")[0].value ||
+                initialDisplayOnContractList !== $("form").find("#ModifiedContract_DisplayOnContractList")[0].checked.toString()) {
                 valuesChanged = true;
             }
             return valuesChanged;

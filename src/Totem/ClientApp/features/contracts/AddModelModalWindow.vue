@@ -1,8 +1,9 @@
 <template>
   <transition @enter="enter">
     <ModalWindow
+      id="modelModalWindow"
       class-name="scroll-overflow"
-      :title="`${modalTitle + ':  ' + modalFieldName}`"
+      :title="`${computedModalTitle + ':  ' + modalFieldName}`"
       :success-btn="successBtn"
       :cancel-btn="cancelBtn"
     >
@@ -17,9 +18,11 @@
           />
         </div>
         <ContractGrid
-          :rows="modalRows"
+          id="nestedContractGrid"
+          :rows="objectRows"
           :is-ellipsis-menu-visible="false"
           @hideEllipsisMenu="true"
+          @showModelWindow="showModelWindow(...arguments)"
           @showFieldWindow="showFieldWindow(...arguments)"
           @editManually="this.$emit('showEditManuallyWindow')"
           @addModel="showModal('addModel', ...arguments)"
@@ -44,7 +47,12 @@
         >
           {{ successBtn.text }}
         </button>
-        <button type="button" class="ui-button btn btn-success" @click="cancelBtn.clicked">
+        <button
+          :id="cancelBtn.id"
+          type="button"
+          class="ui-button btn btn-success"
+          @click="cancelBtn.clicked"
+        >
           {{ cancelBtn.text }}
         </button>
       </template>
@@ -55,7 +63,7 @@
 <script>
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
-import { deepCopy, isNullOrWhiteSpace } from './dataHelpers';
+import { deepCopy, isNullOrWhiteSpace, last } from './dataHelpers';
 
 export default {
   name: 'AddModelModalWindow',
@@ -66,15 +74,15 @@ export default {
   props: {
     title: { type: String, default: '' },
     fieldName: { type: String, default: '' },
+    parentName: { type: String, default: '' },
     modalRows: { type: Array, default: () => [] },
-    partialContract: { type: Array, default: () => [] },
-    currentIndex: { type: Number, default: -1 }
+    editStack: { type: Array, default: () => [] }
   },
   data() {
     return {
-      rows: [],
+      objectRows: [],
+      modalFieldName: '',
       modalTitle: this.title,
-      modalFieldName: this.fieldName,
       showFieldNameTextbox: false,
       isEditModal: false,
       successBtn: {
@@ -84,6 +92,7 @@ export default {
         disabled: this.isSaveDisabled
       },
       cancelBtn: {
+        id: 'cancelBtn',
         text: 'Cancel',
         clicked: this.close
       },
@@ -93,12 +102,28 @@ export default {
   computed: {
     isSaveDisabled() {
       return isNullOrWhiteSpace(this.modalFieldName) || this.modalRows.length === 0;
+    },
+    computedModalTitle: {
+      get() {
+        return this.modalTitle;
+      },
+      set(val) {
+        this.modalTitle = val || this.title;
+      }
     }
   },
   watch: {
+    parentName(val) {
+      this.modalFieldName = val;
+    },
     /* eslint-disable object-shorthand */
     modalRows: function setDisabled(rows) {
-      this.successBtn.disabled = isNullOrWhiteSpace(this.modalFieldName) || rows.length === 0;
+      this.objectRows = deepCopy(rows);
+      const isAnyObjectEmpty = rows.some(obj => {
+        return obj.type === 'object' && obj.properties.length === 0;
+      });
+      this.successBtn.disabled =
+        isNullOrWhiteSpace(this.modalFieldName) || rows.length === 0 || isAnyObjectEmpty;
     },
     modalFieldName: function setDisabled(newFieldName) {
       this.successBtn.disabled = isNullOrWhiteSpace(newFieldName) || this.modalRows.length === 0;
@@ -108,7 +133,6 @@ export default {
   methods: {
     enter() {
       this.modalFieldName = this.fieldName;
-      this.modalTitle = this.title;
       this.successBtn = {
         id: 'saveModelBtn',
         text: 'Add Model',
@@ -116,9 +140,9 @@ export default {
         disabled: this.isSaveDisabled
       };
       this.showFieldNameTextbox = false;
-      if (this.partialContract[this.currentIndex].rowId !== undefined) {
+      if (last(this.editStack).rowId !== undefined) {
         this.isEditModal = true;
-        this.modalTitle = 'Update Model';
+        this.computedModalTitle = 'Update Model';
         this.successBtn = {
           id: 'saveModelBtn',
           text: 'Update Model',
@@ -135,27 +159,46 @@ export default {
     },
 
     saveModel() {
-      const model = deepCopy(this.partialContract[this.currentIndex]);
+      const model = deepCopy(last(this.editStack));
+      model.properties = deepCopy(this.objectRows);
       this.$emit('save', model, this.modalFieldName);
     },
 
     deleteModel() {
-      const model = deepCopy(this.partialContract[this.currentIndex]);
+      const model = deepCopy(last(this.editStack));
       this.$emit('delete', model);
     },
 
     close() {
-      this.$emit('close', 'addModel', false, true);
+      if (this.editStack.length > 0) {
+        this.editStack.pop();
+        this.$emit('close', 'addModel', false, false);
+      } else {
+        this.$emit('close', 'addModel', false, true);
+      }
+    },
+
+    showModelWindow(field) {
+      field.parentId = last(this.editStack).rowId;
+      this.editStack.push(deepCopy(field));
+      this.objectRows = deepCopy(field.properties);
+      this.$parent.modalRows = deepCopy(this.objectRows);
+      this.modalFieldName = field.name;
+      this.$parent.parentName = field.name;
     },
 
     showFieldWindow(field) {
       let deepField = {};
+      this.modalFieldName = this.parentName;
       if (field !== undefined) {
         deepField = deepCopy(field);
       }
-      if (this.partialContract[this.currentIndex].parentId === undefined) {
+      if (last(this.editStack).parentId === undefined) {
         // Parent is a new model that doesn't have an ID yet
         deepField.properties = [];
+      } else {
+        // Parent is a model that has an ID which forms the parentId of the field
+        deepField.parentId = last(this.editStack).rowId;
       }
       this.$emit('showFieldWindow', { ...deepField });
     }

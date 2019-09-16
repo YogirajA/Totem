@@ -1,7 +1,6 @@
 # Totem
 
 <h4 align="center">Don't break your consumers - Test your microservices contracts</h4>
-
 Totem is a tool for testing the contract (message format) used by both producers and consumers; primarily for messaging used in distributed systems (like microservices). Once deployed, the Totem API will allow for automated message testing for both providers and consumers, and a GUI for manual testing by developers. Users can also view existing contracts through the GUI.
 
 ## Usage
@@ -144,7 +143,7 @@ To test the validity of messages as a producer/consumer through the Totem API, w
   ```
 
   - NOTE: Replace the Contract ID in the message and api url in the PostAsync(...) with the exact values being tested against.
-  - Ex: Contract Tester API Url could be: `https://localhost:5001/api/TestMessage/`
+  - Ex: Totem API Url could be: `https://localhost:5001/api/TestMessage/`
 
 - To test that a message is invalid, you could simply use the same message above, but this time, include another field that isn't specified in the contract to see the results of the call, like so:
 
@@ -165,7 +164,7 @@ To test the validity of messages as a producer/consumer through the Totem API, w
   ...
   ```
 
-- The above were just two examples of testing a valid and invalid message thru the Contract Tester API. Of course, feel free to test against the API how you see fit, but hopefully the examples above help get you started.
+- The above were just two examples of testing a valid and invalid message thru the Totem API. Of course, feel free to test against the API how you see fit, but hopefully the examples above help get you started.
 
 - If there was a need to include a new field in a contract, edit the type for an existing field, or delete a field on the contract schema, we would do so by updating the contract in the Totem UI. Then, re-run the tests to ensure their validity.
 
@@ -226,7 +225,9 @@ Debugging the Totem application (either through Visual Studio or from the comman
 
 **Tests**
 
-To run javascript tests, on the command line from the src/Totem folder, run `npm run test`.
+To run javascript logic tests, on the command line from the src/Totem folder, run `npm run test`.
+
+To run end-to-end tests using [TestCafe](https://devexpress.github.io/testcafe/), on the command line from the src/Totem folder, run `npm run e2e`.
 
 ## Contributing
 

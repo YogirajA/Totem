@@ -1,20 +1,28 @@
 <template>
   <transition @leave="onModalHide" @enter="onModalShow">
     <ModalWindow
+      ref="modalWindow"
       :title="modalTitle"
       :success-btn="successBtn"
       :cancel-btn="cancelBtn"
       :delete-btn="deleteBtn"
       :is-editing="isEditing"
+      :disable-delete="disableDelete"
     >
       <template v-slot:body>
         <div class="form-group">
           <label for="fieldName" class="control-label">Property Name</label>
-          <input v-model="fieldName" class="field-name form-control" placeholder="Property Name" />
+          <input
+            id="propertyName"
+            v-model="fieldName"
+            class="field-name form-control"
+            placeholder="Property Name"
+          />
         </div>
         <div class="form-group">
           <label for="selectdata" class="control-label">Data Model</label>
           <multiselect
+            ref="propertyType"
             v-model="fieldType"
             :options="options"
             label="displayName"
@@ -28,7 +36,13 @@
         </div>
         <div class="form-group">
           <label for="fieldexample" class="control-label">Example</label>
-          <input v-model="example" class="form-control" placeholder="Example" />
+          <input
+            id="propertyExample"
+            v-model="example"
+            class="form-control"
+            placeholder="Example"
+            :disabled="isExampleDisabled"
+          />
         </div>
       </template>
     </ModalWindow>
@@ -40,7 +54,7 @@ import $ from 'jquery';
 import Multiselect from 'vue-multiselect';
 import ModalWindow from '../../components/ModalWindow.vue';
 import { buildNewObject } from './contractParser';
-import { deepCopy } from './dataHelpers';
+import { deepCopy, last } from './dataHelpers';
 
 export default {
   name: 'AddNewFieldModalWindow',
@@ -53,10 +67,10 @@ export default {
     name: { type: String, default: '' },
     change: { type: Function, default: () => {} },
     options: { type: Array, default: () => [] },
-    currentIndex: { type: Number, default: -1 },
-    partialContract: { type: Array, default: () => [] },
+    editStack: { type: Array, default: () => [] },
     isDescending: { type: Boolean, default: false },
-    modifiedContract: { type: String, default: '' }
+    modifiedContract: { type: String, default: '' },
+    disableDelete: { type: Boolean, default: false }
   },
   data() {
     return {
@@ -64,6 +78,7 @@ export default {
       fieldType: null,
       example: null,
       modalTitle: this.title,
+      isExampleDisabled: false,
       successBtn: {
         id: 'saveFieldBtn',
         text: 'Add New Field',
@@ -83,28 +98,31 @@ export default {
   computed: {
     isEditing() {
       let isEditing = false;
-      if (this.partialContract[this.currentIndex]) {
-        const currentField = deepCopy(this.partialContract[this.currentIndex]);
-        isEditing = currentField.rowId !== undefined;
+      if (last(this.editStack)) {
+        const currentField = deepCopy(last(this.editStack));
+        isEditing = currentField.rowId !== undefined || currentField.modalRowId !== undefined;
       }
       return isEditing;
     }
   },
   methods: {
     onChange(option) {
+      const currentField = last(this.editStack);
       if (option.id === 0) {
         // Defining a new model; Open the Add Model window
-        this.$emit('showModelWindow', {
+        const newModel = {
           name: this.fieldName,
           type: 'object',
           properties: []
-        });
+        };
+        if (this.isEditing) {
+          newModel.rowId = currentField.rowId;
+        }
+        this.$emit('showModelWindow', newModel, true);
       } else {
         // Set the "example" field based on the selected model
         const schemaObj = JSON.parse(option.value.schemaString);
-        if (schemaObj.example) {
-          this.example = schemaObj.example;
-        }
+        this.updateExampleState(schemaObj.example, option && option.isObject);
       }
     },
     onModalShow() {
@@ -114,16 +132,18 @@ export default {
         clicked: this.saveField
       };
       this.modalTitle = this.title;
-      const currentField = deepCopy(this.partialContract[this.currentIndex]);
+      const currentField = deepCopy(last(this.editStack));
       const editingExistingRow = currentField.name !== undefined;
       if (editingExistingRow || this.isDescending) {
-        // Editing an existing field or moving up through the chain
+        // Editing an existing field or moving up to a parent object
         this.fieldName = currentField.name;
         let typeName = currentField.type;
         if (this.isDescending) {
-          typeName = currentField.name;
+          typeName = currentField.name || '';
         } else if (currentField.reference) {
           typeName = currentField.reference;
+        } else if (currentField.properties && currentField.type === undefined) {
+          typeName = currentField.name;
         } else if (
           typeName.toLowerCase() === 'string' &&
           currentField.format &&
@@ -134,7 +154,7 @@ export default {
         this.fieldType = this.options.find(
           option => option.displayName.toLowerCase() === typeName.toLowerCase()
         );
-        this.example = currentField.example;
+        this.updateExampleState(currentField.example, this.fieldType && this.fieldType.isObject);
         if (editingExistingRow) {
           this.successBtn = {
             id: 'saveFieldBtn',
@@ -160,12 +180,16 @@ export default {
     saveField() {
       // Name and type are required to save the field
       if (this.fieldName !== '' && this.fieldType !== null) {
-        const field = deepCopy(this.partialContract[this.currentIndex]);
+        const field = deepCopy(last(this.editStack));
         this.$emit(
           'save',
           buildNewObject(this.fieldName, this.fieldType, this.example, field, this.modifiedContract)
         );
       }
+    },
+    updateExampleState(example, isObject) {
+      this.isExampleDisabled = isObject === true;
+      this.example = this.isExampleDisabled ? null : example;
     }
   }
 };

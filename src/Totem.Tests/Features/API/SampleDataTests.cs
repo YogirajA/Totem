@@ -19,7 +19,8 @@ namespace Totem.Tests.Features.API
 
             var command = new SampleData.Command()
             {
-                ContractId = contract.Id
+                ContractId = contract.Id,
+                VersionNumber = contract.VersionNumber
             };
 
             var result = await Send(command);
@@ -65,7 +66,8 @@ namespace Totem.Tests.Features.API
 
             var command = new SampleData.Command()
             {
-                ContractId = contract.Id
+                ContractId = contract.Id,
+                VersionNumber = contract.VersionNumber
             };
 
             var result = await Send(command);
@@ -240,7 +242,8 @@ namespace Totem.Tests.Features.API
 
             var command = new SampleData.Command()
             {
-                ContractId = contract.Id
+                ContractId = contract.Id,
+                VersionNumber = contract.VersionNumber
             };
 
             var result = await Send(command);
@@ -297,7 +300,8 @@ namespace Totem.Tests.Features.API
 
             var command = new SampleData.Command()
             {
-                ContractId = contract.Id
+                ContractId = contract.Id,
+                VersionNumber = contract.VersionNumber
             };
 
             var result = await Send(command);
@@ -364,7 +368,8 @@ namespace Totem.Tests.Features.API
 
             var command = new SampleData.Command()
             {
-                ContractId = contract.Id
+                ContractId = contract.Id,
+                VersionNumber = contract.VersionNumber
             };
 
             var result = await Send(command);
@@ -418,7 +423,8 @@ namespace Totem.Tests.Features.API
 
             var command = new SampleData.Command()
             {
-                ContractId = contract.Id
+                ContractId = contract.Id,
+                VersionNumber = contract.VersionNumber
             };
 
             var result = await Send(command);

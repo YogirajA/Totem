@@ -127,6 +127,9 @@ export default {
       if (type === 'inner') {
         classList.push('treegrid-cell-inner');
       }
+      if (type === 'inner' && column.key === 'edit' && !row.isLocked) {
+        classList.push('edit-action');
+      }
       return classList.join(' ');
     }
 

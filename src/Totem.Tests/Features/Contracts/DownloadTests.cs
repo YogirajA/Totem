@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +17,8 @@ namespace Totem.Tests.Features.Contracts
 
             var query = new Download.Query()
             {
-                ContractId = addedContract.Id
+                ContractId = addedContract.Id,
+                VersionNumber = addedContract.VersionNumber
             };
             var contractFileStreamResult = await Send(query);
 
