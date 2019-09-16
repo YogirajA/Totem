@@ -14,7 +14,7 @@ namespace Totem.Services
         private static bool _isContractValid = true;
         private static string _contractErrorMessage = "";
 
-        public TestMessageResult Execute(string contract, string message)
+        public TestMessageResult Execute(string contract, string message, bool allowSubset = false)
         {
             var schemaDictionary = SchemaObject.BuildSchemaDictionary(contract, HandleReferenceError, HandleFailure);
 
@@ -56,7 +56,10 @@ namespace Totem.Services
             {
                 TestCases.Clear();
                 TestCases.Add(AreAllElementsInMessageContainedInContract(messageDictionary, contractDictionary));
-                TestCases.Add(AreAllElementsInContractContainedInMessage(messageDictionary, contractDictionary));
+                if (!allowSubset)
+                {
+                    TestCases.Add(AreAllElementsInContractContainedInMessage(messageDictionary, contractDictionary));
+                }
                 TestCases.Add(DoAllMessageValuesMatchDataTypes(messageDictionary, contractDictionary));
             }
 

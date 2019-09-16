@@ -25,7 +25,7 @@ namespace Totem.Tests.Features.Contracts
 
             const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\",\"Age\":\"26\"}";
 
-            var command = new TestMessage.Command()
+            var command = new TestMessage.Command
             {
                 ContractId = contract.ContractId,
                 VersionNumber = contract.VersionNumber,
@@ -573,6 +573,64 @@ namespace Totem.Tests.Features.Contracts
                 "Message is missing expected property \"Name\".",
                 "Message is missing expected property \"Timestamp\".",
                 "The schema for \"FirstName\" was not found in the contract definition."
+            });
+        }
+
+        public async Task ShouldBeValidWhenMessageMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractString);
+
+            var query = new TestMessage.Query()
+            {
+                ContractId = addedContract.Id,
+                VersionNumber = addedContract.VersionNumber
+            };
+            var contract = await Send(query);
+
+            // Not including "Age" field
+            const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\"}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = contract.ContractId,
+                VersionNumber = contract.VersionNumber,
+                SampleMessage = sampleMessage,
+                AllowSubset = true
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeTrue();
+            result.MessageErrors.ShouldBeEmpty();
+        }
+
+        public async Task ShouldBeInvalidWhenMessageMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractString);
+
+            var query = new TestMessage.Query
+            {
+                ContractId = addedContract.Id,
+                VersionNumber = addedContract.VersionNumber
+            };
+            var contract = await Send(query);
+
+            // Not including "Age" field
+            const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\"}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = contract.ContractId,
+                VersionNumber = contract.VersionNumber,
+                SampleMessage = sampleMessage,
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeFalse();
+            result.MessageErrors.ShouldBe(new List<string>
+            {
+                @"Message is missing expected property ""Age""."
             });
         }
     }

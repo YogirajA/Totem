@@ -27,6 +27,7 @@ namespace Totem.Features.Contracts
                 .ForMember(x => x.ContractDescription, opt => opt.MapFrom(x => x.Description))
                 .ForMember(x => x.MessageErrors, opt => opt.Ignore())
                 .ForMember(x => x.TestMessage, opt => opt.Ignore())
+                .ForMember(x => x.AllowSubset, opt => opt.Ignore())
                 .ForMember(x => x.IsValid, opt => opt.Ignore())
                 .ForMember(x => x.WarningMessage, opt => opt.Ignore())
                 .ForMember(x => x.ContractObject, opt => opt.MapFrom(x => SchemaObject.BuildSchemaDictionary(x.ContractString, NoOp, NoOp)));

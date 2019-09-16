@@ -487,5 +487,47 @@ namespace Totem.Tests.Features.API
                 "The schema for \"FirstName\" was not found in the contract definition."
             });
         }
+
+        public async Task ShouldBeValidWhenMessageMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractString);
+
+            // Not including "Age" field
+            const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\"}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = addedContract.Id,
+                Message = JsonConvert.DeserializeObject(sampleMessage),
+                AllowSubset = true
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeTrue();
+            result.MessageErrors.ShouldBeEmpty();
+        }
+
+        public async Task ShouldBeInvalidWhenMessageMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractString);
+
+            // Not including "Age" field
+            const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\"}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = addedContract.Id,
+                Message = JsonConvert.DeserializeObject(sampleMessage)
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeFalse();
+            result.MessageErrors.ShouldBe(new List<string>
+            {
+                @"Message is missing expected property ""Age""."
+            });
+        }
     }
 }
