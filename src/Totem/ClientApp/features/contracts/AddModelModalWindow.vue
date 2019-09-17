@@ -166,7 +166,19 @@ export default {
 
     deleteModel() {
       const model = deepCopy(last(this.editStack));
-      this.$emit('delete', model);
+      if (this.editStack.length - 1 > 0) {
+        const parent = this.editStack[this.editStack.length - 2];
+        parent.properties = parent.properties.filter((prop) => {
+          return prop.rowId !== model.rowId;
+        });
+        this.modalFieldName = parent.name;
+        this.editStack.pop();
+        this.$parent.currentIndex -= 1;
+        this.objectRows = deepCopy(parent.properties);
+        this.$parent.modalRows = deepCopy(parent.properties);
+      } else {
+        this.$emit('delete', model);
+      }
     },
 
     close() {
