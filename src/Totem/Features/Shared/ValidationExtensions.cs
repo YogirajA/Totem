@@ -9,8 +9,8 @@ using FluentValidation.Validators;
 using Totem.Infrastructure;
 using Totem.Models;
 using Microsoft.EntityFrameworkCore;
-namespace Totem.Features.Shared
 
+namespace Totem.Features.Shared
 {
     public static class ValidationExtensions
     {
