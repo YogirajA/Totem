@@ -352,7 +352,7 @@ export default {
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
         this.isDescending = false;
-        if (updatedModel.rowId !== undefined) {
+        if (typeof setSaveButton === 'function') {
           // setSaveButton is defined in Edit.cshtml
           setSaveButton(); // eslint-disable-line no-undef
         }
