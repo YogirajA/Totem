@@ -429,7 +429,7 @@ test('Cancel edits on a field in the parent model', async t => {
 
 test('Delete a nested model (from the parent model)', async t => {
   await addNewNestedModelAtRoot(t);
-  // To prevent avoid having zero rows in the parent model after deletion
+  // To prevent having zero rows in the parent model after deletion
   await addNewFieldsToParentModel(t);
   // Save the container model
   await t.click(utils.saveModelBtn);
@@ -472,7 +472,7 @@ test('Delete a nested model (from the parent model)', async t => {
 
 test('Edit a nested field after deleting a nested model (from the parent model)', async t => {
   await addNewNestedModelAtRoot(t);
-  // To prevent avoid having zero rows in the parent model after deletion
+  // To prevent having zero rows in the parent model after deletion
   await addNewFieldsToParentModel(t);
   // Save the container model
   await t.click(utils.saveModelBtn);

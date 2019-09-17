@@ -168,7 +168,7 @@ export default {
       const model = deepCopy(last(this.editStack));
       if (this.editStack.length - 1 > 0) {
         const parent = this.editStack[this.editStack.length - 2];
-        parent.properties = parent.properties.filter((prop) => {
+        parent.properties = parent.properties.filter(prop => {
           return prop.rowId !== model.rowId;
         });
         this.modalFieldName = parent.name;
