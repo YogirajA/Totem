@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using MediatR;
@@ -30,7 +29,7 @@ namespace Totem.Features.Contracts
 
         // GET: Contracts/Create
         [Authorize]
-        public IActionResult Create() => View();
+        public async Task<IActionResult> Create(Create.Query query) => View(await _mediator.Send(query));
 
         // POST: Contracts/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
@@ -74,17 +73,25 @@ namespace Totem.Features.Contracts
         [HttpPost]
         public async Task<IActionResult> TestMessage(TestMessage.Command command) => View(await _mediator.Send(command));
 
-        // POST: Contracts/Delete/5
+        // POST: Contracts/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        public async Task<IActionResult> DeleteConfirmed([FromBody] Delete.Command command)
         {
-            var contract = await _context.Contract.FindAsync(id);
-            _context.Contract.Remove(contract);
-            await _context.SaveChangesAsync();
+            await _mediator.Send(command);
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Contracts/History/1
+        public async Task<IActionResult> History(History.Query query)
+        {
+            if (query.ContractId == default)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            return View(await _mediator.Send(query));
         }
 
         // GET: SchemaObjects

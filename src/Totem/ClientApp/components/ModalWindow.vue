@@ -18,6 +18,7 @@
             :id="deleteButton.id"
             type="button"
             class="ui-button btn btn-danger"
+            :disabled="disableDelete"
             @click="deleteButton.clicked"
           >
             <i class="fas fa-trash" />{{ deleteBtn ? deleteBtn.text : '' }}
@@ -54,7 +55,8 @@ export default {
     cancelBtn: { type: Object, default: () => {} },
     deleteBtn: { type: Object, default: () => {} },
     className: { type: String, default: '' },
-    isEditing: { type: Boolean, default: false }
+    isEditing: { type: Boolean, default: false },
+    disableDelete: { type: Boolean, default: false }
   },
   computed: {
     modalClassName() {

@@ -10,9 +10,10 @@ namespace Totem.Features.Contracts
         public MappingProfile()
         {
             CreateMap<Create.Command, Contract>()
-                .ForMember(x => x.Id, opt => opt.Ignore())
                 .ForMember(x => x.UpdateInst, opt => opt.Ignore())
-                .ForMember(x => x.CreatedDate, opt => opt.Ignore());
+                .ForMember(x => x.CreatedDate, opt => opt.Ignore())
+                .ForMember(x => x.DisplayOnContractList, opt => opt.Ignore())
+                .ReverseMap();
 
             CreateMap<Contract, Details.ViewModel>()
                 .ForMember(x => x.ContractObject, opt => opt.MapFrom(x => SchemaObject.BuildSchemaDictionary(x.ContractString, NoOp, NoOp)));
@@ -26,10 +27,15 @@ namespace Totem.Features.Contracts
                 .ForMember(x => x.ContractDescription, opt => opt.MapFrom(x => x.Description))
                 .ForMember(x => x.MessageErrors, opt => opt.Ignore())
                 .ForMember(x => x.TestMessage, opt => opt.Ignore())
-                .ForMember(x => x.TestMessageValid, opt => opt.Ignore())
+                .ForMember(x => x.IsValid, opt => opt.Ignore())
+                .ForMember(x => x.WarningMessage, opt => opt.Ignore())
                 .ForMember(x => x.ContractObject, opt => opt.MapFrom(x => SchemaObject.BuildSchemaDictionary(x.ContractString, NoOp, NoOp)));
 
             CreateMap<Contract, Index.ViewModel>()
+                .ForMember(x => x.ContractProperties, opt => opt.MapFrom(x => BuildPropertyList(x.ContractString)))
+                .ForMember(x => x.ContractObject, opt => opt.MapFrom(x => SchemaObject.BuildSchemaDictionary(x.ContractString, NoOp, NoOp)));
+
+            CreateMap<Contract, History.ViewModel>()
                 .ForMember(x => x.ContractProperties, opt => opt.MapFrom(x => BuildPropertyList(x.ContractString)))
                 .ForMember(x => x.ContractObject, opt => opt.MapFrom(x => SchemaObject.BuildSchemaDictionary(x.ContractString, NoOp, NoOp)));
         }

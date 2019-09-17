@@ -34,20 +34,46 @@ namespace Totem.Features.API
 
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
             {
-                var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId,
-                    cancellationToken: cancellationToken);
-
+                var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId, cancellationToken);
+                string warningMessage = null;
+                var isValid = true;
                 var message = JsonConvert.SerializeObject(request.Message);
-
-                var testResult = _testerService.Execute(contract.ContractString, message);
-
-                return new Result
+                var result = new Result
                 {
                     Contract = _mapper.Map<ContractDto>(contract),
-                    TestMessage = message,
-                    TestMessageValid = testResult.IsMessageValid ? "Valid" : "Invalid",
-                    MessageErrors = testResult.MessageErrors
+                    TestMessage = message
                 };
+
+                if (contract.DeprecationDate.HasValue)
+                {
+                    if (contract.DeprecationDate <= DateTime.Today)
+                    {
+                        isValid = false;
+                        result.MessageErrors.Add("This contract has been deprecated. Please check for a new version.");
+                    }
+                    else
+                    {
+                        warningMessage =
+                            $"This contract will be deprecated on {contract.DeprecationDate}, please check for a new version.";
+                    }
+                }
+
+                if (isValid)
+                {
+                    var testResult = _testerService.Execute(contract.ContractString, message);
+
+                    if (!testResult.IsMessageValid)
+                    {
+                        isValid = false;
+                    }
+
+                    result.MessageErrors = testResult.MessageErrors;
+                }
+
+                result.IsValid = isValid;
+                result.WarningMessage = warningMessage;
+
+                return result;
             }
         }
 
@@ -60,6 +86,7 @@ namespace Totem.Features.API
             public string Namespace { get; set; }
             public string Type { get; set; }
             public DateTime UpdateInst { get; set; }
+            public DateTime? DeprecationDate { get; set; }
             public DateTime CreatedDate { get; set; }
         }
 
@@ -67,7 +94,8 @@ namespace Totem.Features.API
         {
             public ContractDto Contract { get; set; }
             public string TestMessage { get; set; }
-            public string TestMessageValid { get; set; }
+            public string WarningMessage { get; set; }
+            public bool IsValid { get; set; }
             public List<string> MessageErrors { get; set; } = new List<string>();
         }
     }

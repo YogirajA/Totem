@@ -14,6 +14,12 @@
         <h4>Contract</h4>
         <dl class="dl-horizontal">
             <dt>
+                @Html.DisplayNameFor(model => model.VersionNumber)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.VersionNumber)
+            </dd>
+            <dt>
                 @Html.DisplayNameFor(model => model.ContractDescription)
             </dt>
             <dd>
@@ -36,6 +42,7 @@
                 <div class="pull-left">
                     <form asp-controller="Contracts" asp-action="TestMessage">
                         <input type="hidden" asp-for="ContractId" name="ContractId"/>
+                        <input type="hidden" asp-for="VersionNumber" name="VersionNumber"/>
                         <div class="form-group flex-container">
                             <textarea name="sampleMessage" asp-for="TestMessage" class="flex-expand tall"></textarea>
                         </div>
@@ -47,15 +54,15 @@
                 </div>
             </div>
             <div class="col-12">
-                @if (!String.IsNullOrEmpty(Model.TestMessageValid))
+                @if (!String.IsNullOrEmpty(Model.TestMessage))
                 {
-                    if (Model.TestMessageValid == "Valid")
+                    if (Model.IsValid)
                     {
-                        <h4 class="result-message success">Message is @Model.TestMessageValid</h4>
+                        <h4 class="result-message success">Message is Valid. @Model.WarningMessage</h4>
                     }
                     else
                     {
-                        <h4 class="result-message error">Message is @Model.TestMessageValid</h4>
+                        <h4 class="result-message error">Message is Invalid. @Model.WarningMessage</h4>
                         <div class="result-message error">
                             @foreach (var item in Model.MessageErrors)
                             {
@@ -72,7 +79,7 @@
     <div class="col-12">
         @if (SignInManager.IsSignedIn(User))
         {
-            @Html.ActionLink("Edit", "Edit", new { Model.ContractId }) @: |
+            @Html.ActionLink("Edit", "Edit", new { ContractId = Model.ContractId, VersionNumber = Model.VersionNumber }) @: |
         }
         <a asp-action="Index">Back to List</a>
     </div>
@@ -84,7 +91,8 @@
             $('.sidenote').on('click', // get sample test message data
                 function() {
                     var contract = {
-                        ContractId: "@Model.ContractId"
+                        ContractId: "@Model.ContractId",
+                        VersionNumber: "@Model.VersionNumber"
                     };
                     $.ajax({
                         url: "/api/GenerateSampleData",

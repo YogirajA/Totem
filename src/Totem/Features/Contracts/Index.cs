@@ -31,7 +31,7 @@ namespace Totem.Features.Contracts
 
             public async Task<List<ViewModel>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var contracts = await _db.Contract.OrderBy(x => x.CreatedDate).ToListAsync(cancellationToken: cancellationToken);
+                var contracts = await _db.Contract.Where(x => x.DisplayOnContractList).OrderBy(x => x.CreatedDate).ToListAsync(cancellationToken: cancellationToken);
 
                 return _mapper.Map<List<ViewModel>>(contracts);
             }

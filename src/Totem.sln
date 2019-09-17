@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Totem", "Totem\Totem.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Totem.Tests", "Totem.Tests\Totem.Tests.csproj", "{D6D5F7DF-B920-4389-8D09-5FD9543B4E71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Totem.DatabaseMigration", "Totem.DatabaseMigration\Totem.DatabaseMigration.csproj", "{58A8AAC9-C2F7-48C1-B591-726AD92E30E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Totem.DatabaseMigration", "Totem.DatabaseMigration\Totem.DatabaseMigration.csproj", "{58A8AAC9-C2F7-48C1-B591-726AD92E30E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

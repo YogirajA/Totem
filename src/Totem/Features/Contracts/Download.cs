@@ -16,6 +16,7 @@ namespace Totem.Features.Contracts
         public class Query : IRequest<FileStreamResult>
         {
             public Guid ContractId { get; set; }
+            public string VersionNumber { get; set; }
         }
 
         public class QueryHandler : IRequestHandler<Query, FileStreamResult>
@@ -29,7 +30,9 @@ namespace Totem.Features.Contracts
 
             public async Task<FileStreamResult> Handle(Query request, CancellationToken cancellationToken)
             {
-                var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId, cancellationToken: cancellationToken);
+                var contract = await _db.Contract.SingleAsync(
+                    x => x.Id == request.ContractId && x.VersionNumber == request.VersionNumber,
+                    cancellationToken: cancellationToken);
 
                 byte[] byteArray = Encoding.UTF8.GetBytes(contract.ContractString);
 

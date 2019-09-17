@@ -25,7 +25,7 @@
         ""example"": ""01234567-abcd-0123-abcd-0123456789ab""
     }
 }";
-    var defaultVersion = "1.0";
+    var defaultVersion = "1.0.0";
     var contractValue = Model?.ContractString ?? defaultContract;
     var versionValue = Model?.VersionNumber ?? defaultVersion;
 }
@@ -35,6 +35,7 @@
 <div class="row">
     <form asp-action="Create" class="col">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="Id"/>
         <input type="hidden" asp-for="ContractString" value="@contractValue" id="ModifiedContract_ContractString" />
         <div class="col-md-6 col-lg-4">
             <div class="form-group">
@@ -66,6 +67,12 @@
                 <label asp-for="VersionNumber" class="control-label"></label>
                 <input asp-for="VersionNumber" class="form-control" value="@versionValue" />
                 <span asp-validation-for="VersionNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeprecationDate" class="control-label"></label>
+                <span>(optional)</span>
+                <input asp-for="DeprecationDate" class="form-control" value="@Model?.DeprecationDate" type="date" />
+                <span asp-validation-for="DeprecationDate" class="text-danger"></span>
             </div>
             <div class="form-group button-list">
                 <button type="submit" class="btn btn-primary"><i class="far fa-save"></i>Save</button>

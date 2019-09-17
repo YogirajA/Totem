@@ -14,5 +14,7 @@ namespace Totem.Models
         public DateTime UpdateInst { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreatedDate { get; set; }
+        public bool DisplayOnContractList { get; set; } = true;
+        public DateTime? DeprecationDate { get; set; }
     }
 }

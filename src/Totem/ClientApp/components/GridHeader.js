@@ -71,6 +71,7 @@ export default {
                 ) : (
                   <div class="btn-group">
                     <button
+                      id="addNewFieldBtn"
                       class="ui-button btn grid-btn"
                       onClick={this.showAddNewFieldModal}
                       type="button"
@@ -79,7 +80,8 @@ export default {
                       Add New Field
                     </button>
                     {this.isEllipsisMenuVisible && (
-                      <EllipsisMenu onShowModal={this.showEditContractModal} />
+                      // eslint-disable-next-line react/no-string-refs
+                      <EllipsisMenu ref="ellipsisMenu" onShowModal={this.showEditContractModal} />
                     )}
                   </div>
                 );

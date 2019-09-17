@@ -28,3 +28,30 @@ export const getDisplayType = property => {
 export const deepCopy = object => JSON.parse(JSON.stringify(object));
 
 export const isNullOrWhiteSpace = str => str === null || str.trim() === '';
+
+export const getUniqueId = () => {
+  return `_${Math.random()
+    .toString(36)
+    .substr(2, 9)}`;
+};
+
+export const findRowInTreeAndUpdate = (tree, updatedModel) => {
+  const updatedTree = deepCopy(tree);
+  let rowUpdated = false;
+
+  function searchAndUpdateRow(row) {
+    if (row.rowId === updatedModel.rowId) {
+      row.name = updatedModel.name;
+      row.modalRowId = updatedModel.modalRowId;
+      row.properties = updatedModel.properties;
+      rowUpdated = true;
+      return true;
+    }
+    return Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow);
+  }
+
+  updatedTree.forEach(searchAndUpdateRow);
+  return rowUpdated ? updatedTree : undefined;
+};
+
+export const last = array => array[array.length - 1];

@@ -1,88 +1,79 @@
 /* Only use this for CSS that affects non-Vue components (pages that do not include the webpack bundle */
 :root {
-    --depth: 0;
+  --depth: 0;
 }
 
 body {
-    padding-top: 100px;
-    padding-bottom: 20px;
+  padding-top: 100px;
+  padding-bottom: 20px;
 }
 
 .mono {
-    font-family: monospace;
+  font-family: monospace;
 }
 
 .flex-container {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .flex-expand {
-    flex: 1;
+  flex: 1;
 }
 
 h2 {
-    font-size: 1.6rem;
-    margin-bottom: 1rem;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
 }
 
 .link:hover {
-    color: #0f7864;
-    text-decoration: underline;
+  color: #0f7864;
+  text-decoration: underline;
 }
 
-.link, .link:active {
-    color: #18bc9C;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.nav .btn-link:hover, .nav a:hover {
-  color: #ddd;
-}
-.nav .btn {
-  margin-bottom: 0;
-  border: none;
-  padding: 0;
-  margin-top: 8px;
+.link,
+.link:active {
+  color: #18bc9c;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .btn {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 button:disabled {
-    cursor: default;
-    pointer-events: all !important;
+  cursor: default;
+  pointer-events: all !important;
 }
 
 .form-control {
-    color: #4d4d44 !important; /* update later to override all states of form-control text */
+  color: #4d4d44 !important; /* update later to override all states of form-control text */
 }
 
 textarea.tall {
-    min-height: 290px;
+  min-height: 290px;
 }
 
 .form-text {
-    color: #7b8a8b;
-    margin-top: -0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    font-style: italic;
+  color: #7b8a8b;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 .sidenote {
-    margin-left: 10px;
-    margin-bottom: 3px;
+  margin-left: 10px;
+  margin-bottom: 3px;
 }
 
 .result-message.success {
-    color: green;
+  color: green;
 }
 
 .result-message.error {
-    color: #f00;
+  color: #f00;
 }
 
 .row-actions {
@@ -94,119 +85,128 @@ textarea.tall {
   justify-content: flex-end;
 }
 
-footer a, a:hover {
+footer a,
+a:hover {
   color: #212529;
 }
 
 /* Wrapping element */
 /* Set some basic padding to keep content from hitting the edges */
 .body-content {
-    padding-left: 15px;
-    padding-right: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
-
 /* Button styling */
-.btn { margin-bottom: 10px; }
+.btn {
+  margin-bottom: 10px;
+}
 .btn i {
-    padding-right: 7px;
+  padding-right: 7px;
 }
 
 .button-list .btn {
-    margin-right: 10px;
+  margin-right: 10px;
 }
 
 /* Table styling */
 .table-striped tbody tr:nth-of-type(odd) {
-    background-color: #fafafa;
+  background-color: #fafafa;
 }
 
 /* jQuery UI */
-.ui-widget, .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button {
-    font-family: inherit;
+.ui-widget,
+.ui-widget input,
+.ui-widget select,
+.ui-widget textarea,
+.ui-widget button {
+  font-family: inherit;
 }
 
 .no-close .ui-dialog-titlebar-close {
-    display: none;
+  display: none;
 }
 
 .ui-widget-header {
-    background: none;
-    border: none;
+  background: none;
+  border: none;
 }
 
 .ui-widget-overlay.ui-front {
-    background-color: #333;
-    opacity: 0.6;
-    z-index: 1031; /* Higher than ASP.NET header */
+  background-color: #333;
+  opacity: 0.6;
+  z-index: 1031; /* Higher than ASP.NET header */
 }
 
-.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active, a.ui-button:active, .ui-button:active, .ui-button.ui-state-active:hover {
-    border: 1px solid #0f7864;
-    background: #18bc9c;
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active,
+a.ui-button:active,
+.ui-button:active,
+.ui-button.ui-state-active:hover {
+  border: 1px solid #0f7864;
+  background: #18bc9c;
 }
 
 .ui-button.btn.btn-primary {
-    color: #fff;
-    background-color: #2C3E50;
-    border-color: #2C3E50;
+  color: #fff;
+  background-color: #2c3e50;
+  border-color: #2c3e50;
 }
 
 .ui-button.btn.btn-success {
-    color: #fff;
-    background-color: #18BC9C;
-    border-color: #18BC9C;
+  color: #fff;
+  background-color: #18bc9c;
+  border-color: #18bc9c;
 }
 
 .ui-button.btn.btn-danger {
-    color: #fff;
-    background-color: #E74C3C;
-    border-color: #E74C3C;
+  color: #fff;
+  background-color: #e74c3c;
+  border-color: #e74c3c;
 }
 
 .ui-button.btn-success:not(:disabled):not(.disabled):active {
-    background-color: #128f76;
-    border-color: #11836d;
+  background-color: #128f76;
+  border-color: #11836d;
 }
 
 .ui-button.btn-primary:not(:disabled):not(.disabled):active {
-    background-color: #1a252f;
-    border-color: #151e27;
+  background-color: #1a252f;
+  border-color: #151e27;
 }
 
-.ui-button.ui-dialog-titlebar-close, html .ui-button.ui-dialog-titlebar-close.ui-state-disabled:hover, html .ui-dialog-titlebar-close.ui-button.ui-state-disabled:active {
-    border: none;
-    background: none;
-    right: 0.6em;
+.ui-button.ui-dialog-titlebar-close,
+html .ui-button.ui-dialog-titlebar-close.ui-state-disabled:hover,
+html .ui-dialog-titlebar-close.ui-button.ui-state-disabled:active {
+  border: none;
+  background: none;
+  right: 0.6em;
 }
 
 .ui-button.ui-dialog-titlebar-close:active .ui-icon {
-    background-image: url('../../lib/jquery-ui-1.12.1/images/ui-icons_444444_256x240.png');
+  background-image: url('../../lib/jquery-ui-1.12.1/images/ui-icons_444444_256x240.png');
 }
 
 .ui-widget-content {
-    border: none;
-    padding: 0;
+  border: none;
+  padding: 0;
 }
 
 .ui-dialog .ui-dialog-buttonpane {
-    padding: 0.5em 0.6em;
+  padding: 0.5em 0.6em;
 }
 
 .ui-dialog .ui-dialog-titlebar {
-    padding: 1em 1em 1em 2em;
+  padding: 1em 1em 1em 2em;
 }
 
 .ui-dialog .ui-dialog-content {
-    padding-left: 2em;
+  padding-left: 2em;
 }
 
 .contract-display-row {
-    margin-left: calc(var(--depth) * 1.75em);
-}
-
-.navbar-link {
-  color: white;
+  margin-left: calc(var(--depth) * 1.75em);
 }
 
 .navbar-user {
@@ -214,4 +214,34 @@ footer a, a:hover {
   margin-top: 8px;
   margin-bottom: 8px;
   margin-right: 8px;
+}
+.navbar-collapse {
+  flex-grow: unset;
+}
+
+#logoutForm button.btn {
+  padding: 0;
+}
+
+@media (min-width: 992px) {
+  .navbar-collapse li:after {
+    content: '|';
+  }
+}
+
+.navbar-nav .navbar-link {
+  color: #fff;
+}
+
+#logoutForm .btn-link:hover,
+.navbar-nav a:hover,
+.navbar-nav .navbar-link:hover {
+  color: #ddd;
+}
+
+.nav .btn {
+  margin-bottom: 0;
+  border: none;
+  padding: 0;
+  margin-top: 8px;
 }

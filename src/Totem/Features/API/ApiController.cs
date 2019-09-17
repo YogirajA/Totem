@@ -24,7 +24,7 @@ namespace Totem.Features.API
             {
                 var result = await _mediator.Send(command);
                 
-                if (result.TestMessageValid == "Valid")
+                if (result.IsValid)
                 {
                     return new TestMessageResult(HttpStatusCode.OK);
                 }

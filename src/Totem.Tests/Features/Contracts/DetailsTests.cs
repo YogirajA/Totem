@@ -13,7 +13,8 @@ namespace Totem.Tests.Features.Contracts
 
             var query = new Details.Query()
             {
-                ContractId = addedContract.Id
+                ContractId = addedContract.Id,
+                VersionNumber = addedContract.VersionNumber
             };
             var contract = await Send(query);
 

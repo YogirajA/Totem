@@ -15,6 +15,7 @@ namespace Totem.Features.Contracts
         public class Query : IRequest<ViewModel>
         {
             public Guid ContractId { get; set; }
+            public string VersionNumber { get; set; }
         }
 
         public class ViewModel
@@ -57,7 +58,9 @@ namespace Totem.Features.Contracts
 
             public async Task<ViewModel> Handle(Query request, CancellationToken cancellationToken)
             {
-                var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId, cancellationToken: cancellationToken);
+                var contract = await _db.Contract.SingleAsync(
+                    x => x.Id == request.ContractId && x.VersionNumber == request.VersionNumber,
+                    cancellationToken: cancellationToken);
 
                 return _mapper.Map<ViewModel>(contract);
             }

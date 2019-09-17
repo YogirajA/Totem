@@ -2,17 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Json;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Validators;
 using Totem.Infrastructure;
 using Totem.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace Totem.Features.Shared
+
 {
     public static class ValidationExtensions
     {
         private static readonly List<string> AllowedFormats = Format.GetAll().Select(x => x.Value).ToList();
         private static readonly List<string> AllowedDataTypes = DataType.GetAll().Select(x => x.Value).ToList();
+
+        public static async Task<bool> IsUniqueContract(Guid? contractId, string versionNumber, TotemContext dbContext, CancellationToken cancellationToken)
+        {
+            var isDuplicateContract = await dbContext.Contract.AnyAsync(x => x.Id == contractId && x.VersionNumber == versionNumber, cancellationToken);
+            return !isDuplicateContract;
+        }
 
         public static IRuleBuilderInitial<T, string> StringMustBeValidContract<T>(this IRuleBuilder<T, string> ruleBuilder)
         {
@@ -104,7 +113,7 @@ namespace Totem.Features.Shared
                     if (string.IsNullOrEmpty(reference))
                     {
                         context.AddFailure(
-                            $"The definition of \"{propertyName}\" is incorrect. A type is required.");
+                            $"The definition of \"{propertyName}\" is incorrect. A type or reference is required.");
                     }
                 }
                 else

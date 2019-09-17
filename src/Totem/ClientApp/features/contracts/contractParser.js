@@ -25,7 +25,7 @@ export const convertPropertiesToArray = (obj, schema) => {
         item.reference = reference;
         item.type = referenceObject.type;
         item.pattern = referenceObject.pattern;
-        item.example = referenceObject.example;
+        item.example = item.example || referenceObject.example;
       }
     }
     propertyArray.push(item);
@@ -97,14 +97,10 @@ export const updateNestedProperty = (editedRow, rows, isDelete) => {
   let rowDeleted = false;
 
   rows.forEach((row, index) => {
-    if (row.modalRowId !== undefined && row.modalRowId === editedRow.modalRowId) {
-      if (isDelete) {
-        updatedRows.splice(index, 1);
-        rowDeleted = true;
-      } else {
-        updatedRows[index] = editedRow;
-      }
-    } else if (row.modalRowId === undefined && row.rowId === editedRow.rowId) {
+    if (
+      (row.modalRowId !== undefined && row.modalRowId === editedRow.modalRowId) ||
+      (row.rowId !== null && row.rowId === editedRow.rowId)
+    ) {
       if (isDelete) {
         updatedRows.splice(index, 1);
         rowDeleted = true;
@@ -129,6 +125,7 @@ export const buildNestedProperties = rows => {
       object[row.name].properties = buildNestedProperties(row.properties);
     } else if (row.$ref) {
       object[row.name].$ref = row.$ref;
+      object[row.name].example = row.example;
     } else {
       Object.keys(row).forEach(property => {
         if (
@@ -136,7 +133,8 @@ export const buildNestedProperties = rows => {
           property !== 'rowId' &&
           property !== 'reference' &&
           property !== 'isLocked' &&
-          property !== 'parentId'
+          property !== 'parentId' &&
+          property !== 'modalRowId'
         ) {
           object[row.name][property] = row[property];
         }
@@ -178,7 +176,7 @@ export const updateContractString = (updatedRow, rows, contractString, isDelete 
     // Traverse the object until the parent is found, and insert the row there
     updatedRows.forEach(row => {
       if (row.rowId === updatedRow.parentId) {
-        row.properties.push(row);
+        updatedRows.properties.push(row);
       }
     });
   }
@@ -205,7 +203,8 @@ export const buildNestedOptions = (propertyArray, options) => {
           id: options.length + 1,
           schemaName: property.name,
           schemaString: createSchemaString(property)
-        }
+        },
+        isObject: true
       });
       buildNestedOptions(property.properties, options);
     }

@@ -64,7 +64,7 @@
 <div>
     @if (SignInManager.IsSignedIn(User))
     {
-        @Html.ActionLink("Edit", "Edit", new {ContractId = Model.Id}) @: |
+        @Html.ActionLink("Edit", "Edit", new {ContractId = Model.Id, Model.VersionNumber}) @: |
     }
     <a asp-action="Index">Back to List</a>
 </div>
