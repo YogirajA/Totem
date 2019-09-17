@@ -289,7 +289,8 @@ export default {
               id: this.options.length,
               schemaName: field.name,
               schemaString: createSchemaString(field)
-            }
+            },
+            isObject: true
           });
           this.options = reorderOptions(this.options);
         }
@@ -316,7 +317,8 @@ export default {
             id: this.options.length,
             schemaName: updatedModel.name,
             schemaString: createSchemaString(updatedModel)
-          }
+          },
+          isObject: true
         });
         this.options = reorderOptions(this.options);
       } else {

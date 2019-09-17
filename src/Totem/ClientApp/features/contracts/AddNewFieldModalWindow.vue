@@ -163,6 +163,8 @@ export default {
           };
           this.modalTitle = 'Update Field';
         }
+      } else {
+        this.updateExampleState(currentField.example, false);
       }
       $('.field-name')[0].focus();
     },
