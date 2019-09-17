@@ -470,6 +470,74 @@ test('Delete a nested model (from the parent model)', async t => {
     .eql(false);
 });
 
+test('Edit a nested field after deleting a nested model (from the parent model)', async t => {
+  await addNewNestedModelAtRoot(t);
+  // To prevent avoid having zero rows in the parent model after deletion
+  await addNewFieldsToParentModel(t);
+  // Save the container model
+  await t.click(utils.saveModelBtn);
+
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  const rowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = rowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  const nestedModelRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('nestedModel');
+  const nestedModelEditFieldBtn = nestedModelRowToEdit.find('.edit-action');
+  await t.click(nestedModelEditFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+
+  const deleteModelBtn = Selector('#modelModalWindow').find('#deleteModelBtn');
+  await t.click(deleteModelBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+  await t.expect(nestedModelRowToEdit.exists).eql(false);
+
+  await t.click(utils.saveModelBtn);
+
+  const containerModel = Selector('tr.treegrid-body-row').withText('testModel');
+  const nestedModelRow = Selector('tr.treegrid-body-row').withText('nestedModel');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount - 2)
+    .expect(containerModel.exists)
+    .eql(true)
+    .expect(nestedModelRow.exists)
+    .eql(false);
+
+  // Edit from parent model
+  await t.click(editFieldBtn);
+  const nestedFieldToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('newTestProperty');
+  const nestedFieldEditBtn = nestedFieldToEdit.find('.edit-action');
+  await t.click(nestedFieldEditBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('newTestProperty');
+  await t.expect(utils.inputFieldExample.value).eql('2019-01-01T18:14:29Z');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('DateTime');
+
+  await t.click(utils.cancelFieldBtn);
+
+  await t.click(utils.cancelModelBtn);
+
+  // Edit from root grid
+  const rootFieldToEdit = Selector('tr.treegrid-body-row').withText('newTestProperty');
+  const rootFieldEditBtn = rootFieldToEdit.find('.edit-action');
+  await t.click(rootFieldEditBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('newTestProperty');
+  await t.expect(utils.inputFieldExample.value).eql('2019-01-01T18:14:29Z');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('DateTime');
+});
+
 test('Delete a nested field (from the parent model)', async t => {
   await addNewNestedModelAtRoot(t);
   await addNewFieldsToNestedModel(t);
