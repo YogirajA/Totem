@@ -196,7 +196,7 @@ export default {
         this.updateSchemaExample(
           currentFieldNodeToUse,
           this.fieldType && this.fieldType.isObject,
-          currentFieldNodeToUse.example
+          currentField.example
         );
 
         if (editingExistingRow) {
