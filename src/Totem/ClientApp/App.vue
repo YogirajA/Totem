@@ -325,6 +325,8 @@ export default {
         const existingOption = this.options.find(option => option.displayName === model.name);
         if (existingOption) {
           existingOption.displayName = updatedModel.name;
+          existingOption.value.schemaName = updatedModel.name;
+          existingOption.value.schemaString = createSchemaString(updatedModel);
           this.options = reorderOptions(this.options);
         }
       }
