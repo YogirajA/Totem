@@ -8,14 +8,28 @@
       :cancel-btn="cancelBtn"
     >
       <template v-slot:body>
-        <div class="form-group">
-          <label for="modelName" class="control-label">Property Name</label>
-          <input
-            id="modelName"
-            v-model="modalFieldName"
-            class="form-control"
-            placeholder="Property Name"
-          />
+        <div class="container">
+          <div class="row">
+            <div class="form-group col-md-10">
+              <label for="modelName" class="control-label">Property Name</label>
+              <input
+                id="modelName"
+                v-model="modalFieldName"
+                class="form-control"
+                placeholder="Property Name"
+              />
+            </div>
+            <div class="form-check form-group col-md-2 mt-auto">
+              <input
+                id="isArray"
+                v-model="isArray"
+                class="form-check-input"
+                type="checkbox"
+                @change="onCheckboxChange"
+              />
+              <label for="isArray" class="control-label">Array</label>
+            </div>
+          </div>
         </div>
         <ContractGrid
           id="nestedContractGrid"
@@ -64,6 +78,7 @@
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
 import { deepCopy, isNullOrWhiteSpace, last } from './dataHelpers';
+import { updateProperties, getPropertiesCopy } from './contractParser';
 
 export default {
   name: 'AddModelModalWindow',
@@ -85,6 +100,7 @@ export default {
       modalTitle: this.title,
       showFieldNameTextbox: false,
       isEditModal: false,
+      isArray: false,
       successBtn: {
         id: 'saveModelBtn',
         text: 'Add Model',
@@ -119,6 +135,7 @@ export default {
     /* eslint-disable object-shorthand */
     modalRows: function setDisabled(rows) {
       this.objectRows = deepCopy(rows);
+      // TODO: JNZ Check for arrays of objects
       const isAnyObjectEmpty = rows.some(obj => {
         return obj.type === 'object' && obj.properties.length === 0;
       });
@@ -139,6 +156,9 @@ export default {
         clicked: this.saveModel,
         disabled: this.isSaveDisabled
       };
+
+      this.isArray = last(this.editStack).items !== undefined;
+
       this.showFieldNameTextbox = false;
       if (last(this.editStack).rowId !== undefined) {
         this.isEditModal = true;
@@ -159,8 +179,9 @@ export default {
     },
 
     saveModel() {
+      this.onCheckboxChange();
       const model = deepCopy(last(this.editStack));
-      model.properties = deepCopy(this.objectRows);
+      updateProperties(model, deepCopy(this.objectRows));
       this.$emit('save', model, this.modalFieldName);
     },
 
@@ -181,7 +202,7 @@ export default {
     showModelWindow(field) {
       field.parentId = last(this.editStack).rowId;
       this.editStack.push(deepCopy(field));
-      this.objectRows = deepCopy(field.properties);
+      this.objectRows = getPropertiesCopy(field);
       this.$parent.modalRows = deepCopy(this.objectRows);
       this.modalFieldName = field.name;
       this.$parent.parentName = field.name;
@@ -195,12 +216,17 @@ export default {
       }
       if (last(this.editStack).parentId === undefined) {
         // Parent is a new model that doesn't have an ID yet
-        deepField.properties = [];
+        updateProperties(deepField, [], this.isArray);
       } else {
         // Parent is a model that has an ID which forms the parentId of the field
         deepField.parentId = last(this.editStack).rowId;
       }
       this.$emit('showFieldWindow', { ...deepField });
+    },
+
+    onCheckboxChange() {
+      const model = last(this.editStack);
+      updateProperties(model, undefined, this.isArray);
     }
   }
 };

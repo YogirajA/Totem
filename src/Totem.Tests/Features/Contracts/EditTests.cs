@@ -635,6 +635,104 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
         }
 
+        public async Task ShouldEditWhenValidWithArrayOfObjects()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""PhoneId"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""reference"": ""Guid"",
+                                                ""$ref"": ""#/Guid""
+                                            },
+                                            ""example"": ""[\""01234567-abcd-0123-abcd-0123456789ab\""]"",
+                                            ""format"": ""guid""
+                                        },
+                                        ""AreaCode"": {
+                                            ""type"": ""integer"",
+                                            ""example"": ""123""
+                                        },
+                                        ""Number"": {
+                                            ""type"": ""integer"",
+                                            ""example"": ""123""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
         public async Task ShouldEditWhenValidWithNestedObject()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -722,6 +820,99 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
         }
 
+        public async Task ShouldEditWhenValidWithNestedArrayOfObjects()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""integer"",
+                                                        ""example"": ""232""
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
         public async Task ShouldEditWhenValidWithArrayAndNestedObject()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -778,6 +969,112 @@ namespace Totem.Tests.Features.Contracts
                                 ""items"": {
                                     ""type"": ""string""
                                 }                                            
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
+        public async Task ShouldEditWhenValidWithNestedArrayOfObjectsWithMultiArrays()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""integer"",
+                                                        ""example"": ""232""
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        ""ArrayOfIntegers"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""integer"",
+                                                ""example"": ""667""
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""string""
+                                }
                             }
                         }
                     },
@@ -1036,6 +1333,83 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
         }
 
+        public async Task ShouldNotEditWhenNestedArrayOfObjectsDoesNotHaveItems()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array""
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
+        }
+
         public async Task ShouldNotEditWhenContractStringArrayDoesNotHaveAValidItemsType()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -1172,6 +1546,230 @@ namespace Totem.Tests.Features.Contracts
                 ModifiedContract = modifiedContractModel
             };
             command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. A valid type is required for the Items sub-property.");
+        }
+
+        public async Task ShouldNotEditWhenNestedArrayOfObjectsDoesNotHaveAValidItemsType()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array"",
+                                                        ""items"": {
+                                                            ""type"": ""not-a-type""
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. A valid type is required for the Items sub-property.");
+        }
+
+        public async Task ShouldNotEditWhenNestedArrayOfObjectsDoesNotHaveProperties()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array"",
+                                                        ""items"": {
+                                                            ""type"": ""object""
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. \"object\" data type requires a 'Properties' object.");
+        }
+
+        public async Task ShouldNotEditWhenArrayOfObjectsDoesNotHaveProperties()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""ArrayObjsNoProps"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object""
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"ArrayObjsNoProps\" is incorrect. \"object\" data type requires a 'Properties' object.");
         }
 
         public async Task ShouldNotEditWhenContractStringDoesNotHaveValidType()
@@ -1398,7 +1996,7 @@ namespace Totem.Tests.Features.Contracts
                 InitialContract = initialContractModel,
                 ModifiedContract = modifiedContractModel
             };
-            command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.",
+            command.ShouldNotValidate("Reference definition not found.",
                 "The definition of \"Name\" is incorrect. A type or reference is required.");
         }
 

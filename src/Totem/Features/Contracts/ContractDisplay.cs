@@ -15,18 +15,18 @@ namespace Totem.Features.Contracts
 
             var properties = schema["Contract"].Properties;
 
-            BuildDisplayText(properties, displayText, fullDetails);
+            BuildDisplayText(properties, fullDetails);
 
             displayText = string.Join("", _displayContractRows);
 
             return displayText;
         }
 
-        private static void BuildDisplayText(CaseInsensitiveDictionary<SchemaObject> properties, string displayText, bool fullDetails, int depth = 0)
+        private static void BuildDisplayText(CaseInsensitiveDictionary<SchemaObject> properties, bool fullDetails, int depth = 0)
         {
             foreach (var property in properties)
             {
-                var type = property.Value.Type;
+                var dataType = property.Value.GetDataType();
                 var format = property.Value.Format;
                 var reference = property.Value.Reference;
                 var pattern = property.Value.Pattern;
@@ -47,25 +47,44 @@ namespace Totem.Features.Contracts
                     pattern = "";
                 }
 
-                if (type.EqualsCaseInsensitive(DataType.Array.Value))
+                string displayText;
+                if (dataType == DataType.Array)
                 {
                     var itemType = property.Value.Items.Type;
-                    var displayModifier = !string.IsNullOrEmpty(itemType);
-                    var modifier = displayModifier ? $" ({itemType})" : "";
-                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {type}{modifier}<br></span>";
+                    var itemFormat = property.Value.Items.Format;
+                    var itemReference = property.Value.Items.Reference;
+                    var displayModifier = !string.IsNullOrEmpty(itemFormat) || !string.IsNullOrEmpty(itemType) || !string.IsNullOrEmpty(itemReference);
+                    var modifier = "";
+
+                    if (displayModifier)
+                    {
+                        var itemTypeString = itemType;
+                        if (!string.IsNullOrEmpty(itemFormat))
+                        {
+                            itemTypeString = itemFormat;
+                        }
+                        if (!string.IsNullOrEmpty(itemReference))
+                        {
+                            itemTypeString = itemReference;
+                        }
+
+                        modifier = $" ({itemTypeString})";
+                    }
+                    
+                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value}{modifier}<br></span>";
                     _displayContractRows.Add(displayText);
                 }
-                else if (type.EqualsCaseInsensitive("object"))
+                else if (dataType == DataType.Object)
                 {
-                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {type}<br></span>";
+                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value}<br></span>";
                     _displayContractRows.Add(displayText);
-                    BuildDisplayText(property.Value.Properties, property.Key, fullDetails, depth + 1);
+                    BuildDisplayText(property.Value.Properties, fullDetails, depth + 1);
                 }
                 else
                 {
                     var displayModifier = format != null || reference != null || pattern != "";
                     var modifier = displayModifier ? $" ({format}{reference}{pattern})" : "";
-                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {type}{modifier}<br></span>";
+                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value}{modifier}<br></span>";
                     _displayContractRows.Add(displayText);
                 }
             }

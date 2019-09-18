@@ -166,7 +166,9 @@ test('Deleting a previously saved root field', async t => {
   await t.click(editFieldBtn);
   await t.expect(utils.inputFieldName.value).notEql('');
   await t.expect(utils.inputFieldExample.value).notEql('');
-  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+  await t
+    .expect(utils.inputType.getVue(({ props }) => props.value.displayName))
+    .contains('Integer');
 
   // Deleting the field
   await t.click(utils.deleteFieldBtn);

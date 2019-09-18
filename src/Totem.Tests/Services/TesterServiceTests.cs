@@ -330,10 +330,11 @@ namespace Totem.Tests.Services
             result.IsMessageValid.ShouldBeFalse();
             result.MessageErrors[0].ShouldBe("\"Array\" does not have the required property(Items) for type(Array).");
         }
-
-        [TestingConvention.Input("String")]
-        [TestingConvention.Input("Integer")]
-        public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType)
+        
+        [Input("String", "date-time")]
+        [Input("Integer", "int32")]
+        [Input("Integer", "int64")]
+        public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType, string format)
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
             {
@@ -343,7 +344,7 @@ namespace Totem.Tests.Services
                     Items = new SchemaObject()
                     {
                         Type = dataType,
-                        Format = dataType == "String"?"date-time":"int32",
+                        Format = format,
                     }
                 }}
             };
@@ -369,7 +370,7 @@ namespace Totem.Tests.Services
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
             result.IsMessageValid.ShouldBeFalse();
-            result.MessageErrors[0].ShouldBe($"An item in the Items array for Array does not match the required data type ({dataType.ToLower()}).");
+            result.MessageErrors[0].ShouldBe($"An item in the Items array for Array does not match the required data type ({format}).");
         }
 
         public void ShouldFailValidationForArrayTypeWithGreaterThanMaxItems()

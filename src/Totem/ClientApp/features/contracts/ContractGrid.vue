@@ -66,7 +66,7 @@ export default {
   },
   methods: {
     handleEditClick(row) {
-      if (row.type === 'object') {
+      if (row.type === 'object' || (row.items && row.items.type === 'object')) {
         this.$emit('showModelWindow', row, false);
       } else {
         this.$emit('showFieldWindow', row);

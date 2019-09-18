@@ -147,22 +147,24 @@ namespace Totem.Services
         private void ChecksForMessage(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
             TestMessageResult testMessageResult)
         {
-            if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.Integer.Value))
+            var dataType = propertySchemaObject.GetDataType();
+
+            if (dataType == DataType.Integer)
             {
                 CheckIntegerType(propertySchemaObject, kv, testMessageResult);
             }
 
-            if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.String.Value))
+            if (dataType == DataType.String)
             {
                 CheckStringType(propertySchemaObject, kv, testMessageResult);
             }
 
-            if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.Array.Value))
+            if (dataType == DataType.Array)
             {
                 CheckArrayType(propertySchemaObject, kv, testMessageResult);
             }
 
-            if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.Object.Value))
+            if (dataType == DataType.Object)
             {
                 CheckObjectType(propertySchemaObject, kv, testMessageResult);
             }
@@ -185,11 +187,11 @@ namespace Totem.Services
                 // Validate specific integer formats
                 if (propertySchemaObject.Format.EqualsCaseInsensitive("int32") && !isInt32)
                 {
-                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "Int32");
+                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.Int32.DisplayName);
                 }
                 else if (propertySchemaObject.Format.EqualsCaseInsensitive("int64") && !isInt64)
                 {
-                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "Int64");
+                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.Int64.DisplayName);
                 }
             }
         }
@@ -207,17 +209,17 @@ namespace Totem.Services
                     // Validate specific string formats
                     if (propertySchemaObject.Format.EqualsCaseInsensitive("date-time") && notDateTime)
                     {
-                        AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "DateTime");
+                        AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.DateTime.DisplayName);
                     }
                 }
                 if (notGuid && propertySchemaObject.Reference == "Guid")
                 {
-                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "Guid");
+                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.Guid.DisplayName);
                 }
             }
             else if (kv.Value == null && propertySchemaObject.Reference == "Guid")
             {
-                AddFormatError(testMessageResult, null, kv.Key, "Guid");
+                AddFormatError(testMessageResult, null, kv.Key, Format.Guid.DisplayName);
             }
         }
 
@@ -247,20 +249,16 @@ namespace Totem.Services
                     AddArrayMaxLengthError(testMessageResult, kv.Key, propertySchemaObject.MaxItems);
                 }
 
-                if (itemSchema.Type.EqualsCaseInsensitive(DataType.String.Value))
+                var dataType = itemSchema.GetDataType();
+
+                if (dataType == DataType.String)
                 {
-                    if (!TryParseStringArray(itemArray, itemSchema.Format, itemSchema.Reference == "Guid"))
-                    {
-                        AddItemTypeError(testMessageResult, kv.Key, DataType.String.Value);
-                    }
+                    TryParseStringArray(propertySchemaObject, kv, itemArray, testMessageResult, itemSchema.Reference == "Guid");
                 }
 
-                if (itemSchema.Type.EqualsCaseInsensitive(DataType.Integer.Value))
+                if (dataType == DataType.Integer)
                 {
-                    if (!TryParseIntegerArray(itemArray))
-                    {
-                        AddItemTypeError(testMessageResult, kv.Key, DataType.Integer.Value);
-                    }
+                    TryParseIntegerArray(propertySchemaObject, kv, itemArray, testMessageResult);
                 }
             }
         }
@@ -353,15 +351,18 @@ namespace Totem.Services
                 $"The Items array for {key} has greater than the maximum number ({max}) of items allowed.");
         }
 
-        private static bool TryParseStringArray(dynamic itemArray, string itemFormat, bool itemIsGuid)
+        private static void TryParseStringArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult, bool itemIsGuid)
         {
+            var itemFormat = propertySchemaObject.Items.Format;
+
             if (itemFormat.EqualsCaseInsensitive(Format.DateTime.Value))
             {
                 foreach (var item in itemArray)
                 {
                     if (!DateTime.TryParse(item.ToString(), out DateTime _))
                     {
-                        return false;
+                        AddItemTypeError(testMessageResult, kv.Key, Format.DateTime.Value);
+                        break;
                     }
                 }
             }
@@ -371,27 +372,45 @@ namespace Totem.Services
                 {
                     if (!Guid.TryParse(item.ToString(), out Guid _))
                     {
-                        return false;
+                        AddItemTypeError(testMessageResult, kv.Key, Format.Guid.DisplayName);
+                        break;
                     }
                 }
             }
-
-            return true;
         }
 
-        private bool TryParseIntegerArray(dynamic itemArray)
+        private static void TryParseIntegerArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
         {
+            var itemFormat = propertySchemaObject.Items.Format;
+
             foreach (var item in itemArray)
             {
-                int notInt32;
-                long notInt64;
-                if ((!int.TryParse(item.ToString(), out notInt32)) || (!long.TryParse(item.ToString(), out notInt64)))
+                var isInt32 = int.TryParse(item.ToString(), out int _);
+                var isInt64 = long.TryParse(item.ToString(), out long _);
+
+                // Validate integer data type, which is int32.
+                if (itemFormat == null && !isInt32)
                 {
-                    return false;
+                    AddItemTypeError(testMessageResult, kv.Key, DataType.Integer.Value);
+                    break;
+                }
+
+                if (itemFormat != null)
+                {
+                    // Validate specific integer formats
+                    if (itemFormat.EqualsCaseInsensitive(Format.Int32.Value) && !isInt32)
+                    {
+                        AddItemTypeError(testMessageResult, kv.Key, Format.Int32.Value);
+                        break;
+                    }
+
+                    if (itemFormat.EqualsCaseInsensitive(Format.Int64.Value) && !isInt64)
+                    {
+                        AddItemTypeError(testMessageResult, kv.Key, Format.Int64.Value);
+                        break;
+                    }
                 }
             }
-
-            return true;
         }
 
         public bool TryParseJSON(string json, out JsonValue jsonObject)

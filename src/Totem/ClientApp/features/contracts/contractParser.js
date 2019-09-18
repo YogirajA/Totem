@@ -14,6 +14,9 @@ export const convertPropertiesToArray = (obj, schema) => {
     if (item.properties) {
       item.properties = convertPropertiesToArray(item.properties, schema);
     }
+    if (item.items && item.items.properties) {
+      item.items.properties = convertPropertiesToArray(item.items.properties, schema);
+    }
     currentRowCount += 1;
     item.name = property;
     item.rowId = currentRowCount;
@@ -26,6 +29,15 @@ export const convertPropertiesToArray = (obj, schema) => {
         item.type = referenceObject.type;
         item.pattern = referenceObject.pattern;
         item.example = item.example || referenceObject.example;
+      }
+    }
+    if (item.type === 'array') {
+      item.format = item.items.type;
+      if (item.items.format) {
+        item.format = item.items.format;
+      }
+      if (item.items.$ref) {
+        item.format = formatReferenceName(item.items.$ref).toLowerCase();
       }
     }
     propertyArray.push(item);
@@ -84,7 +96,10 @@ export const findRow = (rowId, rows) => {
       result = a;
       return true;
     }
-    return Array.isArray(a.properties) && a.properties.some(searchForRow);
+
+    const properties = (a.items && a.items.properties) || a.properties;
+
+    return Array.isArray(properties) && properties.some(searchForRow);
   }
 
   rows.some(searchForRow);
@@ -109,6 +124,12 @@ export const updateNestedProperty = (editedRow, rows, isDelete) => {
       }
     } else if (row.properties !== undefined && !rowDeleted) {
       updatedRows[index].properties = updateNestedProperty(editedRow, row.properties, isDelete);
+    } else if (row.items && row.items.properties !== undefined && !rowDeleted) {
+      updatedRows[index].items.properties = updateNestedProperty(
+        editedRow,
+        row.items.properties,
+        isDelete
+      );
     }
   });
   return updatedRows;
@@ -123,6 +144,11 @@ export const buildNestedProperties = rows => {
     if (row.properties) {
       object[row.name].type = 'object';
       object[row.name].properties = buildNestedProperties(row.properties);
+    } else if (row.items && row.items.properties) {
+      object[row.name].type = 'array';
+      object[row.name].items = {};
+      object[row.name].items.type = 'object';
+      object[row.name].items.properties = buildNestedProperties(row.items.properties);
     } else if (row.$ref) {
       object[row.name].$ref = row.$ref;
       object[row.name].example = row.example;
@@ -183,19 +209,51 @@ export const updateContractString = (updatedRow, rows, contractString, isDelete 
   return createContractString(updatedRows, schema);
 };
 
+/* getPropertiesCopy: gets properties copy from a schema object or aray of objects, otherwise empty array */
+export const getPropertiesCopy = schema => {
+  return deepCopy(schema.properties || (schema.items && schema.items.properties) || []);
+};
+
+/* hasProperties: return true or false if the schema object has properties */
+export const hasProperties = schema => {
+  return (schema.properties || (schema.items && schema.items.properties)) !== undefined;
+};
+
+/* isObjectArray: return true or false if the schema object is an array of objects */
+export const isObjectArray = schema => {
+  return (schema.items && schema.items.properties) !== undefined;
+};
+
+/* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
+export const updateProperties = (schema, properties, isArray) => {
+  if (properties === undefined) {
+    properties = getPropertiesCopy(schema);
+  }
+  if (isArray === undefined) {
+    isArray = isObjectArray(schema);
+  }
+  schema.properties = isArray ? undefined : properties;
+  schema.items = isArray ? { properties } : undefined;
+};
+
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
 export const createSchemaString = schema => {
+  const isObjArray = isObjectArray(schema);
   const cleanSchema = {
-    type: 'object',
-    properties: buildNestedProperties(schema.properties)
+    type: isObjArray ? 'array' : 'object'
   };
+  const properties = buildNestedProperties(
+    isObjArray ? schema.items.properties : schema.properties
+  );
+  cleanSchema.properties = isObjArray ? undefined : properties;
+  cleanSchema.items = isObjArray ? { properties } : undefined;
   return JSON.stringify(cleanSchema);
 };
 
 /* buildNestedOptions: used for recursively adding options to the option array for dropdown in case of nested objects */
 export const buildNestedOptions = (propertyArray, options) => {
   propertyArray.forEach(property => {
-    if (property.type === 'object') {
+    if (property.type === 'object' || (property.items && property.items.type === 'object')) {
       options.push({
         id: options.length + 1,
         displayName: property.name,
@@ -206,7 +264,10 @@ export const buildNestedOptions = (propertyArray, options) => {
         },
         isObject: true
       });
-      buildNestedOptions(property.properties, options);
+      buildNestedOptions(
+        (property.items && property.items.properties) || property.properties,
+        options
+      );
     }
   });
 };
@@ -226,25 +287,39 @@ export const getExistingOptions = contractString => {
 
 /* buildNewObject: when a field is saved, create a new object with the relevant data to
    pass back up to its parent */
-export const buildNewObject = (name, type, example, currentModel, modifiedContract) => {
+export const buildNewObject = (name, type, isArray, example, currentModel, modifiedContract) => {
   const newObject = { name };
   if (Number.isInteger(type.id)) {
+    const schema = JSON.parse(type.value.schemaString);
     // This data type was created by the client; known data types from the database have Guid ID's
-    newObject.properties = getModalRows(
-      JSON.parse(type.value.schemaString).properties,
-      JSON.parse(modifiedContract)
-    );
-    newObject.type = 'object';
+    const properties = getModalRows(getPropertiesCopy(schema), JSON.parse(modifiedContract));
+    updateProperties(newObject, properties, isArray);
+    newObject.type = isArray ? 'array' : 'object';
   } else {
     const properties = JSON.parse(type.value.schemaString);
 
-    Object.keys(properties).forEach(property => {
-      newObject[property] = properties[property];
-    });
+    if (isArray === true) {
+      newObject.type = 'array';
+      newObject.example = null;
+      newObject.items = {};
 
-    if (type.displayName === 'Guid') {
-      newObject.reference = 'Guid';
-      newObject.$ref = '#/Guid';
+      if (type.displayName === 'Guid') {
+        newObject.items.reference = 'Guid';
+        newObject.items.$ref = '#/Guid';
+      } else {
+        Object.keys(properties).forEach(property => {
+          newObject.items[property] = properties[property];
+        });
+      }
+    } else {
+      Object.keys(properties).forEach(property => {
+        newObject[property] = properties[property];
+      });
+
+      if (type.displayName === 'Guid') {
+        newObject.reference = 'Guid';
+        newObject.$ref = '#/Guid';
+      }
     }
   }
   if (example || example === '') {
