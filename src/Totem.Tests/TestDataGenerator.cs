@@ -44,6 +44,47 @@ namespace Totem.Tests
             }
         }";
 
+        public const string SampleContractStringWithObject = @"{
+            ""Contract"": {
+                ""type"": ""object"",
+                ""properties"": {
+                    ""Id"": {
+                        ""$ref"": ""#/Guid""
+                    },
+                    ""Timestamp"": {
+                        ""type"": ""string"",
+                        ""format"": ""date-time"",
+                        ""example"": ""2019-05-12T18:14:29Z""
+                    },
+                    ""Fullname"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Firstname"": {
+                                ""type"": ""string"",
+                                ""example"": ""sample string""
+                            },
+                            ""Lastname"": {
+                                ""type"": ""string"",
+                                ""example"": ""sample string""
+                            }
+                        }
+                    },
+                    ""Age"": {
+                        ""type"": ""integer"",
+                        ""format"": ""int32"",
+                        ""example"": ""30""
+                    }
+                }
+            },
+            ""Guid"": {
+                ""type"": ""string"",
+                ""pattern"": ""^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$"",
+                ""minLength"": 36,
+                ""maxLength"": 36,
+                ""example"": ""01234567-abcd-0123-abcd-0123456789ab""
+            }
+        }";
+
         public const string SampleContractStringWithReferenceError = @"{
             ""Contract"": {
                 ""type"": ""object"",

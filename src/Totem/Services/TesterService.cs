@@ -13,6 +13,7 @@ namespace Totem.Services
         private static readonly List<TestMessageResult> TestCases = new List<TestMessageResult>();
         private static bool _isContractValid = true;
         private static string _contractErrorMessage = "";
+        public const string ParentOfSymbol = "-->";
 
         public TestMessageResult Execute(string contract, string message, bool allowSubset = false)
         {
@@ -60,7 +61,7 @@ namespace Totem.Services
                 {
                     TestCases.Add(AreAllElementsInContractContainedInMessage(messageDictionary, contractDictionary));
                 }
-                TestCases.Add(DoAllMessageValuesMatchDataTypes(messageDictionary, contractDictionary));
+                TestCases.Add(DoAllMessageValuesMatchDataTypes(messageDictionary, contractDictionary, allowSubset));
             }
 
             return new TestMessageResult
@@ -124,7 +125,8 @@ namespace Totem.Services
             return result;
         }
 
-        public TestMessageResult DoAllMessageValuesMatchDataTypes(CaseInsensitiveDictionary<object> messageKeyDictionary, CaseInsensitiveDictionary<SchemaObject> contractDictionary)
+        public TestMessageResult DoAllMessageValuesMatchDataTypes(CaseInsensitiveDictionary<object> messageKeyDictionary,
+            CaseInsensitiveDictionary<SchemaObject> contractDictionary, bool allowSubset = false)
         {
             var testMessageResult = new TestMessageResult();
 
@@ -136,7 +138,7 @@ namespace Totem.Services
 
                 if (propertySchemaObject != null)
                 {
-                    ChecksForMessage(propertySchemaObject, kv, testMessageResult);
+                    ChecksForMessage(propertySchemaObject, kv, testMessageResult, allowSubset);
                 }
                 else
                 {
@@ -148,7 +150,7 @@ namespace Totem.Services
         }
 
         private void ChecksForMessage(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
-            TestMessageResult testMessageResult)
+            TestMessageResult testMessageResult, bool allowSubset)
         {
             if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.Integer.Value))
             {
@@ -167,7 +169,7 @@ namespace Totem.Services
 
             if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.Object.Value))
             {
-                CheckObjectType(propertySchemaObject, kv, testMessageResult);
+                CheckObjectType(propertySchemaObject, kv, testMessageResult, allowSubset);
             }
         }
 
@@ -269,7 +271,7 @@ namespace Totem.Services
         }
 
         private void CheckObjectType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
-            TestMessageResult testMessageResult)
+            TestMessageResult testMessageResult, bool allowSubset)
         {
             CaseInsensitiveDictionary<object> innerObject = null;
             try
@@ -288,12 +290,15 @@ namespace Totem.Services
                     if (innerObject != null && innerObject.ContainsKey(innerProperty.Key))
                     {
                         ChecksForMessage(innerProperty.Value,
-                            new KeyValuePair<string, object>($"{kv.Key}-->{innerProperty.Key}",
-                                innerObject[innerProperty.Key]), testMessageResult);
+                            new KeyValuePair<string, object>($"{kv.Key}{ParentOfSymbol}{innerProperty.Key}",
+                                innerObject[innerProperty.Key]), testMessageResult, allowSubset);
                     }
                     else
                     {
-                        AddNotFoundError(testMessageResult, $"{kv.Key}-->{innerProperty.Key}");
+                        if (!allowSubset)
+                        {
+                            AddNotFoundError(testMessageResult, $"{kv.Key}{ParentOfSymbol}{innerProperty.Key}");
+                        }
                     }
                 }
             }

@@ -331,8 +331,8 @@ namespace Totem.Tests.Services
             result.MessageErrors[0].ShouldBe("\"Array\" does not have the required property(Items) for type(Array).");
         }
 
-        [TestingConvention.Input("String")]
-        [TestingConvention.Input("Integer")]
+        [Input("String")]
+        [Input("Integer")]
         public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType)
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
