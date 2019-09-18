@@ -63,7 +63,7 @@
 <script>
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
-import { deepCopy, isNullOrWhiteSpace, last } from './dataHelpers';
+import { deepCopy, isNullOrWhiteSpace, last, findParent, findRowInTreeAndDelete } from './dataHelpers';
 
 export default {
   name: 'AddModelModalWindow',
@@ -167,15 +167,13 @@ export default {
     deleteModel() {
       const model = deepCopy(last(this.editStack));
       if (this.editStack.length - 1 > 0) {
-        const parent = this.editStack[this.editStack.length - 2];
-        parent.properties = parent.properties.filter(prop => {
-          return prop.rowId !== model.rowId;
-        });
-        this.modalFieldName = parent.name;
         this.editStack.pop();
+        findRowInTreeAndDelete(this.editStack, model);
+        const previousModel = last(this.editStack);
+        this.modalFieldName = previousModel.name;
         this.$parent.currentIndex -= 1;
-        this.objectRows = deepCopy(parent.properties);
-        this.$parent.modalRows = deepCopy(parent.properties);
+        this.objectRows = deepCopy(previousModel.properties);
+        this.$parent.modalRows = deepCopy(previousModel.properties);
       } else {
         this.$emit('delete', model);
       }
@@ -191,7 +189,7 @@ export default {
     },
 
     showModelWindow(field) {
-      field.parentId = last(this.editStack).rowId;
+      field.parentId = findParent(this.$parent.rows, field).rowId;
       this.editStack.push(deepCopy(field));
       this.objectRows = deepCopy(field.properties);
       this.$parent.modalRows = deepCopy(this.objectRows);
