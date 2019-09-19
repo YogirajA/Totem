@@ -17,6 +17,8 @@
     max-width: 820px;
     height: initial;
     position: relative;
+    overflow-y: auto;
+    max-height: calc(100vh);
     &.scroll-overflow {
         overflow: auto;
     }
