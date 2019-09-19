@@ -30,6 +30,7 @@
             :searchable="true"
             :close-on-select="true"
             :show-labels="false"
+            :hide-selected="true"
             placeholder="Select..."
             @input="onChange"
           />
@@ -163,6 +164,8 @@ export default {
           };
           this.modalTitle = 'Update Field';
         }
+      } else {
+        this.updateExampleState(currentField.example, false);
       }
       $('.field-name')[0].focus();
     },

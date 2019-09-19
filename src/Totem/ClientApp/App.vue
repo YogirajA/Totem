@@ -289,7 +289,8 @@ export default {
               id: this.options.length,
               schemaName: field.name,
               schemaString: createSchemaString(field)
-            }
+            },
+            isObject: true
           });
           this.options = reorderOptions(this.options);
         }
@@ -316,7 +317,8 @@ export default {
             id: this.options.length,
             schemaName: updatedModel.name,
             schemaString: createSchemaString(updatedModel)
-          }
+          },
+          isObject: true
         });
         this.options = reorderOptions(this.options);
       } else {
@@ -352,7 +354,7 @@ export default {
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
         this.isDescending = false;
-        if (updatedModel.rowId !== undefined) {
+        if (typeof setSaveButton === 'function') {
           // setSaveButton is defined in Edit.cshtml
           setSaveButton(); // eslint-disable-line no-undef
         }

@@ -2,7 +2,6 @@
   <transition @enter="enter">
     <ModalWindow
       id="modelModalWindow"
-      class-name="scroll-overflow"
       :title="`${computedModalTitle + ':  ' + modalFieldName}`"
       :success-btn="successBtn"
       :cancel-btn="cancelBtn"
