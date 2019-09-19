@@ -78,7 +78,7 @@
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
 import { deepCopy, isNullOrWhiteSpace, last } from './dataHelpers';
-import { updateProperties, getPropertiesCopy, hasProperties } from './contractParser';
+import { updateProperties, getPropertiesCopy } from './contractParser';
 
 export default {
   name: 'AddModelModalWindow',
@@ -136,7 +136,7 @@ export default {
     modalRows: function setDisabled(rows) {
       this.objectRows = deepCopy(rows);
       const isAnyObjectEmpty = rows.some(obj => {
-        return obj.type === 'object' || obj.items && obj.items.type === 'object' && !hasProperties(obj);
+        return (obj.type === 'object' || obj.items && obj.items.type === 'object') && getPropertiesCopy(obj).length === 0;
       });
       this.successBtn.disabled =
         isNullOrWhiteSpace(this.modalFieldName) || rows.length === 0 || isAnyObjectEmpty;
