@@ -150,11 +150,10 @@ export default {
       if (!_.isEmpty(field) && this.editStack.length === 0) {
         this.disableDelete = this.rows.some(row => {
           // Can not delete the only child of a parent model
-          // TODO: JNZ - Review this case for arrays of objects
           if (
             row.rowId === field.rowId + 1 &&
-            row.type === 'object' &&
-            row.properties.length === 1
+            (row.type === 'object' || (row.items && row.items.type === 'object')) &&
+            getPropertiesCopy(row).length === 1
           ) {
             return true;
           }
