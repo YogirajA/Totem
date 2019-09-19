@@ -31,15 +31,6 @@ export const convertPropertiesToArray = (obj, schema) => {
         item.example = item.example || referenceObject.example;
       }
     }
-    if (item.type === 'array') {
-      item.format = item.items.type;
-      if (item.items.format) {
-        item.format = item.items.format;
-      }
-      if (item.items.$ref) {
-        item.format = formatReferenceName(item.items.$ref).toLowerCase();
-      }
-    }
     propertyArray.push(item);
   });
   return propertyArray;
@@ -233,7 +224,7 @@ export const updateProperties = (schema, properties, isArray) => {
     isArray = isObjectArray(schema);
   }
   schema.properties = isArray ? undefined : properties;
-  schema.items = isArray ? { properties } : undefined;
+  schema.items = isArray ? { type: 'object', properties } : undefined;
 };
 
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */

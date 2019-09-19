@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Totem.Infrastructure;
 using Totem.Models;
 
@@ -35,11 +36,11 @@ namespace Totem.Features.Contracts
                 {
                     if (format != null || reference != null)
                     {
-                        pattern = $"; Pattern: { pattern}";
+                        pattern = $"; Pattern: {pattern}";
                     }
                     else
                     {
-                        pattern = $"Pattern: { pattern}";
+                        pattern = $"Pattern: {pattern}";
                     }
                 }
                 else
@@ -50,29 +51,19 @@ namespace Totem.Features.Contracts
                 string displayText;
                 if (dataType == DataType.Array)
                 {
-                    var itemType = property.Value.Items.Type;
-                    var itemFormat = property.Value.Items.Format;
-                    var itemReference = property.Value.Items.Reference;
-                    var displayModifier = !string.IsNullOrEmpty(itemFormat) || !string.IsNullOrEmpty(itemType) || !string.IsNullOrEmpty(itemReference);
-                    var modifier = "";
-
-                    if (displayModifier)
+                    var itemsSchema = property.Value.Items;
+                    var itemsType = new[]
                     {
-                        var itemTypeString = itemType;
-                        if (!string.IsNullOrEmpty(itemFormat))
-                        {
-                            itemTypeString = itemFormat;
-                        }
-                        if (!string.IsNullOrEmpty(itemReference))
-                        {
-                            itemTypeString = itemReference;
-                        }
+                        itemsSchema.Reference?.ToLower(), itemsSchema.Format, itemsSchema.Type
+                    }.First(x => !string.IsNullOrWhiteSpace(x));
 
-                        modifier = $" ({itemTypeString})";
-                    }
-                    
-                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value}{modifier}<br></span>";
+                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value}({itemsType})<br></span>";
                     _displayContractRows.Add(displayText);
+
+                    if (itemsSchema.GetDataType() == DataType.Object)
+                    {
+                        BuildDisplayText(itemsSchema.Properties, fullDetails, depth + 1);
+                    }
                 }
                 else if (dataType == DataType.Object)
                 {
