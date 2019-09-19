@@ -172,6 +172,7 @@ test('Add a new model using previous model', async t => {
   // Add a new field based on previous model
   await t.typeText(utils.inputFieldName, 'testNewModel');
   await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
 
   await t.click(utils.saveFieldBtn);
 
