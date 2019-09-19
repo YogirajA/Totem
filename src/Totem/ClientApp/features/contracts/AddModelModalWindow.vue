@@ -135,9 +135,8 @@ export default {
     /* eslint-disable object-shorthand */
     modalRows: function setDisabled(rows) {
       this.objectRows = deepCopy(rows);
-      // TODO: JNZ Check for arrays of objects
       const isAnyObjectEmpty = rows.some(obj => {
-        return obj.type === 'object' && obj.properties.length === 0;
+        return obj.type === 'object' || obj.items && obj.items.type === 'object' && !hasProperties(obj);
       });
       this.successBtn.disabled =
         isNullOrWhiteSpace(this.modalFieldName) || rows.length === 0 || isAnyObjectEmpty;
