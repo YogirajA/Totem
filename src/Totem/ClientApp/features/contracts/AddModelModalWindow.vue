@@ -21,13 +21,13 @@
             </div>
             <div class="form-check form-group col-md-2 mt-auto">
               <input
-                id="isArray"
+                id="isObjectArray"
                 v-model="isArray"
                 class="form-check-input"
                 type="checkbox"
                 @change="onCheckboxChange"
               />
-              <label for="isArray" class="control-label">Array</label>
+              <label for="isObjectArray" class="control-label">Array</label>
             </div>
           </div>
         </div>
