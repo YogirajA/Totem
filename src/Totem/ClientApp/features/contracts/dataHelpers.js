@@ -54,4 +54,40 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
   return rowUpdated ? updatedTree : undefined;
 };
 
+export const findRowInTreeAndDelete = (tree, rowToDelete) => {
+  let rowDeleted = false;
+
+  function searchAndDelete(row) {
+    if (
+      Array.isArray(row.properties) &&
+      row.properties.some(prop => prop.rowId === rowToDelete.rowId)
+    ) {
+      // eslint-disable-next-line no-param-reassign
+      row.properties = row.properties.filter(prop => {
+        return prop.rowId !== rowToDelete.rowId;
+      });
+      rowDeleted = true;
+      return true;
+    }
+    return Array.isArray(row.properties) && row.properties.forEach(searchAndDelete);
+  }
+
+  tree.forEach(searchAndDelete);
+  return rowDeleted ? tree : undefined;
+};
+
+export const findParent = (tree, childRow) => {
+  const childRowId = childRow.rowId;
+  let parentRow = null;
+
+  function containsChild(row) {
+    if (Array.isArray(row.properties) && row.properties.some(prop => prop.rowId === childRowId)) {
+      parentRow = deepCopy(row);
+    }
+    return Array.isArray(row.properties) && row.properties.forEach(containsChild);
+  }
+  tree.forEach(containsChild);
+  return parentRow;
+};
+
 export const last = array => array[array.length - 1];
