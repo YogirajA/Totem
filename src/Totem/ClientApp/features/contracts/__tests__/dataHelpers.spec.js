@@ -3,7 +3,9 @@ import {
   getDisplayType,
   deepCopy,
   findRowInTreeAndUpdate,
-  last
+  last,
+  findRowInTreeAndDelete,
+  findParent
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -118,6 +120,83 @@ describe('findRowInTreeAndUpdate', () => {
 
     const updatedObject = findRowInTreeAndUpdate(originalTrees, newObject);
     expect(updatedObject[1].properties[1].properties[0].name).toBe('newRow10');
+  });
+});
+
+describe('findRowInTreeAndDelete', () => {
+  it('returns undefined if the rowId is not found anywhere in the tree', () => {
+    const originalTree = [{ rowId: 1, name: 'row1', properties: [{ rowId: 2, name: 'row2' }] }];
+    const objectToDelete = { rowId: 3, name: 'row3' };
+
+    const updatedTree = findRowInTreeAndDelete(originalTree, objectToDelete);
+    expect(updatedTree).toBe(undefined);
+  });
+
+  it('returns a modified tree if the rowId is found anywhere in the tree', () => {
+    const originalTree = [
+      {
+        rowId: 1,
+        name: 'row1',
+        properties: [
+          { rowId: 2, name: 'row2', properties: [{ rowId: 4, name: 'row4' }] },
+          { rowId: 5, name: 'row5', properties: [{ rowId: 3, name: 'row3' }] }
+        ]
+      },
+      {
+        rowId: 6,
+        name: 'row6',
+        properties: [
+          { rowId: 7, name: 'row7', properties: [{ rowId: 8, name: 'row8' }] },
+          {
+            rowId: 9,
+            name: 'row9',
+            properties: [{ rowId: 10, name: 'row10' }, { rowId: 11, name: 'row11' }]
+          }
+        ]
+      }
+    ];
+    const objectToDelete = { rowId: 10, name: 'row10' };
+
+    const updatedTree = findRowInTreeAndDelete(originalTree, objectToDelete);
+    expect(updatedTree[1].properties[1].properties.length).toBe(1);
+    expect(updatedTree[1].properties[1].properties[0].name).toBe('row11');
+  });
+});
+
+describe('findParent', () => {
+  const tree = [
+    {
+      rowId: 1,
+      name: 'row1',
+      properties: [
+        { rowId: 2, name: 'row2', properties: [{ rowId: 4, name: 'row4' }] },
+        { rowId: 5, name: 'row5', properties: [{ rowId: 3, name: 'row3' }] }
+      ]
+    },
+    {
+      rowId: 6,
+      name: 'row6',
+      properties: [
+        { rowId: 7, name: 'row7', properties: [{ rowId: 8, name: 'row8' }] },
+        {
+          rowId: 9,
+          name: 'row9',
+          properties: [{ rowId: 10, name: 'row10' }, { rowId: 11, name: 'row11' }]
+        }
+      ]
+    }
+  ];
+
+  it('returns the parent of the the given child row in a tree', () => {
+    const childRow = { rowId: 11, name: 'row11' };
+    const parentRow = findParent(tree, childRow);
+    expect(parentRow.name).toBe('row9');
+  });
+
+  it('returns null if the child row is a root grid property (top level of nesting)', () => {
+    const childRow = { rowId: 1, name: 'row1' };
+    const parentRow = findParent(tree, childRow);
+    expect(parentRow).toBe(null);
   });
 });
 
