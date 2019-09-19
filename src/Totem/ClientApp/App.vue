@@ -228,6 +228,9 @@ export default {
           }
         }
       }
+      if (this.rows.length === 0) {
+        disableSaveButton(true);
+      }
     },
 
     saveField(object) {

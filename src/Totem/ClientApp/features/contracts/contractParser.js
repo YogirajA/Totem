@@ -63,16 +63,6 @@ export const parseContractArray = (contractString, validationFieldId) => {
   const { properties } = schema.Contract;
   const propertyArray = getModalRows(properties, schema);
 
-  // Hard-code the "required" fields for now
-  propertyArray.forEach(rootProperty => {
-    if (rootProperty.name.toLowerCase() === 'id') {
-      rootProperty.isLocked = true;
-    }
-    if (rootProperty.name.toLowerCase() === 'timestamp') {
-      rootProperty.isLocked = true;
-    }
-  });
-
   return propertyArray;
 };
 

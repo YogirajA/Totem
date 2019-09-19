@@ -66,20 +66,16 @@ namespace Totem.Features.Shared
                         }
 
                         var idKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("ID"));
-                        if (idKey == null || (contractObject.Properties[idKey].Type != null &&
-                                              !contractObject.Properties[idKey].Type.Equals(DataType.String.Value)) ||
-                            contractObject.Properties[idKey].Reference != "Guid" || contractDictionary["Guid"] == null)
+                        if (idKey != null && (contractObject.Properties[idKey].Type != null &&
+                                              !contractObject.Properties[idKey].Type.Equals(DataType.String.Value)) || idKey != null &&
+                            (contractObject.Properties[idKey].Reference != "Guid" || contractDictionary["Guid"] == null))
                         {
                             context.AddFailure("Contract must include a property ID of type Guid.");
                         }
 
                         var timestampKey =
                             contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("Timestamp"));
-                        if (timestampKey == null)
-                        {
-                            context.AddFailure("Contract must include a property Timestamp of format date-time.");
-                        }
-                        else
+                        if (timestampKey != null)
                         {
                             if (contractObject.Properties[timestampKey].Format == null || !contractObject
                                     .Properties[timestampKey].Format.Equals(Format.DateTime.Value))

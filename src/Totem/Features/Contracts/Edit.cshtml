@@ -112,11 +112,15 @@
                 });
         });
 
+        function disableSaveButton(shouldDisable = false) {
+            $("#saveEdits").attr("disabled", shouldDisable);
+        }
+
         function setSaveButton() {
             if (valuesHaveChanged()) {
-                $("#saveEdits").attr("disabled", false);
+                disableSaveButton(false);
             } else {
-                $("#saveEdits").attr("disabled", true);
+                disableSaveButton(true);
             }
         }
 
