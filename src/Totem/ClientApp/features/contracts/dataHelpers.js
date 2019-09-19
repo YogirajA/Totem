@@ -20,6 +20,15 @@ export const getDisplayType = property => {
     return `${property.type} (${property.format})`;
   }
   if (property.type) {
+    if (property.type === 'array') {
+      if (property.items.reference) {
+        return `array(${property.items.reference.toLowerCase()})`;
+      }
+      if (property.items.format) {
+        return `array(${property.items.format})`;
+      }
+      return `array(${property.items.type})`;
+    }
     return property.type;
   }
   return 'object';

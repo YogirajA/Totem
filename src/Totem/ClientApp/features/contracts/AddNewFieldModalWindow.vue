@@ -125,7 +125,7 @@ export default {
         const newModel = {
           name: this.fieldName,
           type: this.isArray ? 'array' : 'object',
-          items: this.isArray ? { properties: [] } : undefined,
+          items: this.isArray ? { type: 'object', properties: [] } : undefined,
           properties: this.isArray ? undefined : []
         };
         if (this.isEditing) {
@@ -187,8 +187,6 @@ export default {
           currentFieldNodeToUse.format.toLowerCase() === 'date-time'
         ) {
           typeName = 'DateTime';
-        } else if (typeName.toLowerCase() === 'integer' && currentFieldNodeToUse.format) {
-          typeName = `${typeName.toLowerCase()}(${currentFieldNodeToUse.format})`;
         }
         this.fieldType = this.options.find(
           option => option.displayName.toLowerCase() === typeName.toLowerCase()

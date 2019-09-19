@@ -78,7 +78,7 @@
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
 import { deepCopy, isNullOrWhiteSpace, last } from './dataHelpers';
-import { updateProperties, getPropertiesCopy } from './contractParser';
+import { updateProperties, getPropertiesCopy, hasProperties } from './contractParser';
 
 export default {
   name: 'AddModelModalWindow',
@@ -224,7 +224,8 @@ export default {
     },
 
     onCheckboxChange() {
-      const model = last(this.editStack);
+      let model = last(this.editStack);
+      model.type = this.isArray ? 'array' : 'object';
       updateProperties(model, undefined, this.isArray);
     }
   }
