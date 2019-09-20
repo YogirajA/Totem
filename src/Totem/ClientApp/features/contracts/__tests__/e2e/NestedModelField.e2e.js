@@ -8,7 +8,7 @@ global
   .beforeEach(utils.loginAndNavigateToEditContract)
   .afterEach(utils.logOut);
 
-async function addNewNestedModelAtRoot(t) {
+async function addNewNestedModelAtRoot(t, keepModalOpen = true) {
   await t.click(utils.addNewFieldBtn);
 
   // Add a new container model
@@ -30,8 +30,10 @@ async function addNewNestedModelAtRoot(t) {
   // Save the nested model
   await t.click(utils.saveModelBtn);
 
-  // Save the container model
-  await t.click(utils.saveModelBtn);
+  if (keepModalOpen === true) {
+    // Save the container model
+    await t.click(utils.saveModelBtn);
+  }
 }
 
 async function addNewFieldsToNestedModel(t) {
@@ -133,6 +135,43 @@ test('Edit a 2x nested model name from modal window', async t => {
   await t.click(editFieldBtn);
 
   await t.expect(utils.modelName.value).eql('testModel');
+
+  const nestedModelRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('nestedModel');
+  const nestedModelEditFieldBtn = nestedModelRowToEdit.find('.edit-action');
+  await t.click(nestedModelEditFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+
+  await t.typeText(utils.modelName, 'editNestedModel', { replace: true });
+
+  // Save the nested model
+  await t.click(utils.saveModelBtn);
+
+  // Save the container model
+  await t.click(utils.saveModelBtn);
+
+  const oldContainerModel = Selector('tr.treegrid-body-row').withText('testModel');
+  const oldNestedModelRow = Selector('tr.treegrid-body-row').withText('nestedModel');
+  const newNestedModelRow = Selector('tr.treegrid-body-row').withText('editNestedModel');
+  const nestedPropertyRow = Selector('tr.treegrid-body-row').withText('testProperty');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount)
+    .expect(oldNestedModelRow.exists)
+    .eql(false)
+    .expect(oldContainerModel.exists)
+    .eql(true)
+    .expect(newNestedModelRow.exists)
+    .eql(true)
+    .expect(nestedPropertyRow.exists)
+    .eql(true);
+});
+
+test('Create a nested model then edit a 2x nested model name without closing the modal window', async t => {
+  await addNewNestedModelAtRoot(t, false);
 
   const nestedModelRowToEdit = Selector('#nestedContractGrid')
     .find('tr.treegrid-body-row')
