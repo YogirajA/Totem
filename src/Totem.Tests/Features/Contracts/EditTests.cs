@@ -286,8 +286,6 @@ namespace Totem.Tests.Features.Contracts
                 "'Contract' must not be empty.",
                 "'Description' must not be empty.",
                 "'Id' must not be empty.",
-                "'Namespace' must not be empty.",
-                "'Type' must not be empty.",
                 "'Version Number' must follow semantic version system.",
                 "'Version Number' must not be empty.");
         }
@@ -391,60 +389,6 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.");
         }
 
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveTimestamp()
-        {
-            var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = initialContract.Description,
-                ContractString = initialContract.ContractString,
-                Namespace = initialContract.Namespace,
-                Type = initialContract.Type,
-                VersionNumber = initialContract.VersionNumber
-            };
-
-            var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = sampleContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Id"": {
-                                ""$ref"": ""#/Guid""
-                            },
-                            ""Name"": {
-                                ""type"": ""string"",
-                                ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                                ""type"": ""integer"",
-                                ""format"": ""int32"",
-                                ""example"": ""30""
-                            }
-                        }
-                    },
-                    ""Guid"": {
-                        ""type"": ""string""
-                    }
-                }",
-                Namespace = initialContract.Namespace,
-                Type = sampleContract.Type,
-                VersionNumber = sampleContract.VersionNumber
-            };
-
-            var command = new Edit.Command()
-            {
-                InitialContract = initialContractModel,
-                ModifiedContract = modifiedContractModel
-            };
-
-            command.ShouldNotValidate("Contract must include a property Timestamp of format date-time.");
-        }
-
         public async Task ShouldNotEditWhenContractStringTimestampDoesNotHaveFormat()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -501,59 +445,6 @@ namespace Totem.Tests.Features.Contracts
             };
 
             command.ShouldNotValidate("The Timestamp property must have a format of date-time.");
-        }
-
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveId()
-        {
-            var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = initialContract.Description,
-                ContractString = initialContract.ContractString,
-                Namespace = initialContract.Namespace,
-                Type = initialContract.Type,
-                VersionNumber = initialContract.VersionNumber
-            };
-
-            var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = sampleContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Timestamp"": {
-                            ""type"": ""string"",
-                            ""format"": ""date-time"",
-                            ""example"": ""2019-05-12T18:14:29Z""
-                            },
-                            ""Name"": {
-                            ""type"": ""string"",
-                            ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                            ""type"": ""integer"",
-                            ""format"": ""int32"",
-                            ""example"": ""30""
-                            }
-                        }
-                    }
-                }",
-                Namespace = initialContract.Namespace,
-                Type = sampleContract.Type,
-                VersionNumber = sampleContract.VersionNumber
-            };
-
-            var command = new Edit.Command()
-            {
-                InitialContract = initialContractModel,
-                ModifiedContract = modifiedContractModel
-            };
-
-            command.ShouldNotValidate("Contract must include a property ID of type Guid.");
         }
 
         public async Task ShouldEditWhenValidWithArray()
