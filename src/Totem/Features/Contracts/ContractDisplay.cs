@@ -57,7 +57,7 @@ namespace Totem.Features.Contracts
                         itemsSchema.Reference?.ToLower(), itemsSchema.Format, itemsSchema.Type
                     }.First(x => !string.IsNullOrWhiteSpace(x));
 
-                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value}({itemsType})<br></span>";
+                    displayText = $"<span class='contract-display-row' style='--depth:{depth};'><em>{property.Key}</em> - {dataType.Value} ({itemsType})<br></span>";
                     _displayContractRows.Add(displayText);
 
                     if (itemsSchema.GetDataType() == DataType.Object)

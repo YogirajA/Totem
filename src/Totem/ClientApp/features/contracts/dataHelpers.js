@@ -23,12 +23,12 @@ export const getDisplayType = property => {
     if (property.type === 'array') {
       const { reference, format, type } = property.items;
       if (reference) {
-        return `array(${reference.toLowerCase()})`;
+        return `array (${reference.toLowerCase()})`;
       }
       if (format) {
-        return `array(${format})`;
+        return `array (${format})`;
       }
-      return `array(${type})`;
+      return `array (${type})`;
     }
     return property.type;
   }
