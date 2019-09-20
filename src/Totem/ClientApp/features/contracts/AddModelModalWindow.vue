@@ -2,7 +2,6 @@
   <transition @enter="enter">
     <ModalWindow
       id="modelModalWindow"
-      class-name="scroll-overflow"
       :title="`${computedModalTitle + ':  ' + modalFieldName}`"
       :success-btn="successBtn"
       :cancel-btn="cancelBtn"
@@ -77,7 +76,7 @@
 <script>
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
-import { deepCopy, isNullOrWhiteSpace, last } from './dataHelpers';
+import { deepCopy, isNullOrWhiteSpace, last, findParent, findRowInTreeAndDelete } from './dataHelpers';
 import { updateProperties, getPropertiesCopy } from './contractParser';
 
 export default {
@@ -186,7 +185,18 @@ export default {
 
     deleteModel() {
       const model = deepCopy(last(this.editStack));
-      this.$emit('delete', model);
+      if (this.editStack.length - 1 > 0) {
+        this.editStack.pop();
+        findRowInTreeAndDelete(this.editStack, model);
+        const previousModel = last(this.editStack);
+        this.modalFieldName = previousModel.name;
+        this.$parent.currentIndex -= 1;
+        const properties = getPropertiesCopy(previousModel);
+        this.objectRows = deepCopy(properties);
+        this.$parent.modalRows = deepCopy(properties);
+      } else {
+        this.$emit('delete', model);
+      }
     },
 
     close() {
@@ -199,7 +209,7 @@ export default {
     },
 
     showModelWindow(field) {
-      field.parentId = last(this.editStack).rowId;
+      field.parentId = findParent(this.$parent.rows, field).rowId;
       this.editStack.push(deepCopy(field));
       this.objectRows = getPropertiesCopy(field);
       this.$parent.modalRows = deepCopy(this.objectRows);
