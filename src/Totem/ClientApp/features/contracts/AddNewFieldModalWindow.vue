@@ -30,6 +30,7 @@
             :searchable="true"
             :close-on-select="true"
             :show-labels="false"
+            :hide-selected="true"
             placeholder="Select..."
             @input="onChange"
           />
