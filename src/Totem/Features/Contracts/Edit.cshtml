@@ -112,15 +112,11 @@
                 });
         });
 
-        function disableSaveButton(shouldDisable = false) {
-            $("#saveEdits").attr("disabled", shouldDisable);
-        }
-
         function setSaveButton() {
-            if (valuesHaveChanged()) {
-                disableSaveButton(false);
+            if (valuesHaveChanged() && !($("#rootGrid .treegrid-empty-row").length === 1)) {
+                $("#saveEdits").attr("disabled", false);
             } else {
-                disableSaveButton(true);
+                $("#saveEdits").attr("disabled", true);
             }
         }
 

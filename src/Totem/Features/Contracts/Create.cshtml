@@ -86,8 +86,12 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script src="~/dist/main.js" asp-append-version="true"></script>
     <script>
-        function disableSaveButton(shouldDisable = false) {
-            $("#createContractSave").attr("disabled", shouldDisable);
+        function setSaveButton(isGridEmpty) {
+            if (isGridEmpty) {
+                $("#createContractSave").attr("disabled", true);
+            } else {
+                $("#createContractSave").attr("disabled", false);
+            }
         }
     </script>
 }
