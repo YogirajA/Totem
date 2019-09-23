@@ -130,6 +130,11 @@ namespace Totem.Features.Shared
                         {
                             context.AddFailure($"The definition of \"{propertyName}\" is incorrect. \"{type}\" data type requires a 'Properties' object.");
                         }
+                        else if
+                            (propertyObject.Properties.Count == 0)
+                        {
+                            context.AddFailure($"The definition of \"{propertyName}\" is incorrect. \"{type}\" data type requires at least one nested property. It can not be empty.");
+                        }
                         else
                         {
                             CheckProperties(propertyObject.Properties, context);
