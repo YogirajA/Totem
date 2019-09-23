@@ -480,6 +480,99 @@ namespace Totem.Tests.Features.Contracts
             createdContract.ShouldMatch(newContract);
         }
 
+        public void ShouldNotCreateWhenAnObjectHasNoPropertiesObject()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""object"",
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.",
+                "The definition of \"LevelOne\" is incorrect. \"object\" data type requires a 'Properties' object."
+            );
+        }
+
+        public void ShouldNotCreateWhenAnObjectHasZeroProperties()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""object"",
+                                ""properties"": {
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The definition of \"LevelOne\" is incorrect. \"object\" data type requires at least one nested property. It can not be empty.");
+
+        }
+
         public async Task ShouldCreateWhenValidWithArrayAndNestedObject()
         {
             var oldCount = CountRecords<Contract>();

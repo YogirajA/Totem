@@ -722,6 +722,135 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
         }
 
+        public async Task ShouldNotEditWhenAnObjectHasNoPropertiesObject()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""object"",
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+
+            command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.",
+                "The definition of \"LevelOne\" is incorrect. \"object\" data type requires a 'Properties' object."
+            );
+        }
+
+        public async Task ShouldNotEditWhenAnObjectHasZeroProperties()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""object"",
+                                ""properties"": {
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+
+            command.ShouldNotValidate("The definition of \"LevelOne\" is incorrect. \"object\" data type requires at least one nested property. It can not be empty.");
+
+        }
+
         public async Task ShouldEditWhenValidWithArrayAndNestedObject()
         {
             var initialContract = await AlreadyInDatabaseContract();
