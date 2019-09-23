@@ -54,10 +54,14 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
       row.name = updatedModel.name;
       row.modalRowId = updatedModel.modalRowId;
       row.properties = updatedModel.properties;
+      row.items = updatedModel.items;
       rowUpdated = true;
       return true;
     }
-    return Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow);
+    return (
+      (Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow)) ||
+      (row.items && Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow))
+    );
   }
 
   updatedTree.forEach(searchAndUpdateRow);
@@ -79,6 +83,18 @@ export const findRowInTreeAndDelete = (tree, rowToDelete) => {
       rowDeleted = true;
       return true;
     }
+    if (
+      row.items &&
+      Array.isArray(row.items.properties) &&
+      row.items.properties.some(prop => prop.rowId === rowToDelete.rowId)
+    ) {
+      // eslint-disable-next-line no-param-reassign
+      row.items.properties = row.items.properties.filter(prop => {
+        return prop.rowId !== rowToDelete.rowId;
+      });
+      rowDeleted = true;
+      return true;
+    }
     return Array.isArray(row.properties) && row.properties.forEach(searchAndDelete);
   }
 
@@ -91,10 +107,20 @@ export const findParent = (tree, childRow) => {
   let parentRow = null;
 
   function containsChild(row) {
-    if (Array.isArray(row.properties) && row.properties.some(prop => prop.rowId === childRowId)) {
+    if (
+      (Array.isArray(row.properties) && row.properties.some(prop => prop.rowId === childRowId)) ||
+      (row.items &&
+        Array.isArray(row.items.properties) &&
+        row.items.properties.some(prop => prop.rowId === childRowId))
+    ) {
       parentRow = deepCopy(row);
     }
-    return Array.isArray(row.properties) && row.properties.forEach(containsChild);
+    return (
+      (Array.isArray(row.properties) && row.properties.forEach(containsChild)) ||
+      (row.items &&
+        Array.isArray(row.items.properties) &&
+        row.items.properties.forEach(containsChild))
+    );
   }
   tree.forEach(containsChild);
   return parentRow;
