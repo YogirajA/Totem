@@ -50,7 +50,10 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
   let rowUpdated = false;
 
   function searchAndUpdateRow(row) {
-    if (row.rowId === updatedModel.rowId) {
+    if (
+      (row.rowId !== undefined && row.rowId === updatedModel.rowId) ||
+      (row.modalRowId !== undefined && row.modalRowId === updatedModel.modalRowId)
+    ) {
       row.name = updatedModel.name;
       row.modalRowId = updatedModel.modalRowId;
       row.properties = updatedModel.properties;
@@ -60,7 +63,9 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
     }
     return (
       (Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow)) ||
-      (row.items && Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow))
+      (row.items &&
+        Array.isArray(row.items.properties) &&
+        row.items.properties.some(searchAndUpdateRow))
     );
   }
 
@@ -103,15 +108,18 @@ export const findRowInTreeAndDelete = (tree, rowToDelete) => {
 };
 
 export const findParent = (tree, childRow) => {
-  const childRowId = childRow.rowId;
+  const childRowId = childRow.rowId || childRow.modalRowId;
   let parentRow = null;
 
   function containsChild(row) {
     if (
-      (Array.isArray(row.properties) && row.properties.some(prop => prop.rowId === childRowId)) ||
+      (Array.isArray(row.properties) &&
+        row.properties.some(prop => prop.rowId === childRowId || prop.modalRowId === childRowId)) ||
       (row.items &&
         Array.isArray(row.items.properties) &&
-        row.items.properties.some(prop => prop.rowId === childRowId))
+        row.items.properties.some(
+          prop => prop.rowId === childRowId || prop.modalRowId === childRowId
+        ))
     ) {
       parentRow = deepCopy(row);
     }

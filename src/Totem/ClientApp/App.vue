@@ -343,8 +343,8 @@ export default {
       if (this.editStack.length > 0 && hasProperties(last(this.editStack))) {
         // Update the modal window to show the parent's rows
         this.modalRows = getPropertiesCopy(last(this.editStack));
-        updatedModel.modalRowId = getUniqueId();
         const updatedParent = findRowInTreeAndUpdate(this.modalRows, updatedModel);
+        updatedModel.modalRowId = getUniqueId();
         if (updatedParent) {
           this.modalRows = deepCopy(updatedParent);
         } else {

@@ -173,6 +173,8 @@ test('Edit a 2x nested model name from modal window', async t => {
 });
 
 test('Create a nested model then edit a 2x nested model name without closing the modal window', async t => {
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
   await addNewNestedModelAtRoot(t, false);
 
   const nestedModelRowToEdit = Selector('#nestedContractGrid')
@@ -198,7 +200,7 @@ test('Create a nested model then edit a 2x nested model name without closing the
 
   await t
     .expect(Selector('tr.treegrid-body-row').count)
-    .eql(initialRowCount)
+    .eql(initialRowCount + 3)
     .expect(oldNestedModelRow.exists)
     .eql(false)
     .expect(oldContainerModel.exists)

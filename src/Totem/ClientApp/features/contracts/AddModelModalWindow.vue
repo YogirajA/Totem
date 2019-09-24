@@ -209,7 +209,11 @@ export default {
     },
 
     showModelWindow(field) {
-      field.parentId = findParent(this.$parent.rows, field).rowId;
+      let parent = findParent(this.$parent.rows, field);
+      if (parent === null) {
+        parent = findParent(this.$parent.modalRows, field);
+      }
+      field.parentId = parent == null ? null : parent.rowId;
       this.editStack.push(deepCopy(field));
       this.objectRows = getPropertiesCopy(field);
       this.$parent.modalRows = deepCopy(this.objectRows);
