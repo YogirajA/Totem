@@ -211,6 +211,78 @@ namespace Totem.Tests.Features.Contracts
                 "'Version Number' must not be empty.");
         }
 
+        public void ShouldNotCreateWhenContractHasNoFields()
+        {
+            var newContract = SampleContract(true);
+
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                        }
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("An empty contract cannot be saved.");
+        }
+
+        public async Task ShouldCreateWhenContractDoesNotHaveOptionalFields()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+            newContract.Namespace = "";
+            newContract.Type = "";
+            newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""string""
+                                }                                            
+                            }
+                        }
+                    }
+                }";
+
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
+        }
+
         public void ShouldNotCreateWhenContractStringIsNotValidJson()
         {
             var newContract = SampleContract();
