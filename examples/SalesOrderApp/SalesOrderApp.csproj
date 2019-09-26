@@ -7,8 +7,16 @@
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
     <StartupObject />
+    <IsTestProject>true</IsTestProject>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="3.0.0" />
+    <PackageReference Include="System.Json" Version="4.5.0" />
+    <PackageReference Include="Fixie" Version="2.0.0" />
+    <DotNetCliToolReference Include="Fixie.Console" Version="2.0.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Remove="appsettings.json" />
