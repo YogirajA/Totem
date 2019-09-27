@@ -1,4 +1,4 @@
-﻿namespace MicroservicesMessagingDemo
+﻿namespace SalesOrderApp
 {
     public class TotemSettings
     {

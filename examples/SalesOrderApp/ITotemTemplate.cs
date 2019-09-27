@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MicroservicesMessagingDemo
+namespace SalesOrderApp
 {
     public interface ITotemTemplate
     {

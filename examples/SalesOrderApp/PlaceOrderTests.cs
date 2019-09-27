@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using MicroservicesMessagingDemo;
 using Newtonsoft.Json;
 using Shouldly;
 
