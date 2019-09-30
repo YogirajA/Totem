@@ -26,11 +26,11 @@ function getBodyData(data, isTreeType, childrenProp, isFold, level = 1) {
     const childrenLen =
       Object.prototype.toString.call(children).slice(8, -1) === 'Array' ? children.length : 0;
     bodyData.push({
-      _level: level,
-      _isHide: isFold ? level !== 1 : false,
-      _isFold: isFold,
-      _childrenLen: childrenLen,
-      _normalIndex: index + 1,
+      level,
+      isHide: isFold ? level !== 1 : false,
+      isFold,
+      childrenLen,
+      normalIndex: index + 1,
       ...row
     });
     if (isTreeType) {
@@ -69,14 +69,14 @@ function initialColumns(table, clientWidth) {
       minWidthColumns.push({
         ...column,
         minWidth,
-        _index: index
+        index
       });
     } else {
       width = typeof column.width === 'number' ? column.width : parseInt(column.width, 10);
       otherColumns.push({
         ...column,
         width,
-        _index: index
+        index
       });
     }
     columnsWidth += minWidth || width;
@@ -88,11 +88,13 @@ function initialColumns(table, clientWidth) {
     const extraWidth = clientWidth - totalWidth;
     const averageExtraWidth = Math.floor(extraWidth / minWidthColumns.length);
     minWidthColumns.forEach(column => {
-      column.computedWidth = column.minWidth + averageExtraWidth;
+      const updatedColumn = column;
+      updatedColumn.computedWidth = column.minWidth + averageExtraWidth;
+      return updatedColumn;
     });
   }
   const tableColumns = otherColumns.concat(minWidthColumns);
-  tableColumns.sort((a, b) => a._index - b._index);
+  tableColumns.sort((a, b) => a.index - b.index);
   return tableColumns;
 }
 

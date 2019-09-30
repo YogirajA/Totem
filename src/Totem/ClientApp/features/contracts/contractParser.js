@@ -65,12 +65,14 @@ export const parseContractArray = (contractString, validationFieldId) => {
 
   // Hard-code the "required" fields for now
   propertyArray.forEach(rootProperty => {
+    const updatedRootProperty = rootProperty;
     if (rootProperty.name.toLowerCase() === 'id') {
-      rootProperty.isLocked = true;
+      updatedRootProperty.isLocked = true;
     }
     if (rootProperty.name.toLowerCase() === 'timestamp') {
-      rootProperty.isLocked = true;
+      updatedRootProperty.isLocked = true;
     }
+    return updatedRootProperty;
   });
 
   return propertyArray;

@@ -40,14 +40,15 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
   let rowUpdated = false;
 
   function searchAndUpdateRow(row) {
+    const updatedRow = row;
     if (row.rowId === updatedModel.rowId) {
-      row.name = updatedModel.name;
-      row.modalRowId = updatedModel.modalRowId;
-      row.properties = updatedModel.properties;
+      updatedRow.name = updatedModel.name;
+      updatedRow.modalRowId = updatedModel.modalRowId;
+      updatedRow.properties = updatedModel.properties;
       rowUpdated = true;
       return true;
     }
-    return Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow);
+    return Array.isArray(updatedRow.properties) && updatedRow.properties.some(searchAndUpdateRow);
   }
 
   updatedTree.forEach(searchAndUpdateRow);

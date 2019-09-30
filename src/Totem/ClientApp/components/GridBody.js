@@ -19,19 +19,19 @@ export default {
     getChildrenIndex(parentLevel, parentIndex, careFold = true) {
       const data = this.table.bodyData;
       let childrenIndex = [];
-      for (let i = parentIndex + 1; i < data.length; i++) {
-        if (data[i]._level <= parentLevel) break;
-        if (data[i]._level - 1 === parentLevel) {
+      for (let i = parentIndex + 1; i < data.length; i += 1) {
+        if (data[i].level <= parentLevel) break;
+        if (data[i].level - 1 === parentLevel) {
           childrenIndex.push(i);
         }
       }
       const len = childrenIndex.length; // important!!!
       if (len > 0) {
-        for (let i = 0; i < len; i++) {
+        for (let i = 0; i < len; i += 1) {
           const childData = data[childrenIndex[i]];
-          if (childData._childrenLen && (!careFold || (careFold && !childData._isFold))) {
+          if (childData.childrenLen && (!careFold || (careFold && !childData.isFold))) {
             childrenIndex = childrenIndex.concat(
-              this.getChildrenIndex(childData._level, childrenIndex[i], careFold)
+              this.getChildrenIndex(childData.level, childrenIndex[i], careFold)
             );
           }
         }
@@ -46,8 +46,8 @@ export default {
       if (type === 'icon') {
         $event.stopPropagation();
         this.toggleExpand('Fold', row, rowIndex);
-        const childrenIndex = this.getChildrenIndex(row._level, rowIndex);
-        for (let i = 0; i < childrenIndex.length; i++) {
+        const childrenIndex = this.getChildrenIndex(row.level, rowIndex);
+        for (let i = 0; i < childrenIndex.length; i += 1) {
           this.toggleExpand('Hide', latestData[childrenIndex[i]], childrenIndex[i]);
         }
         return this.table.$emit(
@@ -137,21 +137,21 @@ export default {
       if (this.table.treeProp === column.key) {
         return (
           <span
-            class={`treegrid-level-${row._level}-cell`}
+            class={`treegrid-level-${row.level}-cell`}
             style={{
-              marginLeft: `${(row._level - 1) * 24}px`,
-              paddingLeft: row._childrenLen === 0 ? '17px' : ''
+              marginLeft: `${(row.level - 1) * 24}px`,
+              paddingLeft: row.childrenLen === 0 ? '17px' : ''
             }}
           >
-            {row._childrenLen > 0 && (
+            {row.childrenLen > 0 && (
               <i
-                class={`far ${row._isFold ? 'fa-plus-square' : 'fa-minus-square'}`}
+                class={`far ${row.isFold ? 'fa-plus-square' : 'fa-minus-square'}`}
                 on-click={$event =>
                   this.handleEvent(
                     $event,
                     'icon',
                     { row, rowIndex, column, columnIndex },
-                    { isFold: row._isFold }
+                    { isFold: row.isFold }
                   )
                 }
               />
@@ -183,7 +183,7 @@ export default {
           {this.table.bodyData.length > 0 ? (
             this.table.bodyData.map((row, rowIndex) => [
               <tr
-                v-show={!row._isHide}
+                v-show={!row.isHide}
                 key={this.table.rowKey ? getKey(row, rowIndex) : rowIndex}
                 style={getStyle.call(this, 'row', row, rowIndex)}
                 class={getClassName.call(this, 'row', row, rowIndex)}

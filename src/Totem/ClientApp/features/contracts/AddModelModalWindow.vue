@@ -62,7 +62,13 @@
 <script>
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
-import { deepCopy, isNullOrWhiteSpace, last, findParent, findRowInTreeAndDelete } from './dataHelpers';
+import {
+  deepCopy,
+  isNullOrWhiteSpace,
+  last,
+  findParent,
+  findRowInTreeAndDelete
+} from './dataHelpers';
 
 export default {
   name: 'AddModelModalWindow',
@@ -188,12 +194,13 @@ export default {
     },
 
     showModelWindow(field) {
-      field.parentId = findParent(this.$parent.rows, field).rowId;
-      this.editStack.push(deepCopy(field));
-      this.objectRows = deepCopy(field.properties);
+      const model = field;
+      model.parentId = findParent(this.$parent.rows, field).rowId;
+      this.editStack.push(deepCopy(model));
+      this.objectRows = deepCopy(model.properties);
       this.$parent.modalRows = deepCopy(this.objectRows);
-      this.modalFieldName = field.name;
-      this.$parent.parentName = field.name;
+      this.modalFieldName = model.name;
+      this.$parent.parentName = model.name;
     },
 
     showFieldWindow(field) {
