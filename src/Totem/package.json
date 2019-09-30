@@ -32,6 +32,11 @@
       "./ClientApp/features/contracts/__tests__/e2e"
     ]
   },
+  "husky": {
+    "hooks": {
+      "pre-push": "npm run test"
+    }
+  },
   "dependencies": {
     "bootstrap": "^4.3.1",
     "jquery": "3.4.0",
@@ -58,6 +63,7 @@
     "eslint-plugin-react": "^7.14.2",
     "eslint-plugin-vue": "5.2.2",
     "extract-text-webpack-plugin": "3.0.2",
+    "husky": "^3.0.7",
     "jest": "24.7.1",
     "npm-run-all": "^4.1.5",
     "popper.js": "^1.15.0",
