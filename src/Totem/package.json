@@ -4,7 +4,7 @@
   "description": "Contract Testing for Distributed Systems",
   "main": "ClientApp/app.js",
   "scripts": {
-    "runtestps": "@powershell start 'dotnet' -nnw -argumentlist 'run -p ../Totem/Totem.csproj --launch-profile \"Testing\"'",
+    "runtestps": "@powershell start 'dotnet' -argumentlist 'run -p ../Totem/Totem.csproj --launch-profile \"Testing\"'",
     "killapp": "@powershell taskkill /f /im dotnet.exe",
     "runtest": "webpack && npm run --silent runtestps",
     "e2etest": "testcafe 'chrome:headless' ./ClientApp/features/contracts/__tests__/e2e/*.e2e.js",
