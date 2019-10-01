@@ -3,11 +3,7 @@
 <template>
   <div v-if="columns.length > 0">
     <div class="treegrid-header-wrapper">
-      <GridHeader
-        :is-ellipsis-menu-visible="isEllipsisMenuVisible"
-        @editManually="$emit('editManually')"
-        @showFieldWindow="showAddFieldModal"
-      />
+      <GridHeader :add-menu="menu" />
     </div>
     <div class="treegrid-body-wrapper">
       <GridBody />
@@ -133,10 +129,7 @@ export default {
       type: String,
       default: 'None'
     },
-    isEllipsisMenuVisible: {
-      type: Boolean,
-      default: true
-    },
+    menu: Function,
     rowKey: Function,
     rowClassName: [String, Function],
     cellClassName: [String, Function],
@@ -162,9 +155,6 @@ export default {
     },
     bodyClass() {
       return {};
-    },
-    fieldModalData() {
-      return {};
     }
   },
   watch: {
@@ -189,9 +179,6 @@ export default {
     handleEvent(type, $event) {
       const eventType = $event.type;
       return this.$emit(`${type}-${eventType}`, $event);
-    },
-    showAddFieldModal() {
-      this.$emit('showFieldWindow', this.fieldModalData);
     },
     measure() {
       this.$nextTick(() => {
