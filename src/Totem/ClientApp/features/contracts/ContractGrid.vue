@@ -6,8 +6,6 @@
       :columns="columns"
       :menu="menu"
       @editRowClick="handleEditClick"
-      @editManually="$emit('editManually')"
-      @showFieldWindow="$emit('showFieldWindow')"
     >
       <template slot="editableTemplate" slot-scope="scope">
         <i v-if="scope.row.isLocked" class="fas edit fa-lock" />
@@ -77,6 +75,9 @@ export default {
     showAddNewFieldModal() {
       this.$emit('showFieldWindow');
     },
+    showImportModal() {
+      this.$emit('importFromMessage');
+    },
     getType(property) {
       return getDisplayType(property);
     },
@@ -91,6 +92,15 @@ export default {
         ) : (
           /* eslint-disable */
           <div class="btn-group">
+            <button
+              id="importContractFromMessageBtn"
+              class="ui-button btn grid-btn"
+              onClick={this.showImportModal}
+              type="button"
+            >
+              <i class="fa fa-upload" />
+              Import
+            </button>
             <button
               id="addNewFieldBtn"
               class="ui-button btn grid-btn"
