@@ -33,6 +33,10 @@ export default {
     isEllipsisMenuVisible: {
       type: Boolean,
       default: true
+    },
+    isImportButtonVisible: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
@@ -93,15 +97,17 @@ export default {
           table.$slots.buttongroup
         ) : (
           <div class="btn-group">
-            <button
-              id="importContractFromMessageBtn"
-              class="ui-button btn grid-btn"
-              onClick={this.showImportModal}
-              type="button"
-            >
-              <i class="fa fa-upload" />
-              Import
-            </button>
+            {this.isImportButtonVisible && (
+              <button
+                id="importContractFromMessageBtn"
+                class="ui-button btn grid-btn"
+                onClick={this.showImportModal}
+                type="button"
+              >
+                <i class="fa fa-upload" />
+                Import
+              </button>
+            )}
             <button
               id="addNewFieldBtn"
               class="ui-button btn grid-btn"
