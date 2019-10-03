@@ -4,8 +4,6 @@
       id="rootGrid"
       ref="rootContractGrid"
       :rows="rows"
-      :hide-ellipsis-menu="false"
-      :edit-stack="editStack"
       @editManually="showEditManuallyWindow"
       @importFromMessage="showImportWindow"
       @showFieldWindow="showFieldWindow(...arguments)"
