@@ -93,6 +93,24 @@ export const findRow = (rowId, rows) => {
   return result;
 };
 
+/* buildContractFromMessage: build a contract from the given message */
+export const buildContractFromMessage = message => {
+  const messageObject = JSON.parse(message);
+  const baseContractObject = {
+    Contract: {
+      type: 'object',
+      properties: {}
+    }
+  };
+  Object.keys(messageObject).forEach(key => {
+    const prop = {
+      type: 'string'
+    };
+    baseContractObject.Contract.properties[key] = prop;
+  });
+  return baseContractObject;
+};
+
 /* updateNestedProperty: finds the existing row by rowId and replaces it with the edited value */
 export const updateNestedProperty = (editedRow, rows, isDelete) => {
   const updatedRows = deepCopy(rows);
