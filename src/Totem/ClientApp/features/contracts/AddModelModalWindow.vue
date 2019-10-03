@@ -34,7 +34,7 @@
           id="nestedContractGrid"
           :rows="objectRows"
           :is-ellipsis-menu-visible="false"
-          @hideEllipsisMenu="true"
+          :is-import-button-visible="false"
           @showModelWindow="showModelWindow(...arguments)"
           @showFieldWindow="showFieldWindow(...arguments)"
           @editManually="this.$emit('showEditManuallyWindow')"
