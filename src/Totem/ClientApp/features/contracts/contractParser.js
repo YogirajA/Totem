@@ -270,17 +270,18 @@ export const isObjectArray = schema => {
 
 /* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
 export const updateProperties = (schema, properties, isArray) => {
-  let updatedProperties = properties;
-  const updatedSchema = deepCopy(schema);
-  let updatedIsArray = isArray;
   if (properties === undefined) {
-    updatedProperties = getPropertiesCopy(schema);
+    // eslint-disable-next-line no-param-reassign
+    properties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
-    updatedIsArray = isObjectArray(schema);
+    // eslint-disable-next-line no-param-reassign
+    isArray = isObjectArray(schema);
   }
-  updatedSchema.properties = updatedIsArray ? undefined : updatedProperties;
-  updatedSchema.items = updatedIsArray ? { type: 'object', updatedProperties } : undefined;
+  // eslint-disable-next-line no-param-reassign
+  schema.properties = isArray ? undefined : properties;
+  // eslint-disable-next-line no-param-reassign
+  schema.items = isArray ? { type: 'object', properties } : undefined;
 };
 
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
