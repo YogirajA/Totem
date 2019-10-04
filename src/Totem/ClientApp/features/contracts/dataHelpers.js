@@ -91,11 +91,10 @@ export const findParent = (tree, childRow) => {
   return parentRow;
 };
 
-export const isValidJSON = (msg, $validationField) => {
+export const isValidJSON = msg => {
   try {
     JSON.parse(msg);
   } catch (e) {
-    $validationField.html(e);
     return false;
   }
   return true;
