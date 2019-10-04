@@ -103,7 +103,17 @@ export const findRow = (rowId, rows) => {
 export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   const updatedParentObject = deepCopy(parentObject);
   Object.keys(messageObject).forEach(key => {
-    if (messageObject[key] instanceof Object) {
+    if (Array.isArray(messageObject[key])) {
+      const prop = {
+        type: 'array',
+        example: '["sample string"]',
+        items: {
+          type: 'string',
+          example: 'sample string'
+        }
+      };
+      updatedParentObject.properties[key] = prop;
+    } else if (messageObject[key] instanceof Object) {
       const prop = {
         type: 'object',
         properties: {}
@@ -115,7 +125,8 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
       );
     } else {
       const prop = {
-        type: 'string'
+        type: 'string',
+        example: 'sample string'
       };
       updatedParentObject.properties[key] = prop;
     }
@@ -259,14 +270,17 @@ export const isObjectArray = schema => {
 
 /* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
 export const updateProperties = (schema, properties, isArray) => {
+  let updatedProperties = properties;
+  const updatedSchema = deepCopy(schema);
+  let updatedIsArray = isArray;
   if (properties === undefined) {
-    properties = getPropertiesCopy(schema);
+    updatedProperties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
-    isArray = isObjectArray(schema);
+    updatedIsArray = isObjectArray(schema);
   }
-  schema.properties = isArray ? undefined : properties;
-  schema.items = isArray ? { type: 'object', properties } : undefined;
+  updatedSchema.properties = updatedIsArray ? undefined : updatedProperties;
+  updatedSchema.items = updatedIsArray ? { type: 'object', updatedProperties } : undefined;
 };
 
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
