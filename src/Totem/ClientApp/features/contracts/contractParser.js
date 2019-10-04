@@ -93,6 +93,30 @@ export const findRow = (rowId, rows) => {
   return result;
 };
 
+/* buildPropertiesFromMessage: build the properties for an object from the given message */
+export const buildPropertiesFromMessage = (parentObject, messageObject) => {
+  const updatedParentObject = deepCopy(parentObject);
+  Object.keys(messageObject).forEach(key => {
+    if (messageObject[key] instanceof Object) {
+      const prop = {
+        type: 'object',
+        properties: {}
+      };
+      updatedParentObject.properties[key] = prop;
+      updatedParentObject.properties[key] = buildPropertiesFromMessage(
+        updatedParentObject.properties[key],
+        messageObject[key]
+      );
+    } else {
+      const prop = {
+        type: 'string'
+      };
+      updatedParentObject.properties[key] = prop;
+    }
+  });
+  return updatedParentObject;
+};
+
 /* buildContractFromMessage: build a contract from the given message */
 export const buildContractFromMessage = message => {
   const messageObject = JSON.parse(message);
@@ -102,12 +126,10 @@ export const buildContractFromMessage = message => {
       properties: {}
     }
   };
-  Object.keys(messageObject).forEach(key => {
-    const prop = {
-      type: 'string'
-    };
-    baseContractObject.Contract.properties[key] = prop;
-  });
+  baseContractObject.Contract = buildPropertiesFromMessage(
+    baseContractObject.Contract,
+    messageObject
+  );
   return baseContractObject;
 };
 
