@@ -39,11 +39,11 @@ export default {
   },
   methods: {
     importContract() {
-      const validationFieldId = 'contract-string-validation';
-      const $validationField = $(`#${validationFieldId}`);
-      if (isValidJSON($('#import-message')[0].value, $validationField)) {
+      if (isValidJSON($('#import-message')[0].value)) {
         this.$emit('importContract');
       } else {
+        const $validationField = $(`#contract-string-validation`);
+        $validationField.html('Invalid JSON');
         this.$emit('close');
       }
     },
