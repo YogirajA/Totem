@@ -449,12 +449,17 @@ export default {
     importContract() {
       const message = $('#import-message')[0].value;
       const contractBasedOnMessage = buildContractFromMessage(message);
-      $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
       this.rows = parseContractArray(
         JSON.stringify(contractBasedOnMessage),
         'contract-string-validation'
       );
+      $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
+      $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
       this.closeModal('importContract');
+      if (typeof setSaveButton === 'function') {
+        // setSaveButton is defined in Edit.cshtml
+        setSaveButton(); // eslint-disable-line no-undef
+      }
       $('#contract-raw').scrollTop(0);
     }
   }
