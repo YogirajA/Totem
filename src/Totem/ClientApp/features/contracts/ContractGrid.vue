@@ -7,11 +7,11 @@
       :menu="menu"
       @editRowClick="handleEditClick"
     >
-      <template slot="editable" slot-scope="scope">
+      <template slot="editableTemplate" slot-scope="scope">
         <i v-if="scope.row.isLocked" class="fas edit fa-lock" />
         <i v-else class="fas edit fa-pencil-alt" />
       </template>
-      <template slot="type" slot-scope="scope">
+      <template slot="typeTemplate" slot-scope="scope">
         {{ getType(scope.row) }}
       </template>
     </TreeGrid>
@@ -46,7 +46,7 @@ export default {
           key: 'edit',
           width: '50px',
           type: 'template',
-          template: 'editable',
+          template: 'editableTemplate',
           align: 'center'
         },
         {
@@ -58,7 +58,7 @@ export default {
           width: '150px',
           key: 'type',
           type: 'template',
-          template: 'type'
+          template: 'typeTemplate'
         },
         {
           label: 'Example',
@@ -69,7 +69,7 @@ export default {
   },
   methods: {
     handleEditClick(row) {
-      if (row.type === 'object') {
+      if (row.type === 'object' || (row.items && row.items.type === 'object')) {
         this.$emit('showModelWindow', row, false);
       } else {
         this.$emit('showFieldWindow', row);

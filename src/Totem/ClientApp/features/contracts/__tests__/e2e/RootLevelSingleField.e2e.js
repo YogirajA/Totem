@@ -3,11 +3,15 @@ import { Selector } from 'testcafe';
 import { baseUrl } from '../../../../testConfig/setup';
 import * as utils from './e2e-utils';
 
-async function addNewFieldAtRoot(t) {
+async function addNewFieldAtRoot(t, typeText = 'Integer', asArray = false) {
   await t.click(utils.addNewFieldBtn);
 
   await t.typeText(utils.inputFieldName, 'testProperty');
-  await t.click(utils.inputType).click(Selector('li').withText('Integer'));
+  await t.click(utils.inputType).click(Selector('li').withText(typeText));
+
+  if (asArray === true) {
+    await t.click(utils.isArrayCheckbox);
+  }
 
   await t.click(utils.saveFieldBtn);
 }
@@ -42,12 +46,14 @@ test('Cancel adding a field', async t => {
 
   await t.typeText(utils.inputFieldName, 'testProperty');
   await t.click(utils.inputType).click(Selector('li').withText('Integer'));
+  await t.click(utils.isArrayCheckbox);
 
   await t.click(utils.cancelFieldBtn);
   await t.expect(Selector('tr.treegrid-body-row').count).eql(initialRowCount);
 
   await t.click(utils.addNewFieldBtn);
   await t.expect(utils.inputFieldName.value).eql('');
+  await t.expect(utils.isArrayCheckbox.checked).eql(false);
   await t.expect(utils.inputFieldExample.value).eql('');
   await t.expect(utils.inputType.getVue(({ props }) => props.value)).eql(null);
 });
@@ -166,7 +172,9 @@ test('Deleting a previously saved root field', async t => {
   await t.click(editFieldBtn);
   await t.expect(utils.inputFieldName.value).notEql('');
   await t.expect(utils.inputFieldExample.value).notEql('');
-  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+  await t
+    .expect(utils.inputType.getVue(({ props }) => props.value.displayName))
+    .contains('Integer');
 
   // Deleting the field
   await t.click(utils.deleteFieldBtn);
@@ -264,4 +272,88 @@ test('Edit Contract Manually', async t => {
     .contains('Timestamp')
     .expect(thirdRow.textContent)
     .contains('Name');
+});
+
+test('Add a new primitive array field at the root', async t => {
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  await addNewFieldAtRoot(t, 'Integer', true);
+
+  const newlyAddedRow = Selector('tr.treegrid-body-row').withText('testProperty');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 1)
+    .expect(newlyAddedRow.exists)
+    .eql(true)
+    .expect(newlyAddedRow.textContent)
+    .contains('array (integer)');
+});
+
+test('Edit a root primitive array field into primitive', async t => {
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  // Adding a field to edit
+  await addNewFieldAtRoot(t, 'Integer', true);
+
+  const newlyAddedRow = Selector('tr.treegrid-body-row').nth(-1);
+  const editFieldBtn = newlyAddedRow.find('.edit-action');
+
+  await t.click(editFieldBtn);
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+  await t.expect(utils.inputFieldExample.value).eql('[123]');
+  await t.expect(utils.isArrayCheckbox.checked).ok();
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+
+  await t.expect(Selector('tr.treegrid-body-row').count).eql(initialRowCount + 1);
+
+  // Editing the field
+  await t.typeText(utils.inputFieldName, 'editProperty', { replace: true });
+  await t.click(utils.inputType).click(Selector('li').withText('DateTime'));
+  await t.click(utils.isArrayCheckbox);
+
+  // Saving the edit
+  await t.click(utils.saveFieldBtn);
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 1)
+    .expect(newlyAddedRow.textContent)
+    .contains('editProperty')
+    .expect(newlyAddedRow.textContent)
+    .contains('string (date-time)');
+});
+
+test('Cancel editing a root primitive array field', async t => {
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  // Adding a field to edit
+  await addNewFieldAtRoot(t, 'Integer', true);
+
+  const newlyAddedRow = Selector('tr.treegrid-body-row').nth(-1);
+  const editFieldBtn = newlyAddedRow.find('.edit-action');
+
+  await t.click(editFieldBtn);
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+  await t.expect(utils.inputFieldExample.value).eql('[123]');
+  await t.expect(utils.isArrayCheckbox.checked).ok();
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+
+  await t.expect(Selector('tr.treegrid-body-row').count).eql(initialRowCount + 1);
+
+  // Editing the field
+  await t.typeText(utils.inputFieldName, 'editProperty', { replace: true });
+  await t.click(utils.inputType).click(Selector('li').withText('DateTime'));
+  await t.click(utils.isArrayCheckbox);
+
+  // Canceling the edit
+  await t.click(utils.cancelFieldBtn);
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 1)
+    .expect(newlyAddedRow.textContent)
+    .contains('testProperty')
+    .expect(newlyAddedRow.textContent)
+    .contains('array (integer)');
 });

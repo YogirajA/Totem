@@ -1,13 +1,17 @@
-@import "./_variables.scss";
-@import "./contract-list.scss";
-@import "./modals.scss";
-@import "./tree-grid.scss";
+@import './_variables.scss';
+@import './contract-list.scss';
+@import './modals.scss';
+@import './tree-grid.scss';
 
 /* Use SCSS files to define styles to use on pages that contain the Vue bundle */
 .hidden {
-    display: none;
+  display: none;
 }
 
 .multiselect {
-    min-height: 36.5px;
+  min-height: 36.5px;
+}
+
+.checkbox {
+  height: 20px;
 }

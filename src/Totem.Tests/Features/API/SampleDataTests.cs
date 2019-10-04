@@ -84,33 +84,33 @@ namespace Totem.Tests.Features.API
 
         public void GeneratesProperIntegerSampleData()
         {
-            var sampleInt32 = SampleData.GenerateSampleData("Integer", "Int32");
+            var sampleInt32 = SampleData.GenerateSampleData(DataType.Integer, "Int32");
             var int32Value = int.Parse(sampleInt32);
             int32Value.GetType().ShouldBe(typeof(int));
 
-            var sampleInt64 = SampleData.GenerateSampleData("Integer", "Int64");
+            var sampleInt64 = SampleData.GenerateSampleData(DataType.Integer, "Int64");
             var int64Value = long.Parse(sampleInt64);
             int64Value.GetType().ShouldBe(typeof(long));
 
-            var sampleInt = SampleData.GenerateSampleData("Integer", null);
+            var sampleInt = SampleData.GenerateSampleData(DataType.Integer, null);
             var intValue = long.Parse(sampleInt);
             intValue.GetType().ShouldBe(typeof(long));
         }
 
         public void GeneratesProperStringSampleData()
         {
-            var dateTimeString = SampleData.GenerateSampleData("string", "date-time");
+            var dateTimeString = SampleData.GenerateSampleData(DataType.String, "date-time");
             dateTimeString = dateTimeString.Replace("\"", "");
             var sampleDateTime = DateTime.Parse(dateTimeString);
             sampleDateTime.GetType().ShouldBe(typeof(DateTime));
 
-            var sampleData = SampleData.GenerateSampleData("string", null);
+            var sampleData = SampleData.GenerateSampleData(DataType.String, null);
             sampleData.GetType().ShouldBe(typeof(string));
         }
 
         public void GeneratesProperGuidSampleData()
         {
-            var guidString = SampleData.GenerateSampleData("string", null,
+            var guidString = SampleData.GenerateSampleData(DataType.String, null,
                 "^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
             var sampleGuid = Guid.Parse(guidString);
@@ -120,7 +120,7 @@ namespace Totem.Tests.Features.API
         public void SampleDataHandlesInvalidPatternRegex()
         {
             // mismatched parens to test invalid pattern
-            var guidString = SampleData.GenerateSampleData("string", null, "^(([0-9a-f]))-([0-9a-f]){12})$");
+            var guidString = SampleData.GenerateSampleData(DataType.String, null, "^(([0-9a-f]))-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
             guidString.ShouldBe("Invalid pattern");
         }
@@ -148,7 +148,7 @@ namespace Totem.Tests.Features.API
                     }}
             });
 
-            var objectString = SampleData.GenerateSampleData("object", null, properties: propertyDictionary);
+            var objectString = SampleData.GenerateSampleData(DataType.Object, null, properties: propertyDictionary);
             objectString = objectString.Replace("\"\"", "\"");
             objectString.ShouldBe("{\"IntegerProp\":\"30\",\"StringProp\":\"String text\",\"ObjectProp\":{\"InnerProp\":\"30\"}}");
         }
@@ -159,7 +159,7 @@ namespace Totem.Tests.Features.API
             {
                 Type = "String",
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
             sampleData = sampleData.Replace("\"\"", "\"");
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
@@ -176,7 +176,7 @@ namespace Totem.Tests.Features.API
                 Type = "Integer",
                 Format = "int32"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
@@ -193,7 +193,7 @@ namespace Totem.Tests.Features.API
                 Type = "String",
                 Format = "date-time"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
             sampleData = sampleData.Replace("\"\"", "\"");
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);

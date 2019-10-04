@@ -6,7 +6,7 @@ namespace Totem.Infrastructure
     {
         public static bool EqualsCaseInsensitive(this string source, string compare)
         {
-            return source?.IndexOf(compare, StringComparison.InvariantCultureIgnoreCase) == 0 && source.Length == compare.Length;
+            return string.Equals(source, compare, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }

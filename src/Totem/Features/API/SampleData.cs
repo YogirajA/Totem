@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Fare;
@@ -15,7 +16,7 @@ namespace Totem.Features.API
 {
     public class SampleData
     {
-        private static Dictionary<string, string> _jsonDictionary = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> JsonDictionary = new Dictionary<string, string>();
 
         public class Command : IRequest<Result>
         {
@@ -35,18 +36,11 @@ namespace Totem.Features.API
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
             {
                 var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId && x.VersionNumber == request.VersionNumber,
-                    cancellationToken: cancellationToken);
+                    cancellationToken);
 
-                var sampleString = "{";
                 var schemaDictionary = SchemaObject.BuildSchemaDictionary(contract.ContractString, HandleError, HandleError);
 
-                foreach (var kv in schemaDictionary["Contract"].Properties.Select((value, idx) => new { idx, value}))
-                {
-                    var exampleString = kv.idx == schemaDictionary["Contract"].Properties.Count - 1 ? $"{GetExample(kv.value, sampleString, schemaDictionary)}" : $"{GetExample(kv.value, sampleString, schemaDictionary)}, ";
-                    sampleString += $"\"{kv.value.Key}\": {exampleString}";
-                }
-
-                sampleString += "}";
+                var sampleString = GenerateSampleString(schemaDictionary, schemaDictionary["Contract"].Properties);
 
                 return new Result
                 {
@@ -54,52 +48,46 @@ namespace Totem.Features.API
                 };
             }
 
-            private static string GetExample(KeyValuePair<string, SchemaObject> kv, string sampleString, CaseInsensitiveDictionary<SchemaObject> schemaDictionary)
+            private static string GetExample(CaseInsensitiveDictionary<SchemaObject> schemaDictionary, SchemaObject schemaObject)
             {
+                string sampleString;
                 string referenceKey = null;
-                if (!string.IsNullOrEmpty(kv.Value.Reference))
+                var dataType = schemaObject.GetDataType();
+
+                if (!string.IsNullOrEmpty(schemaObject.Reference))
                 {
-                    referenceKey = kv.Value.Reference.Replace(@"#/", "");
+                    referenceKey = schemaObject.Reference.Replace(@"#/", "");
                 }
 
-                if (kv.Value.Example != null || kv.Value.Type.EqualsCaseInsensitive(DataType.Object.Value))
+                // use the Example as the sample data if given
+                if (dataType == DataType.Object)
                 {
-                    // use the Example as the sample data if given
-                    if (kv.Value.Type.EqualsCaseInsensitive(DataType.Object.Value))
+                    sampleString = GenerateSampleString(schemaDictionary, schemaObject.Properties);
+                }
+                else if (schemaObject.Example != null)
+                {
+                    if (dataType == DataType.String && schemaObject.Format.EqualsCaseInsensitive(Format.DateTime.Value))
                     {
-                        var nestedSampleString = "{";
-                        foreach (var nestedProp in kv.Value.Properties.Select((value, idx) => new { idx, value }))
-                        {
-                            var exampleString = nestedProp.idx == kv.Value.Properties.Count - 1 ? $"{GetExample(nestedProp.value, sampleString, schemaDictionary)}" : $"{GetExample(nestedProp.value, nestedSampleString, schemaDictionary)}, ";
-                            nestedSampleString += $"\"{nestedProp.value.Key}\": {exampleString}";
-                        }
-
-                        nestedSampleString += "}";
-                        sampleString = nestedSampleString;
-                    }
-                    else if (kv.Value.Type.EqualsCaseInsensitive(DataType.String.Value) &&
-                        kv.Value.Format.EqualsCaseInsensitive(Format.DateTime.Value))
-                    {
-                        var date = (DateTime) kv.Value.Example;
+                        var date = (DateTime)schemaObject.Example;
                         sampleString = $"\"{date:yyyy-MM-ddTHH:mm:ssZ}\"";
                     }
-                    else if (kv.Value.Type.EqualsCaseInsensitive(DataType.Array.Value))
+                    else if (dataType == DataType.Array)
                     {
-                        var arrayExample = kv.Value.Example.ToString().Replace(System.Environment.NewLine, "");
-                        if (kv.Value.Example.ToString()[0] != '[') // example of a single item instead of a list
+                        var arrayExample = schemaObject.Example.ToString().Replace(Environment.NewLine, "");
+                        if (schemaObject.Example.ToString()[0] != '[') // example of a single item instead of a list
                         {
                             arrayExample = $"[{arrayExample}]";
                         }
 
-                        sampleString = arrayExample.ToString();
+                        sampleString = arrayExample;
                     }
-                    else if (kv.Value.Type.EqualsCaseInsensitive(DataType.String.Value))
+                    else if (dataType == DataType.String)
                     {
-                        sampleString = $"\"{kv.Value.Example}\"";
+                        sampleString = $"\"{schemaObject.Example}\"";
                     }
                     else
                     {
-                        sampleString = kv.Value.Example.ToString();
+                        sampleString = schemaObject.Example.ToString();
                     }
                 }
                 else if (!string.IsNullOrEmpty(referenceKey) && schemaDictionary[referenceKey].Example != null)
@@ -108,12 +96,35 @@ namespace Totem.Features.API
                 }
                 else
                 {
-                    var sampleValue = GenerateSampleData(kv.Value.Type, kv.Value.Format, kv.Value.Pattern, kv.Value.Properties,
-                        items: kv.Value.Items, minItems: kv.Value.MinItems, maxItems: kv.Value.MaxItems);
+                    var sampleValue = GenerateSampleData(schemaObject.GetDataType(), schemaObject.Format, schemaObject.Pattern, schemaObject.Properties,
+                        schemaObject.Items, schemaObject.MinItems, schemaObject.MaxItems);
                     sampleString = sampleValue;
                 }
 
                 return sampleString;
+            }
+
+            private static string GenerateSampleString(CaseInsensitiveDictionary<SchemaObject> schemaDictionary, CaseInsensitiveDictionary<SchemaObject> properties)
+            {
+                var stringBuilder = new StringBuilder();
+
+                stringBuilder.Append("{");
+
+                foreach (var item in properties.Select((property, index) => new {property, index}))
+                {
+                    var index = item.index;
+                    var (propertyKey, propertySchemaObject) = item.property;
+
+                    var exampleString = index == properties.Count - 1
+                        ? $"{GetExample(schemaDictionary, propertySchemaObject)}"
+                        : $"{GetExample(schemaDictionary, propertySchemaObject)}, ";
+
+                    stringBuilder.Append($"\"{propertyKey}\": {exampleString}");
+                }
+
+                stringBuilder.Append("}");
+
+                return stringBuilder.ToString();
             }
         }
 
@@ -122,21 +133,19 @@ namespace Totem.Features.API
             return new Result();
         }
 
-        public static string GenerateSampleData(string type, string format, string pattern = null, CaseInsensitiveDictionary<SchemaObject> properties = null, SchemaObject items = null, int minItems = 0, int maxItems = 0)
+        public static string GenerateSampleData(DataType dataType, string format, string pattern = null, CaseInsensitiveDictionary<SchemaObject> properties = null, SchemaObject items = null, int minItems = 0, int maxItems = 0)
         {
-            if (type.EqualsCaseInsensitive("integer"))
+            if (dataType == DataType.Integer)
             {
                 return GenerateInteger(format);
             }
 
-            if (type.EqualsCaseInsensitive(DataType.Array.Value))
+            if (dataType == DataType.Array)
             {
-                if (items != null)
-                    return GenerateArray(items.Type, items.Format, minItems, maxItems, items.Pattern);
-                return "[]";
+                return items != null ? GenerateArray(dataType, items.Format, minItems, maxItems, items.Pattern) : "[]";
             }
 
-            if (type.EqualsCaseInsensitive("object"))
+            if (dataType == DataType.Object)
             {
                 // Replace quotes inside nested JSON objects and remove slashes
                 return GenerateObject(properties).Replace(@"\", "").Replace("\"{", "{").Replace("}\"", "}");
@@ -149,31 +158,36 @@ namespace Totem.Features.API
         public static string GenerateObject(CaseInsensitiveDictionary<SchemaObject> properties)
         {
             var objectDictionary = new Dictionary<string, string>();
-            if (properties != null)
-            {
-                foreach (var (key, value) in properties)
-                {
-                    if (value.Type.EqualsCaseInsensitive("integer"))
-                    {
-                        _jsonDictionary[key] = GenerateInteger(value.Format);
-                    }
-                    if (value.Type.EqualsCaseInsensitive("string"))
-                    {
-                        //Removing extra quotes from string examples in nested objects
-                        _jsonDictionary[key] = GenerateString(value.Format, value.Pattern).Replace("\"", ""); ;
-                    }
-                    if (value.Type.EqualsCaseInsensitive("object"))
-                    {
-                        _jsonDictionary[key] = GenerateObject(value.Properties);
-                    }
-                }
 
-                foreach (var (key, _) in properties)
+            if (properties == null)
+            {
+                return JsonConvert.SerializeObject(objectDictionary);
+            }
+
+            foreach (var (key, value) in properties)
+            {
+                var dataType = value.GetDataType();
+
+                if (dataType == DataType.Integer)
                 {
-                    if (_jsonDictionary.ContainsKey(key))
-                    {
-                        objectDictionary.Add(key, _jsonDictionary[key].Replace(@"\", ""));
-                    }
+                    JsonDictionary[key] = GenerateInteger(value.Format);
+                }
+                if (dataType == DataType.String)
+                {
+                    //Removing extra quotes from string examples in nested objects
+                    JsonDictionary[key] = GenerateString(value.Format, value.Pattern).Replace("\"", "");
+                }
+                if (dataType == DataType.Object)
+                {
+                    JsonDictionary[key] = GenerateObject(value.Properties);
+                }
+            }
+
+            foreach (var key in properties.Keys)
+            {
+                if (JsonDictionary.ContainsKey(key))
+                {
+                    objectDictionary.Add(key, JsonDictionary[key].Replace(@"\", ""));
                 }
             }
 
@@ -193,7 +207,7 @@ namespace Totem.Features.API
             try
             {
                 // Generate a string based on the pattern regex
-                Xeger regexGenerator = new Xeger(pattern, new Random());
+                var regexGenerator = new Xeger(pattern, new Random());
                 return $"\"{regexGenerator.Generate()}\"";
             }
             catch
@@ -216,11 +230,11 @@ namespace Totem.Features.API
             return "30"; // format not included or unknown
         }
 
-        public static string GenerateArray(string itemType, string itemFormat, int minItems, int maxItems, string pattern)
+        public static string GenerateArray(DataType dataType, string itemFormat, int minItems, int maxItems, string pattern)
         {
             var length = GetArrayLength(minItems, maxItems);
             var returnArray = new List<string>();
-            if (itemType.EqualsCaseInsensitive(DataType.Integer.Value))
+            if (dataType == DataType.Integer)
             {
                 for (var i = 0; i < length; i++)
                 {
@@ -228,7 +242,7 @@ namespace Totem.Features.API
                 }
             }
 
-            if (itemType.EqualsCaseInsensitive(DataType.String.Value))
+            if (dataType == DataType.String)
             {
                 for (var i = 0; i < length; i++)
                 {

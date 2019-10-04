@@ -3,7 +3,7 @@ import { baseUrl } from '../../../../testConfig/setup';
 import * as utils from './e2e-utils';
 
 global
-  .fixture('Nested Model Field Tests')
+  .fixture('Nested Array Model Field Tests')
   .page(baseUrl)
   .beforeEach(utils.loginAndNavigateToEditContract)
   .afterEach(utils.logOut);
@@ -13,10 +13,12 @@ async function addNewNestedModelAtRoot(t, keepModalOpen = true) {
 
   // Add a new container model
   await t.typeText(utils.inputFieldName, 'testModel');
+  await t.click(utils.isArrayCheckbox);
   await t.click(utils.inputType).click(Selector('li').withText('Define a new model'));
 
   // Add a new nested model to the model
   await t.click(utils.addNewFieldNestedBtn);
+  await t.click(utils.isArrayCheckbox);
   await t.typeText(utils.inputFieldName, 'nestedModel');
   await t.click(utils.inputType).click(Selector('li').withText('Define a new model'));
 
