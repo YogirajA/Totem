@@ -260,10 +260,12 @@ export const isObjectArray = schema => {
 export const updateProperties = (schema, properties, isArray) => {
   /* eslint-disable */
   if (properties === undefined) {
-    updatedProperties = getPropertiesCopy(schema);
+    // eslint-disable-next-line no-param-reassign
+    properties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
-    updatedIsArray = isObjectArray(schema);
+    // eslint-disable-next-line no-param-reassign
+    isArray = isObjectArray(schema);
   }
   schema.properties = isArray ? undefined : properties;
   schema.items = isArray ? { type: 'object', properties } : undefined;
