@@ -91,7 +91,17 @@ export const findRow = (rowId, rows) => {
 export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   const updatedParentObject = deepCopy(parentObject);
   Object.keys(messageObject).forEach(key => {
-    if (messageObject[key] instanceof Object) {
+    if (Array.isArray(messageObject[key])) {
+      const prop = {
+        type: 'array',
+        example: '["sample string"]',
+        items: {
+          type: 'string',
+          example: 'sample string'
+        }
+      };
+      updatedParentObject.properties[key] = prop;
+    } else if (messageObject[key] instanceof Object) {
       const prop = {
         type: 'object',
         properties: {}
@@ -103,7 +113,8 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
       );
     } else {
       const prop = {
-        type: 'string'
+        type: 'string',
+        example: 'sample string'
       };
       updatedParentObject.properties[key] = prop;
     }
@@ -249,10 +260,10 @@ export const isObjectArray = schema => {
 export const updateProperties = (schema, properties, isArray) => {
   /* eslint-disable */
   if (properties === undefined) {
-    properties = getPropertiesCopy(schema);
+    updatedProperties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
-    isArray = isObjectArray(schema);
+    updatedIsArray = isObjectArray(schema);
   }
   schema.properties = isArray ? undefined : properties;
   schema.items = isArray ? { type: 'object', properties } : undefined;
