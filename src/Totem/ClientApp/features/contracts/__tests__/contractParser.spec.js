@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   parseContractArray,
   formatReferenceName,
@@ -10,7 +11,8 @@ import {
   getPropertiesCopy,
   hasProperties,
   isObjectArray,
-  updateProperties
+  updateProperties,
+  buildContractFromMessage
 } from '../contractParser';
 
 const sampleContractString = `{
@@ -938,5 +940,104 @@ describe('updateProperties', () => {
 
     expect(model.properties).toEqual(expectedProperties);
     expect(model.items).toEqual(undefined);
+  });
+});
+
+describe('buildContractFromMessage', () => {
+  it('should generate a contract based on a message', () => {
+    const messageString = `{
+      "item1": "test1",
+      "item2": "test2",
+      "item3": "test3"
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item2: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item3:  {
+        type: 'string',
+        example: 'sample string'
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle nested objects', () => {
+    const messageString = `{
+      "item1": "test",
+      "item2": {
+        "item3": "test543",
+        "item4": {
+          "item5": "testu436"
+        }
+      }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item2: {
+        type: 'object',
+        properties: {
+          item3:  {
+            type: 'string',
+            example: 'sample string'
+          },
+          item4:  {
+            type: 'object',
+            properties: {
+              item5:  {
+                type: 'string',
+                example: 'sample string'
+              }
+            }
+          }
+        }
+      },
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle arrays', () => {
+    const messageString = `{
+      "item1": "test",
+      "item2": ["string1", "string2"]
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'string',
+          example: 'sample string'
+        },
+        example: '["sample string"]'
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
   });
 });
