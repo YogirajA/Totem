@@ -36,6 +36,40 @@ test('Import a non-nested contract', async t => {
     .eql(true);
 });
 
+test('Import a contract with string formats', async t => {
+  await t.click(utils.importContractBtn);
+
+  await t.expect(utils.importTextArea.value).eql('');
+
+  const messageString = `{
+    "item1": "2019-01-01T18:14:29Z",
+    "item2": "01234567-abcd-0123-abcd-0123456789ab",
+    "item3": "test3"
+  }`;
+  await t.typeText(utils.importTextArea, messageString, { replace: true });
+  await t.click(utils.importBtn);
+
+  const item1Row = Selector('tr.treegrid-body-row').withText('item1');
+  const item2Row = Selector('tr.treegrid-body-row').withText('item2');
+  const item3Row = Selector('tr.treegrid-body-row').withText('item3');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(3)
+    .expect(item1Row.exists)
+    .eql(true)
+    .expect(item1Row.textContent)
+    .contains('string (date-time)')
+    .expect(item2Row.exists)
+    .eql(true)
+    .expect(item2Row.textContent)
+    .contains('guid')
+    .expect(item3Row.exists)
+    .eql(true)
+    .expect(item3Row.textContent)
+    .contains('string');
+});
+
 test('Import a nested contract', async t => {
   await t.click(utils.importContractBtn);
 
