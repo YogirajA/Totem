@@ -61,6 +61,94 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.DisplayOnContractList.ShouldBe(sampleContract.DisplayOnContractList);
         }
 
+        public async Task ShouldEditContractWithoutOptionalFields()
+        {
+            var initialContract = await AlreadyInDatabaseContract(newContract =>
+            {
+                newContract.Type = string.Empty;
+                newContract.Namespace = string.Empty;
+                newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            }
+                        }
+                    }
+                }"; // No Id and no Timestamp
+            });
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber,
+                DisplayOnContractList = initialContract.DisplayOnContractList
+            };
+
+            var sampleContract = SampleContract(!initialContract.DisplayOnContractList);
+
+            sampleContract.ContractString = @"{
+                ""Contract"": {
+                    ""type"": ""object"",
+                    ""properties"": {
+                        ""EditedName"": {
+                            ""type"": ""string"",
+                            ""example"": ""John Doe""
+                        },
+                        ""EditedAge"": {
+                            ""type"": ""integer"",
+                            ""format"": ""int32"",
+                            ""example"": ""30""
+                        }
+                    }
+                }
+            }"; // No Id and no Timestamp
+
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber,
+                DisplayOnContractList = sampleContract.DisplayOnContractList // Edited
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel,
+                UniqueDisplayedContractVersion = false
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+            modifiedContract.DisplayOnContractList.ShouldBe(sampleContract.DisplayOnContractList);
+        }
+
         public async Task ShouldEditWithDisplayOnContractListAsTrueWhenUniqueDisplayedContractVersion()
         {
             var initialContract = await AlreadyInDatabaseContract();

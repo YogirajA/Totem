@@ -39,6 +39,51 @@ namespace Totem.Tests.Features.Contracts
             createdContract.ShouldMatch(newContract);
         }
 
+        public async Task ShouldCreateContractWithoutOptionalFields()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+
+            newContract.Type = string.Empty;
+            newContract.Namespace = string.Empty;
+            newContract.ContractString = @"{
+                ""Contract"": {
+                    ""type"": ""object"",
+                    ""properties"": {
+                        ""Name"": {
+                            ""type"": ""string"",
+                            ""example"": ""John Doe""
+                        },
+                        ""Age"": {
+                            ""type"": ""integer"",
+                            ""format"": ""int32"",
+                            ""example"": ""30""
+                        }
+                    }
+                }
+            }"; // No Id and no Timestamp
+
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
+        }
+
         public async Task ShouldGetLatestVersionDataOnCreateNewContract()
         {
             var command = await BuildAndPersistContract();
