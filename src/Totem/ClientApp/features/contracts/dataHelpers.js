@@ -1,4 +1,6 @@
 import _ from 'lodash';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import validator from 'validator';
 
 export const reorderOptions = oldOptions => {
   // pull out the "Define new" option if it exists, and order the rest alphabetically
@@ -146,6 +148,20 @@ export const isValidJSON = msg => {
     return false;
   }
   return true;
+};
+
+export const isDate = msg => {
+  if (Number.isNaN(Date.parse(msg))) {
+    return false;
+  }
+  return true;
+};
+
+export const isGUID = msg => {
+  if (validator.isUUID(msg)) {
+    return true;
+  }
+  return false;
 };
 
 export const last = array => array[array.length - 1];
