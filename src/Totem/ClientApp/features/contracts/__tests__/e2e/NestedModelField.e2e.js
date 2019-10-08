@@ -796,6 +796,51 @@ test('Parent model name edits persist after opening a model modal', async t => {
   await t.expect(utils.modelName.value).eql('testModelEdits');
 });
 
+test('Parent model name edits persist after edits to a nested model', async t => {
+  await addNewNestedModelAtRoot(t);
+
+  const rowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = rowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  // Edit the model name
+  await t.typeText(utils.modelName, 'testModelEdits', { replace: true });
+
+  const nestedModelRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('nestedModel');
+  const nestedModelEditFieldBtn = nestedModelRowToEdit.find('.edit-action');
+  await t.click(nestedModelEditFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+
+  // Edit the child model name
+  await t.typeText(utils.modelName, 'editedNestedModel', { replace: true });
+  const childModelFieldRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('testProperty');
+  const nestedFieldEditFieldBtn = childModelFieldRowToEdit.find('.edit-action');
+  await t.click(nestedFieldEditFieldBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+  await t.expect(utils.inputFieldExample.value).eql('123');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+
+  await t.click(utils.cancelFieldBtn);
+
+  await t.click(utils.saveModelBtn);
+
+  await t.expect(nestedModelRowToEdit.exists).eql(false);
+
+  const editedNestedModelRow = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('editedNestedModel');
+  await t.expect(editedNestedModelRow.exists).eql(true);
+  await t.expect(utils.modelName.value).eql('testModelEdits');
+});
+
 test('Cancel add new model to an already nested model', async t => {
   await addNewNestedModelAtRoot(t);
   const initialRowCount = await Selector('tr.treegrid-body-row').count;
