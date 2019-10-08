@@ -67,7 +67,8 @@ import {
   deepCopy,
   getUniqueId,
   findRowInTreeAndUpdate,
-  last
+  last,
+  findParent
 } from './features/contracts/dataHelpers';
 
 export default {
@@ -297,6 +298,16 @@ export default {
           this.options = reorderOptions(this.options);
         }
 
+        const parent = findParent(this.rows, field);
+        if (parent) {
+            parent.properties[parent.properties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
+            const parentOption = this.options.find(option => option.displayName === parent.name);
+            parentOption.displayName = parent.name;
+            parentOption.value.schemaName = parent.name;
+            parentOption.value.schemaString = createSchemaString(parent);
+            this.options = reorderOptions(this.options);
+        }
+
         this.modifiedContract = updateContractString(field, this.rows, this.modifiedContract);
         $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
@@ -325,10 +336,21 @@ export default {
         this.options = reorderOptions(this.options);
       } else {
         const existingOption = this.options.find(option => option.displayName === model.name);
+        const parent = findParent(this.rows, updatedModel);
+
         if (existingOption) {
           existingOption.displayName = updatedModel.name;
-          this.options = reorderOptions(this.options);
+          existingOption.value.schemaName = updatedModel.name;
+          existingOption.value.schemaString = createSchemaString(updatedModel);
         }
+        if (parent) {
+            parent.properties[parent.properties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
+            const parentOption = this.options.find(option => option.displayName === parent.name);
+            parentOption.displayName = parent.name;
+            parentOption.value.schemaName = parent.name;
+            parentOption.value.schemaString = createSchemaString(parent);
+        }
+        this.options = reorderOptions(this.options);
       }
       this.editStack.pop();
 
