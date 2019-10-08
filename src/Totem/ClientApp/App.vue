@@ -341,7 +341,7 @@ export default {
           // Existing model row ID not found, so add as a new row
           this.modalRows.push(updatedModel);
         }
-        this.currentParentName = last(this.editStack).name;
+        this.currentParentName = updatedModel.parentName ? updatedModel.parentName : last(this.editStack).name;
         last(this.editStack).properties = deepCopy(this.modalRows);
       } else {
         // update root contract
