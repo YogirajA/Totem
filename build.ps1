@@ -7,7 +7,7 @@ help {
     write-help "build rebuild" "Builds a clean local copy, rebuilding databases instead of updating them."
     write-help "build ci 1234" "Continuous integration build, applying build counter to assembly versions."
     write-help "build migratetest" "Updates test database with test environment scripts instead of rebuilding"
-	write-help "build testexample" "Tests an example app with Totem"
+    write-help "build testexample" "Tests an example app with Totem"
 }
 
 function publish($project) {
@@ -40,25 +40,29 @@ main {
 
     if ($target -eq "default") {
         task "Update DEV/TEST Databases" { update-database DEV TEST } src/Totem.DatabaseMigration
-    } elseif ($target -eq "rebuild") {
+    }
+    elseif ($target -eq "rebuild") {
         task "Rebuild DEV/TEST Databases" { rebuild-database DEV TEST } src/Totem.DatabaseMigration
-    } elseif ($target -eq "ci") {
+    }
+    elseif ($target -eq "ci") {
         task "Rebuild TEST Database" { rebuild-database TEST } src/Totem.DatabaseMigration
-    } elseif ($target -eq "migratetest") {
-      task "Update TEST Database" { update-database TEST } src/Totem.DatabaseMigration
+    }
+    elseif ($target -eq "migratetest") {
+        task "Update TEST Database" { update-database TEST } src/Totem.DatabaseMigration
     }
 
     task "Test" { dotnet test --configuration $configuration --no-build } src/Totem.Tests
 	
-	if ($target -eq "testexample") {
-	  write-host "Running Totem" -ForegroundColor Cyan
-	  $procId = (start 'dotnet' -verb runas -argumentlist "run -p src/Totem/Totem.csproj" -passthru).ID
-	  task "Seed DB with example data" { seed-database-for-examples DEV } src/Totem.DatabaseMigration
-	  try {
-		task "Run Sales Order example app" {dotnet test examples/SalesOrderApp/SalesOrderApp.csproj}
-	  } finally {
-		task "Closing Totem" { start 'taskkill' -verb runas -argumentlist "/F /PID $procId /T" }
-	  }  	  
+    if ($target -eq "testexample") {
+        task "Seed DB with example data" { seed-database-for-examples DEV } src/Totem.DatabaseMigration
+        write-host "Running Totem" -ForegroundColor Cyan
+        $procId = (start 'dotnet' -verb runas -argumentlist "run -p src/Totem/Totem.csproj" -passthru).ID
+        try {
+            task "Run Sales Order example app" { dotnet test examples/SalesOrderApp/SalesOrderApp.csproj }
+        }
+        finally {
+            task "Closing Totem" { start 'taskkill' -verb runas -argumentlist "/F /PID $procId /T" }
+        } 
     }
 
     if ($target -eq "ci") {
