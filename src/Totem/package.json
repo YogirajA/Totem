@@ -4,9 +4,10 @@
   "description": "Contract Testing for Distributed Systems",
   "main": "ClientApp/app.js",
   "scripts": {
-    "runtest": "@powershell dotnet run ../Totem/Totem.csproj --launch-profile 'Testing'",
+    "runtestps": "@powershell dotnet run ../Totem/Totem.csproj --launch-profile 'Testing'",
+    "runtest": "webpack && npm run runtestps",
     "e2etest": "testcafe 'chrome:headless' ./ClientApp/features/contracts/__tests__/e2e/*.e2e.js",
-    "e2e": "concurrently --kill-others \"npm run runtest\" \"npm run e2etest\"",
+    "e2e": "concurrently --kill-others \"npm run runtest\" \"wait-on tcp:4000 && npm run e2etest\"",
     "test": "jest",
     "lint": "eslint --ext .js,.vue ClientApp"
   },
@@ -68,6 +69,7 @@
     "vue-router": "3.0.6",
     "vue-style-loader": "4.1.2",
     "vue-template-compiler": "2.6.10",
+    "wait-on": "^3.3.0",
     "webpack": "4.30.0",
     "webpack-cli": "3.3.1",
     "webpack-dev-server": "3.3.1",
