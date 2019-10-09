@@ -46,7 +46,7 @@ function get-copyright {
     $date = Get-Date
     $year = $date.Year
     $copyrightSpan = if ($year -eq $yearInitiated) { $year } else { "$yearInitiated-$year" }
-    return "© $copyrightSpan $owner"
+    return "Â© $copyrightSpan $owner"
 }
 
 function regenerate-file($path, $newContent) {
@@ -139,6 +139,27 @@ function rebuild-database([Parameter(ValueFromRemainingArguments)]$environments)
                                        --silent `
                                        --simple }
     }
+}
+
+function seed-database-for-examples($environment) {
+    $migrationsProject = (get-item -path .).Name
+    $roundhouseExePath = find-dependency rh.exe
+    $roundhouseOutputDir = [System.IO.Path]::GetDirectoryName($roundhouseExePath) + "\output"
+
+    $migrationScriptsPath = "..\..\examples\Messaging"
+	
+    $roundhouseVersionFile = "bin\$configuration\$targetFramework\$migrationsProject.dll"
+	
+    $connectionString = $connectionStrings[$environment]
+	
+    execute { & $roundhouseExePath --connectionstring $connectionString `
+            --commandtimeout 300 `
+            --env $environment `
+            --output $roundhouseOutputDir `
+            --sqlfilesdirectory $migrationScriptsPath `
+            --versionfile $roundhouseVersionFile `
+            --transaction `
+            --silent }
 }
 
 function task($heading, $command, $path) {
