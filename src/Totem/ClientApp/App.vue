@@ -2,6 +2,7 @@
   <div id="contract-list">
     <ContractGrid
       ref="rootContractGrid"
+      id="rootGrid"
       :rows="rows"
       :hide-ellipsis-menu="false"
       :edit-stack="editStack"
@@ -229,6 +230,7 @@ export default {
           }
         }
       }
+      this.updateSaveButtonState();
     },
 
     saveField(object) {
@@ -376,10 +378,6 @@ export default {
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
         this.isDescending = false;
-        if (typeof setSaveButton === 'function') {
-          // setSaveButton is defined in Edit.cshtml
-          setSaveButton(); // eslint-disable-line no-undef
-        }
         this.closeModal('addModel', true, false);
       }
     },
@@ -434,6 +432,17 @@ export default {
       this.rows = parseContractArray(newValue, 'contract-string-validation');
       this.closeModal('editManually');
       $('#contract-raw').scrollTop(0);
+    },
+
+    updateSaveButtonState() {
+      if (typeof setSaveButton === 'function') {
+          // setSaveButton is defined in Create.cshtml and Edit.cshtml
+          if (this.rows.length === 0 && setSaveButton.length > 0){
+            setSaveButton(true); // eslint-disable-line no-undef
+          } else {
+            setSaveButton(); // eslint-disable-line no-undef
+          }
+      }
     }
   }
 };

@@ -113,7 +113,7 @@
         });
 
         function setSaveButton() {
-            if (valuesHaveChanged()) {
+            if (valuesHaveChanged() && !($("#rootGrid .treegrid-empty-row").length === 1)) {
                 $("#saveEdits").attr("disabled", false);
             } else {
                 $("#saveEdits").attr("disabled", true);

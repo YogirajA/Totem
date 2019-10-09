@@ -13,6 +13,8 @@ namespace Totem.Features.Contracts
                 .ForMember(x => x.UpdateInst, opt => opt.Ignore())
                 .ForMember(x => x.CreatedDate, opt => opt.Ignore())
                 .ForMember(x => x.DisplayOnContractList, opt => opt.Ignore())
+                .ForMember(x => x.Type, opt => opt.NullSubstitute(""))
+                .ForMember(x => x.Namespace, opt => opt.NullSubstitute(""))
                 .ReverseMap();
 
             CreateMap<Contract, Details.ViewModel>()
@@ -20,6 +22,8 @@ namespace Totem.Features.Contracts
 
             CreateMap<Edit.EditModel, Contract>()
                 .ForMember(x => x.CreatedDate, opt => opt.Ignore())
+                .ForMember(x => x.Type, opt => opt.NullSubstitute(""))
+                .ForMember(x => x.Namespace, opt => opt.NullSubstitute(""))
                 .ReverseMap();
 
             CreateMap<Contract, TestMessage.ViewModel>()
