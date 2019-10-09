@@ -182,33 +182,16 @@ test('Deleting a previously saved root field', async t => {
 });
 
 test('Delete all root fields', async t => {
-  await t.click(
-    Selector('tr.treegrid-body-row')
-      .nth(0)
-      .find('.edit-action')
-  );
-  await t.click(utils.deleteFieldBtn);
+  const rowCount = await Selector('tr.treegrid-body-row').count;
 
-  await t.click(
-    Selector('tr.treegrid-body-row')
-      .nth(0)
-      .find('.edit-action')
-  );
-  await t.click(utils.deleteFieldBtn);
-
-  await t.click(
-    Selector('tr.treegrid-body-row')
-      .nth(0)
-      .find('.edit-action')
-  );
-  await t.click(utils.deleteFieldBtn);
-
-  await t.click(
-    Selector('tr.treegrid-body-row')
-      .nth(0)
-      .find('.edit-action')
-  );
-  await t.click(utils.deleteFieldBtn);
+  for (let i = 0; i < rowCount; i++) {
+    await t.click(
+      Selector('tr.treegrid-body-row')
+        .nth(0)
+        .find('.edit-action')
+    );
+    await t.click(utils.deleteFieldBtn);
+  }
 
   await t.expect(Selector('tr.treegrid-body-row').count).eql(0);
   await t.expect(Selector('#rootGrid .treegrid-empty-row').count).eql(1);
