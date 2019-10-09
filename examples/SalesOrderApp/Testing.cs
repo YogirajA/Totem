@@ -1,7 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SalesOrderApp
 {
@@ -41,6 +45,16 @@ namespace SalesOrderApp
         public static string Json(object value)
         {
             return JsonConvert.SerializeObject(value, Formatting.Indented);
+        }
+
+        public static async Task DisplayErrors(HttpResponseMessage response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                JObject responseJson = JObject.Parse(responseString);
+                Console.WriteLine(responseJson.Last.Last);
+            }
         }
     }
 }
