@@ -310,12 +310,14 @@ export default {
 
         const parent = findParent(this.rows, field);
         if (parent) {
-            parent.properties[parent.properties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
-            const parentOption = this.options.find(option => option.displayName === parent.name);
-            parentOption.displayName = parent.name;
-            parentOption.value.schemaName = parent.name;
-            parentOption.value.schemaString = createSchemaString(parent);
-            this.options = reorderOptions(this.options);
+          let parentProperties = getPropertiesCopy(parent);
+          parentProperties[parentProperties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
+          updateProperties(parent, parentProperties)
+          const parentOption = this.options.find(option => option.displayName === parent.name);
+          parentOption.displayName = parent.name;
+          parentOption.value.schemaName = parent.name;
+          parentOption.value.schemaString = createSchemaString(parent);
+          this.options = reorderOptions(this.options);
         }
 
         this.modifiedContract = updateContractString(field, this.rows, this.modifiedContract);
@@ -354,11 +356,13 @@ export default {
           existingOption.value.schemaString = createSchemaString(updatedModel);
         }
         if (parent) {
-            parent.properties[parent.properties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
-            const parentOption = this.options.find(option => option.displayName === parent.name);
-            parentOption.displayName = parent.name;
-            parentOption.value.schemaName = parent.name;
-            parentOption.value.schemaString = createSchemaString(parent);
+          let parentProperties = getPropertiesCopy(parent);
+          parentProperties[parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
+          updateProperties(parent, parentProperties)
+          const parentOption = this.options.find(option => option.displayName === parent.name);
+          parentOption.displayName = parent.name;
+          parentOption.value.schemaName = parent.name;
+          parentOption.value.schemaString = createSchemaString(parent);
         }
         this.options = reorderOptions(this.options);
       }
