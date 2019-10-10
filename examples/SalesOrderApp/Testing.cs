@@ -53,7 +53,7 @@ namespace SalesOrderApp
             {
                 var responseString = await response.Content.ReadAsStringAsync();
                 JObject responseJson = JObject.Parse(responseString);
-                Console.WriteLine(responseJson.Last.Last);
+                Console.WriteLine(responseJson["body"]);
             }
         }
     }
