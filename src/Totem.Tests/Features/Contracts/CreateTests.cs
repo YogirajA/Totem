@@ -39,6 +39,58 @@ namespace Totem.Tests.Features.Contracts
             createdContract.ShouldMatch(newContract);
         }
 
+        public async Task ShouldCreateContractWithoutOptionalFields()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+
+            newContract.Type = string.Empty;
+            newContract.Namespace = string.Empty;
+            newContract.ContractString = @"{
+                ""Contract"": {
+                    ""type"": ""object"",
+                    ""properties"": {
+                        ""Name"": {
+                            ""type"": ""string"",
+                            ""example"": ""John Doe""
+                        },
+                        ""Age"": {
+                            ""type"": ""integer"",
+                            ""format"": ""int32"",
+                            ""example"": ""30""
+                        }
+                    }
+                },
+                ""Guid"": {
+                    ""type"": ""string"",
+                    ""pattern"": ""^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$"",
+                    ""minLength"": 36,
+                    ""maxLength"": 36,
+                    ""example"": ""01234567-abcd-0123-abcd-0123456789ab""
+                }
+            }"; // No Id and no Timestamp
+
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
+        }
+
         public async Task ShouldGetLatestVersionDataOnCreateNewContract()
         {
             var command = await BuildAndPersistContract();
@@ -207,10 +259,80 @@ namespace Totem.Tests.Features.Contracts
                 "Contract must be valid JSON.",
                 "'Contract' must not be empty.",
                 "'Description' must not be empty.",
-                "'Namespace' must not be empty.",
-                "'Type' must not be empty.",
                 "'Version Number' must follow semantic version system.",
                 "'Version Number' must not be empty.");
+        }
+
+        public void ShouldNotCreateWhenContractHasNoFields()
+        {
+            var newContract = SampleContract(true);
+
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                        }
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("An empty contract cannot be saved.");
+        }
+
+        public async Task ShouldCreateWhenContractDoesNotHaveOptionalFields()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+            newContract.Namespace = "";
+            newContract.Type = "";
+            newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""string""
+                                }                                            
+                            }
+                        }
+                    }
+                }";
+
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
         }
 
         public void ShouldNotCreateWhenContractStringIsNotValidJson()
@@ -241,77 +363,6 @@ namespace Totem.Tests.Features.Contracts
             };
 
             command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.");
-        }
-
-        public void ShouldNotCreateWhenContractStringDoesNotHaveTimestamp()
-        {
-            var newContract = SampleContract();
-            var command = new Create.Command()
-            {
-                Description = newContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Id"": {
-                                ""$ref"": ""#/Guid""
-                            },
-                            ""Name"": {
-                                ""type"": ""string"",
-                                ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                                ""type"": ""integer"",
-                                ""format"": ""int32"",
-                                ""example"": ""30""
-                            }
-                        }
-                    },
-                    ""Guid"": {
-                        ""type"": ""string""
-                    }
-                }",
-                Namespace = newContract.Namespace,
-                Type = newContract.Type,
-                VersionNumber = newContract.VersionNumber
-            };
-
-            command.ShouldNotValidate("Contract must include a property Timestamp of format date-time.");
-        }
-
-        public void ShouldNotCreateWhenContractStringDoesNotHaveId()
-        {
-            var newContract = SampleContract();
-            var command = new Create.Command()
-            {
-                Description = newContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Timestamp"": {
-                            ""type"": ""string"",
-                            ""format"": ""date-time"",
-                            ""example"": ""2019-05-12T18:14:29Z""
-                            },
-                            ""Name"": {
-                            ""type"": ""string"",
-                            ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                            ""type"": ""integer"",
-                            ""format"": ""int32"",
-                            ""example"": ""30""
-                            }
-                        }
-                    }
-                }",
-                Namespace = newContract.Namespace,
-                Type = newContract.Type,
-                VersionNumber = newContract.VersionNumber
-            };
-
-            command.ShouldNotValidate("Contract must include a property ID of type Guid.");
         }
 
         public void ShouldNotCreateWhenContractStringTimestampDoesNotHaveFormat()

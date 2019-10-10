@@ -61,6 +61,101 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.DisplayOnContractList.ShouldBe(sampleContract.DisplayOnContractList);
         }
 
+        public async Task ShouldEditContractWithoutOptionalFields()
+        {
+            var initialContract = await AlreadyInDatabaseContract(newContract =>
+            {
+                newContract.Type = string.Empty;
+                newContract.Namespace = string.Empty;
+                newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string"",
+                        ""pattern"": ""^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$"",
+                        ""minLength"": 36,
+                        ""maxLength"": 36,
+                        ""example"": ""01234567-abcd-0123-abcd-0123456789ab""
+                    }
+                }"; // No Id and no Timestamp
+            });
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber,
+                DisplayOnContractList = initialContract.DisplayOnContractList
+            };
+
+            var sampleContract = SampleContract(!initialContract.DisplayOnContractList);
+
+            sampleContract.ContractString = @"{
+                ""Contract"": {
+                    ""type"": ""object"",
+                    ""properties"": {
+                        ""EditedName"": {
+                            ""type"": ""string"",
+                            ""example"": ""John Doe""
+                        },
+                        ""EditedAge"": {
+                            ""type"": ""integer"",
+                            ""format"": ""int32"",
+                            ""example"": ""30""
+                        }
+                    }
+                }
+            }"; // No Id and no Timestamp
+
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber,
+                DisplayOnContractList = sampleContract.DisplayOnContractList // Edited
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel,
+                UniqueDisplayedContractVersion = false
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+            modifiedContract.DisplayOnContractList.ShouldBe(sampleContract.DisplayOnContractList);
+        }
+
         public async Task ShouldEditWithDisplayOnContractListAsTrueWhenUniqueDisplayedContractVersion()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -286,10 +381,109 @@ namespace Totem.Tests.Features.Contracts
                 "'Contract' must not be empty.",
                 "'Description' must not be empty.",
                 "'Id' must not be empty.",
-                "'Namespace' must not be empty.",
-                "'Type' must not be empty.",
                 "'Version Number' must follow semantic version system.",
                 "'Version Number' must not be empty.");
+        }
+
+        public async Task ShouldNotEditWhenContractHasNoFields()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var modifiedContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                        }
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("An empty contract cannot be saved.");
+        }
+
+        public async Task ShouldEditWhenContractDoesNotHaveOptionalFields()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.Type = "";
+            sampleContract.Namespace = "";
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            }
+                        }
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = sampleContract.Namespace, // Edited
+                Type = sampleContract.Type, // Edited
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(initialContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(sampleContract.Namespace);
+            modifiedContract.Type.ShouldBe(sampleContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
         }
 
         public async Task ShouldNotEditWhenVersionIsNotValid()
@@ -391,60 +585,6 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.");
         }
 
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveTimestamp()
-        {
-            var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = initialContract.Description,
-                ContractString = initialContract.ContractString,
-                Namespace = initialContract.Namespace,
-                Type = initialContract.Type,
-                VersionNumber = initialContract.VersionNumber
-            };
-
-            var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = sampleContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Id"": {
-                                ""$ref"": ""#/Guid""
-                            },
-                            ""Name"": {
-                                ""type"": ""string"",
-                                ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                                ""type"": ""integer"",
-                                ""format"": ""int32"",
-                                ""example"": ""30""
-                            }
-                        }
-                    },
-                    ""Guid"": {
-                        ""type"": ""string""
-                    }
-                }",
-                Namespace = initialContract.Namespace,
-                Type = sampleContract.Type,
-                VersionNumber = sampleContract.VersionNumber
-            };
-
-            var command = new Edit.Command()
-            {
-                InitialContract = initialContractModel,
-                ModifiedContract = modifiedContractModel
-            };
-
-            command.ShouldNotValidate("Contract must include a property Timestamp of format date-time.");
-        }
-
         public async Task ShouldNotEditWhenContractStringTimestampDoesNotHaveFormat()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -501,59 +641,6 @@ namespace Totem.Tests.Features.Contracts
             };
 
             command.ShouldNotValidate("The Timestamp property must have a format of date-time.");
-        }
-
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveId()
-        {
-            var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = initialContract.Description,
-                ContractString = initialContract.ContractString,
-                Namespace = initialContract.Namespace,
-                Type = initialContract.Type,
-                VersionNumber = initialContract.VersionNumber
-            };
-
-            var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = sampleContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Timestamp"": {
-                            ""type"": ""string"",
-                            ""format"": ""date-time"",
-                            ""example"": ""2019-05-12T18:14:29Z""
-                            },
-                            ""Name"": {
-                            ""type"": ""string"",
-                            ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                            ""type"": ""integer"",
-                            ""format"": ""int32"",
-                            ""example"": ""30""
-                            }
-                        }
-                    }
-                }",
-                Namespace = initialContract.Namespace,
-                Type = sampleContract.Type,
-                VersionNumber = sampleContract.VersionNumber
-            };
-
-            var command = new Edit.Command()
-            {
-                InitialContract = initialContractModel,
-                ModifiedContract = modifiedContractModel
-            };
-
-            command.ShouldNotValidate("Contract must include a property ID of type Guid.");
         }
 
         public async Task ShouldEditWhenValidWithArray()

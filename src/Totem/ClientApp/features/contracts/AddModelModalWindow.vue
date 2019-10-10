@@ -5,6 +5,7 @@
       :title="`${computedModalTitle + ':  ' + modalFieldName}`"
       :success-btn="successBtn"
       :cancel-btn="cancelBtn"
+      :class-name="`modal-scrollable`"
     >
       <template v-slot:body>
         <div class="container">

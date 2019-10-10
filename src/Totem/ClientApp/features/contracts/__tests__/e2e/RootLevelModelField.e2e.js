@@ -193,6 +193,53 @@ test('Add a new model using previous model', async t => {
     .eql(2);
 });
 
+test('Edit a previous model and add a new model using the previous model with the edits', async t => {
+  await addNewModelAtRoot(t);
+  // Add a new field to the model and save
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  await t.click(utils.addNewFieldNestedBtn);
+
+  await t.typeText(utils.inputFieldName, 'newTestModelProperty');
+  await t.click(utils.inputType).click(Selector('li').withText('DateTime'));
+
+  await t.click(utils.saveFieldBtn);
+
+  await t.click(utils.saveModelBtn);
+
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  // Add a new field based on previous model
+  await t.click(utils.addNewFieldBtn);
+
+  await t.typeText(utils.inputFieldName, 'testNewModel');
+  await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
+
+  await t.click(utils.saveFieldBtn);
+
+  const newlyAddedModelField = Selector('tr.treegrid-body-row').withText('testNewModel');
+  const nestedRows = await Selector('tr.treegrid-body-row').withText('testProperty');
+  const newTestModelRows = await Selector('tr.treegrid-body-row').withText('newTestModelProperty');
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 3)
+    .expect(newlyAddedModelField.exists)
+    .eql(true)
+    .expect(nestedRows.exists)
+    .eql(true)
+    .expect(nestedRows.count)
+    .eql(2)
+    .expect(newTestModelRows.exists)
+    .eql(true)
+    .expect(newTestModelRows.count)
+    .eql(2);
+});
+
 test('Edit a non-root level field from the root table', async t => {
   await addNewModelAtRoot(t);
   const initialRowCount = await Selector('tr.treegrid-body-row').count;

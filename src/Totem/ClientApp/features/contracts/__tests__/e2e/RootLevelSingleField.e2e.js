@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import VueSelector from 'testcafe-vue-selectors';
 import { Selector } from 'testcafe';
 import { baseUrl } from '../../../../testConfig/setup';
@@ -186,6 +187,22 @@ test('Deleting a previously saved root field', async t => {
     .eql(initialRowCount - 1)
     .expect(deletedRow.exists)
     .eql(false);
+});
+
+test('Delete all root fields', async t => {
+  const rowCount = await Selector('tr.treegrid-body-row').count;
+
+  for (let i = 0; i < rowCount; i++) {
+    await t.click(
+      Selector('tr.treegrid-body-row')
+        .nth(0)
+        .find('.edit-action')
+    );
+    await t.click(utils.deleteFieldBtn);
+  }
+
+  await t.expect(Selector('tr.treegrid-body-row').count).eql(0);
+  await t.expect(Selector('#rootGrid .treegrid-empty-row').count).eql(1);
 });
 
 test('Adding and deleting a root field', async t => {

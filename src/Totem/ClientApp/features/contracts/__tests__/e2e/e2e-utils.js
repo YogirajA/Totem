@@ -32,7 +32,7 @@ export async function loginAndNavigateToEditContract(t) {
   const loginButton = Selector('#loginSubmit');
   await t.click(loginButton);
 
-  const contractEditButton = Selector('.edit-contract').nth(1);
+  const contractEditButton = Selector('.edit-contract').nth(2);
   await t.click(contractEditButton);
 }
 

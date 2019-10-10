@@ -61,34 +61,44 @@ namespace Totem.Features.Shared
                         {
                             if (!CheckDataType(contractObject.Type))
                             {
-                                context.AddFailure($"Contract does not have a valid type.");
+                                context.AddFailure("Contract does not have a valid type.");
                             }
                         }
 
-                        var idKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("ID"));
-                        if (idKey == null || (contractObject.Properties[idKey].Type != null &&
-                                              !contractObject.Properties[idKey].Type.Equals(DataType.String.Value)) ||
-                            contractObject.Properties[idKey].Reference != "Guid" || contractDictionary["Guid"] == null)
+                        if (contractObject.Properties.Count == 0)
                         {
-                            context.AddFailure("Contract must include a property ID of type Guid.");
-                        }
-
-                        var timestampKey =
-                            contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("Timestamp"));
-                        if (timestampKey == null)
-                        {
-                            context.AddFailure("Contract must include a property Timestamp of format date-time.");
+                            context.AddFailure("An empty contract cannot be saved.");
                         }
                         else
                         {
-                            if (contractObject.Properties[timestampKey].Format == null || !contractObject
-                                    .Properties[timestampKey].Format.Equals(Format.DateTime.Value))
-                            {
-                                context.AddFailure("The Timestamp property must have a format of date-time.");
-                            }
-                        }
+                            var idKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("ID"));
 
-                        CheckProperties(contractObject.Properties, context);
+                            if (idKey != null)
+                            {
+                                var idProperty = contractObject.Properties[idKey];
+
+                                if (idProperty.Type != null && !idProperty.Type.Equals(DataType.String.Value) ||
+                                    idProperty.Reference != "Guid" ||
+                                    contractDictionary["Guid"] == null)
+                                {
+                                    context.AddFailure("Contract must include a property ID of type Guid.");
+                                }
+                            }
+
+                            var timestampKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("Timestamp"));
+
+                            if (timestampKey != null)
+                            {
+                                var timestampProperty = contractObject.Properties[timestampKey];
+
+                                if (timestampProperty.Format == null || !timestampProperty.Format.Equals(Format.DateTime.Value))
+                                {
+                                    context.AddFailure("The Timestamp property must have a format of date-time.");
+                                }
+                            }
+
+                            CheckProperties(contractObject.Properties, context);
+                        }
                     }
                     catch (Exception)
                     {
