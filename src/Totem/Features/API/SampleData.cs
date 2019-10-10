@@ -129,6 +129,11 @@ namespace Totem.Features.API
                 return GenerateInteger(format);
             }
 
+            if (type.EqualsCaseInsensitive("number"))
+            {
+                return GenerateNumber(format);
+            }
+
             if (type.EqualsCaseInsensitive(DataType.Array.Value))
             {
                 if (items != null)
@@ -156,6 +161,10 @@ namespace Totem.Features.API
                     if (value.Type.EqualsCaseInsensitive("integer"))
                     {
                         _jsonDictionary[key] = GenerateInteger(value.Format);
+                    }
+                    if (value.Type.EqualsCaseInsensitive("number"))
+                    {
+                        _jsonDictionary[key] = GenerateNumber(value.Format);
                     }
                     if (value.Type.EqualsCaseInsensitive("string"))
                     {
@@ -202,6 +211,20 @@ namespace Totem.Features.API
             }
         }
 
+        public static string GenerateNumber(string format)
+        {
+            if (format != null && format.EqualsCaseInsensitive("Float"))
+            {
+                return "10.50";
+            }
+            if (format != null && format.EqualsCaseInsensitive("Double"))
+            {
+                return "123456789012.34567";
+            }
+
+            return "5.5"; // format not included or unknown
+        }
+
         public static string GenerateInteger(string format)
         {
             if (format != null && format.EqualsCaseInsensitive("Int32"))
@@ -225,6 +248,14 @@ namespace Totem.Features.API
                 for (var i = 0; i < length; i++)
                 {
                     returnArray.Add(GenerateInteger(itemFormat));
+                }
+            }
+
+            if (itemType.EqualsCaseInsensitive(DataType.Number.Value))
+            {
+                for (var i = 0; i < length; i++)
+                {
+                    returnArray.Add(GenerateNumber(itemFormat));
                 }
             }
 
