@@ -87,11 +87,11 @@ describe('parseContractArray', () => {
     expect(result[0].name).toEqual('Id');
     expect(result[0].type).toEqual('string');
     expect(result[0].reference).toEqual('Guid');
-    expect(result[0].isLocked).toEqual(true);
+    expect(result[0].isLocked).toEqual(undefined);
     expect(result[1].name).toEqual('Timestamp');
     expect(result[1].type).toEqual('string');
     expect(result[1].format).toEqual('date-time');
-    expect(result[1].isLocked).toEqual(true);
+    expect(result[1].isLocked).toEqual(undefined);
     expect(result[2].name).toEqual('Address');
     expect(result[2].type).toEqual('object');
     expect(result[2].isLocked).toEqual(undefined);
