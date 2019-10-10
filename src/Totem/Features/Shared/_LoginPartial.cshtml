@@ -3,10 +3,10 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler">
         <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+    <div class="collapse navbar-collapse" id="navbarToggler">
         <ul class="navbar-nav navbar-right">
             <li class="navbar-user">
                 <span class="navbar-user">@UserManager.GetUserName(User)</span>
