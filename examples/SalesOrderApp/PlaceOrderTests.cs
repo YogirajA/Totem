@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Shouldly;
+using static SalesOrderApp.Testing;
 
 namespace SalesOrderApp
 {
@@ -43,6 +44,7 @@ namespace SalesOrderApp
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
             var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
 
+            await DisplayErrors(response);
             response.EnsureSuccessStatusCode();
         }
 
@@ -70,6 +72,8 @@ namespace SalesOrderApp
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
             var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            await DisplayErrors(response);
+
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             var responseString = await response.Content.ReadAsStringAsync();
@@ -102,6 +106,8 @@ namespace SalesOrderApp
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
             var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            await DisplayErrors(response);
+
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             var responseString = await response.Content.ReadAsStringAsync();
@@ -130,6 +136,8 @@ namespace SalesOrderApp
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
             var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            await DisplayErrors(response);
+
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             var responseString = await response.Content.ReadAsStringAsync();
