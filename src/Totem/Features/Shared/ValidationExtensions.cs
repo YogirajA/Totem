@@ -179,6 +179,16 @@ namespace Totem.Features.Shared
                     }
                 }
 
+                if (type.EqualsCaseInsensitive(DataType.Number.Value))
+                {
+                    var isExampleNumber = double.TryParse(example, out _) || float.TryParse(example, out _);
+                    // Validate example is number data type
+                    if (!isExampleNumber)
+                    {
+                        AddExampleError(context, example, propertyName, type);
+                    }
+                }
+
                 if (type.EqualsCaseInsensitive(DataType.String.Value))
                 {
                     // Validate  example is date-time data type

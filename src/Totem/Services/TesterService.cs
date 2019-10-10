@@ -152,6 +152,11 @@ namespace Totem.Services
                 CheckIntegerType(propertySchemaObject, kv, testMessageResult);
             }
 
+            if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.Number.Value))
+            {
+                CheckNumberType(propertySchemaObject, kv, testMessageResult);
+            }
+
             if (propertySchemaObject.Type.EqualsCaseInsensitive(DataType.String.Value))
             {
                 CheckStringType(propertySchemaObject, kv, testMessageResult);
@@ -190,6 +195,32 @@ namespace Totem.Services
                 else if (propertySchemaObject.Format.EqualsCaseInsensitive("int64") && !isInt64)
                 {
                     AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "Int64");
+                }
+            }
+        }
+
+        private static void CheckNumberType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
+            TestMessageResult testMessageResult)
+        {
+            var isDouble = double.TryParse(kv.Value.ToString(), out _);
+            var isFloat = float.TryParse(kv.Value.ToString(), out _);
+            
+            // Validate number data type
+            if (!isDouble && !isFloat)
+            {
+                AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, propertySchemaObject.Type);
+            }
+
+            if (propertySchemaObject.Format != null)
+            {
+                // Validate specific number formats
+                if (propertySchemaObject.Format.EqualsCaseInsensitive("float") && !isFloat)
+                {
+                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "Float");
+                }
+                else if (propertySchemaObject.Format.EqualsCaseInsensitive("double") && !isDouble)
+                {
+                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, "Double");
                 }
             }
         }
@@ -260,6 +291,14 @@ namespace Totem.Services
                     if (!TryParseIntegerArray(itemArray))
                     {
                         AddItemTypeError(testMessageResult, kv.Key, DataType.Integer.Value);
+                    }
+                }
+
+                if (itemSchema.Type.EqualsCaseInsensitive(DataType.Number.Value))
+                {
+                    if (!TryParseNumberArray(itemArray))
+                    {
+                        AddItemTypeError(testMessageResult, kv.Key, DataType.Number.Value);
                     }
                 }
             }
@@ -386,6 +425,21 @@ namespace Totem.Services
                 int notInt32;
                 long notInt64;
                 if ((!int.TryParse(item.ToString(), out notInt32)) || (!long.TryParse(item.ToString(), out notInt64)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool TryParseNumberArray(dynamic itemArray)
+        {
+            foreach (var item in itemArray)
+            {
+                float notFloat;
+                double notDouble;
+                if ((!float.TryParse(item.ToString(), out notFloat)) || (!double.TryParse(item.ToString(), out notDouble)))
                 {
                     return false;
                 }
