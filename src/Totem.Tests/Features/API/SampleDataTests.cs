@@ -97,6 +97,21 @@ namespace Totem.Tests.Features.API
             intValue.GetType().ShouldBe(typeof(long));
         }
 
+        public void GeneratesProperNumberSampleData()
+        {
+            var sampleFloat = SampleData.GenerateSampleData("Number", "Float");
+            var floatValue = float.Parse(sampleFloat);
+            floatValue.GetType().ShouldBe(typeof(float));
+
+            var sampleDouble = SampleData.GenerateSampleData("Number", "Double");
+            var doubleValue = double.Parse(sampleDouble);
+            doubleValue.GetType().ShouldBe(typeof(double));
+
+            var sampleNumber = SampleData.GenerateSampleData("Number", null);
+            var numberValue = float.Parse(sampleNumber);
+            numberValue.GetType().ShouldBe(typeof(float));
+        }
+
         public void GeneratesProperStringSampleData()
         {
             var dateTimeString = SampleData.GenerateSampleData("string", "date-time");
@@ -183,6 +198,23 @@ namespace Totem.Tests.Features.API
             {
                 var parsedItem = int.Parse(item);
                 parsedItem.GetType().ShouldBe(typeof(int));
+            }
+        }
+
+        public void GeneratesProperNumberArraySampleData()
+        {
+            var arrayItem = new SchemaObject()
+            {
+                Type = "Number",
+                Format = "float"
+            };
+            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+
+            var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
+            foreach (var item in items)
+            {
+                var parsedItem = float.Parse(item);
+                parsedItem.GetType().ShouldBe(typeof(float));
             }
         }
 

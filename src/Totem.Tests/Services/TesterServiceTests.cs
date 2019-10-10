@@ -260,6 +260,28 @@ namespace Totem.Tests.Services
             result.IsMessageValid.ShouldBeTrue();
         }
 
+        public void ShouldValidateNumberType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Number", new SchemaObject
+                {
+                    Type = "Number"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Number",  "4.5"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeTrue();
+        }
+
         public void ShouldFailValidationForNonIntegerType()
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
@@ -280,6 +302,28 @@ namespace Totem.Tests.Services
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
             result.IsMessageValid.ShouldBeFalse("\"Not an integer\" does not match the required data type for Integer (Integer).");
+        }
+
+        public void ShouldFailValidationForNonNumberType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Number", new SchemaObject
+                {
+                    Type = "Number"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Number",  "Not a number"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeFalse("\"Not a number\" does not match the required data type for Number (Number).");
         }
 
         public void ShouldValidateArrayType()
@@ -333,6 +377,7 @@ namespace Totem.Tests.Services
 
         [TestingConvention.Input("String")]
         [TestingConvention.Input("Integer")]
+        [TestingConvention.Input("Number")]
         public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType)
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
@@ -355,7 +400,10 @@ namespace Totem.Tests.Services
                     itemString = "not a datetime"; // Not a string item
                     break;
                 case "Integer":
-                    itemString = "not an integer"; // Not an integer item 
+                    itemString = "not an integer"; // Not an integer item
+                    break;
+                case "Number":
+                    itemString = "not a number"; // Not a number item
                     break;
             }
 
@@ -472,6 +520,75 @@ namespace Totem.Tests.Services
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
             result.IsMessageValid.ShouldBeFalse("\"2150000000\" does not match the required format for Integer (Int32).");
+        }
+
+        public void ShouldValidateFloatFormat()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Number", new SchemaObject
+                {
+                    Type = "Number",
+                    Format = "float"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Number",  "5.7"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeTrue();
+        }
+
+        public void ShouldValidateDoubleFormat()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Number", new SchemaObject
+                {
+                    Type = "Number",
+                    Format = "double"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Number",  "123456789012.34567"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeTrue();
+        }
+
+        public void ShouldFailValidationForNonFloatFormat()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Number", new SchemaObject
+                {
+                    Type = "Number",
+                    Format = "float"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Number", double.MinValue}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeFalse("\"123456789012.34567\" does not match the required format for Number (Float).");
         }
 
         public void ShouldValidateDateTimeFormat()

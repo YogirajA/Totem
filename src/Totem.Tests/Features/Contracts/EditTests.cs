@@ -1548,6 +1548,65 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The example 'not-an-integer-example' for 'Age' does not match the required data type or format 'integer'.");
         }
 
+        public async Task ShouldNotEditWhenNonNumberTypeExampleForNumberType()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Height"": {
+                                ""type"": ""number"",
+                                ""format"": ""float"",
+                                ""example"": ""not-a-number-example""
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+
+            command.ShouldNotValidate("The example 'not-a-number-example' for 'Height' does not match the required data type or format 'number'.");
+        }
+
         public async Task ShouldNotEditWhenNonDateTimeExampleForDateTimeFormat()
         {
             var initialContract = await AlreadyInDatabaseContract();

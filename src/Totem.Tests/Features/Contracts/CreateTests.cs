@@ -1076,6 +1076,47 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The example 'not-an-integer-example' for 'Age' does not match the required data type or format 'integer'.");
         }
 
+        public void ShouldNotCreateWhenNonNumberTypeExampleForNumberType()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Height"": {
+                                ""type"": ""number"",
+                                ""format"": ""float"",
+                                ""example"": ""not-a-number-example""
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The example 'not-a-number-example' for 'Height' does not match the required data type or format 'number'.");
+        }
+
         public void ShouldNotCreateWhenNonDateTimeExampleForDateTimeFormat()
         {
             var newContract = SampleContract();
