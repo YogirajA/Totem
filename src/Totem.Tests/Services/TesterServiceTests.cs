@@ -375,10 +375,10 @@ namespace Totem.Tests.Services
             result.MessageErrors[0].ShouldBe("\"Array\" does not have the required property(Items) for type(Array).");
         }
 
-        [TestingConvention.Input("String")]
-        [TestingConvention.Input("Integer")]
-        [TestingConvention.Input("Number")]
-        public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType)
+        [Input("String", "not a datetime")]
+        [Input("Integer", "not an integer")]
+        [Input("Number", "not a number")]
+        public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType, string itemString)
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
             {
@@ -392,20 +392,6 @@ namespace Totem.Tests.Services
                     }
                 }}
             };
-
-            var itemString = "";
-            switch (dataType)
-            {
-                case "String":
-                    itemString = "not a datetime"; // Not a string item
-                    break;
-                case "Integer":
-                    itemString = "not an integer"; // Not an integer item
-                    break;
-                case "Number":
-                    itemString = "not a number"; // Not a number item
-                    break;
-            }
 
             var messageKeyDictionary = new CaseInsensitiveDictionary<object>
             {
