@@ -73,11 +73,9 @@ namespace Totem.Tests.Features.API
             var result = await Send(command);
 
             var messageDictionary = JsonConvert.DeserializeObject<CaseInsensitiveDictionary<object>>(result.SampleData);
-            var time = DateTime.Parse(messageDictionary["Timestamp"].ToString());
-            var guid = Guid.Parse(messageDictionary["ID"].ToString());
+            Guid.TryParse(messageDictionary["ID"].ToString(), out _).ShouldBe(true);
+            DateTime.TryParse(messageDictionary["Timestamp"].ToString(), out _).ShouldBe(true);
 
-            guid.GetType().ShouldBe(typeof(Guid));
-            time.GetType().ShouldBe(typeof(DateTime));
             messageDictionary["Name"].ShouldBe("String text");
             messageDictionary["Age"].ShouldBe(5);
         }
@@ -85,39 +83,32 @@ namespace Totem.Tests.Features.API
         public void GeneratesProperIntegerSampleData()
         {
             var sampleInt32 = SampleData.GenerateSampleData("Integer", "Int32");
-            var int32Value = int.Parse(sampleInt32);
-            int32Value.GetType().ShouldBe(typeof(int));
+            int.TryParse(sampleInt32, out _).ShouldBe(true);
 
             var sampleInt64 = SampleData.GenerateSampleData("Integer", "Int64");
-            var int64Value = long.Parse(sampleInt64);
-            int64Value.GetType().ShouldBe(typeof(long));
+            long.TryParse(sampleInt64, out _).ShouldBe(true);
 
             var sampleInt = SampleData.GenerateSampleData("Integer", null);
-            var intValue = long.Parse(sampleInt);
-            intValue.GetType().ShouldBe(typeof(long));
+            long.TryParse(sampleInt, out _).ShouldBe(true);
         }
 
         public void GeneratesProperNumberSampleData()
         {
             var sampleFloat = SampleData.GenerateSampleData("Number", "Float");
-            var floatValue = float.Parse(sampleFloat);
-            floatValue.GetType().ShouldBe(typeof(float));
+            float.TryParse(sampleFloat, out _).ShouldBe(true);
 
             var sampleDouble = SampleData.GenerateSampleData("Number", "Double");
-            var doubleValue = double.Parse(sampleDouble);
-            doubleValue.GetType().ShouldBe(typeof(double));
+            double.TryParse(sampleDouble, out _).ShouldBe(true);
 
             var sampleNumber = SampleData.GenerateSampleData("Number", null);
-            var numberValue = float.Parse(sampleNumber);
-            numberValue.GetType().ShouldBe(typeof(float));
+            double.TryParse(sampleNumber, out _).ShouldBe(true);
         }
 
         public void GeneratesProperStringSampleData()
         {
             var dateTimeString = SampleData.GenerateSampleData("string", "date-time");
             dateTimeString = dateTimeString.Replace("\"", "");
-            var sampleDateTime = DateTime.Parse(dateTimeString);
-            sampleDateTime.GetType().ShouldBe(typeof(DateTime));
+            DateTime.TryParse(dateTimeString, out _).ShouldBe(true);
 
             var sampleData = SampleData.GenerateSampleData("string", null);
             sampleData.GetType().ShouldBe(typeof(string));
@@ -128,8 +119,7 @@ namespace Totem.Tests.Features.API
             var guidString = SampleData.GenerateSampleData("string", null,
                 "^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
-            var sampleGuid = Guid.Parse(guidString);
-            sampleGuid.GetType().ShouldBe(typeof(Guid));
+            Guid.TryParse(guidString, out _).ShouldBe(true);
         }
 
         public void SampleDataHandlesInvalidPatternRegex()
@@ -196,8 +186,7 @@ namespace Totem.Tests.Features.API
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
             {
-                var parsedItem = int.Parse(item);
-                parsedItem.GetType().ShouldBe(typeof(int));
+                int.TryParse(item, out _).ShouldBe(true);
             }
         }
 
@@ -213,8 +202,7 @@ namespace Totem.Tests.Features.API
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
             {
-                var parsedItem = float.Parse(item);
-                parsedItem.GetType().ShouldBe(typeof(float));
+                float.TryParse(item, out _).ShouldBe(true);
             }
         }
 
@@ -231,8 +219,7 @@ namespace Totem.Tests.Features.API
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
             {
-                var parsedItem = DateTime.Parse(item);
-                parsedItem.GetType().ShouldBe(typeof(DateTime));
+                DateTime.TryParse(item, out _).ShouldBe(true);
             }
         }
 
