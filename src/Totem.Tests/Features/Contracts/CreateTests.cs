@@ -18,7 +18,7 @@ namespace Totem.Tests.Features.Contracts
             var oldCount = CountRecords<Contract>();
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -148,7 +148,7 @@ namespace Totem.Tests.Features.Contracts
             var oldCount = CountRecords<Contract>();
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -187,7 +187,7 @@ namespace Totem.Tests.Features.Contracts
         {
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -215,7 +215,7 @@ namespace Totem.Tests.Features.Contracts
         {
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -232,7 +232,7 @@ namespace Totem.Tests.Features.Contracts
         {
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -246,7 +246,7 @@ namespace Totem.Tests.Features.Contracts
 
         public void ShouldNotCreateWhenRequiredFieldsEmpty()
         {
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = "",
                 ContractString = "",
@@ -267,7 +267,7 @@ namespace Totem.Tests.Features.Contracts
         {
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -314,7 +314,7 @@ namespace Totem.Tests.Features.Contracts
                     }
                 }";
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -338,7 +338,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringIsNotValidJson()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = "Not a valid JSON string",
@@ -353,7 +353,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringIsNotValidSchema()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = "{\"id\": \"Guid\", \"Timestamp\": \"DateTime\", \"Name\": \"String\", \"Age\": \"Int32\"}",
@@ -368,7 +368,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringTimestampDoesNotHaveFormat()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -443,7 +443,7 @@ namespace Totem.Tests.Features.Contracts
                     }
                 }";
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -510,7 +510,7 @@ namespace Totem.Tests.Features.Contracts
                     }
                 }";
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -583,7 +583,7 @@ namespace Totem.Tests.Features.Contracts
                     }
                 }";
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -652,7 +652,7 @@ namespace Totem.Tests.Features.Contracts
                     }
                 }";
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -676,7 +676,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNestedArrayDoesNotHaveItems()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -730,7 +730,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringArrayDoesNotHaveItems()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -774,7 +774,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringArrayDoesNotHaveAValidItemsType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -821,7 +821,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNestedArrayDoesNotHaveAValidItemsType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -878,7 +878,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringDoesNotHaveValidType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -919,7 +919,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringDoesNotHaveValidFormat()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -960,7 +960,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringDoesNotHaveAProperFormat()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1002,7 +1002,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenContractStringPropertyDoesNotHaveAType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1038,7 +1038,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNonIntegerTypeExampleForIntegerType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1079,7 +1079,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNonNumberTypeExampleForNumberType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1120,7 +1120,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNonDateTimeExampleForDateTimeFormat()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1161,7 +1161,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNonGuidExampleForGuid()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1206,7 +1206,7 @@ namespace Totem.Tests.Features.Contracts
         public void ShouldNotCreateWhenNestedExamplesDoNotMatchType()
         {
             var newContract = SampleContract();
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = @"{
@@ -1257,7 +1257,7 @@ namespace Totem.Tests.Features.Contracts
             var initialContract = await AlreadyInDatabaseContract();
             var newContract = SampleContract(true);
 
-            var command = new Create.Command()
+            var command = new Create.Command
             {
                 Id = initialContract.Id,
                 Description = newContract.Description,
