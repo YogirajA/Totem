@@ -294,10 +294,7 @@ namespace Totem.Services
 
                 if (itemSchema.Type.EqualsCaseInsensitive(DataType.Number.Value))
                 {
-                    if (!TryParseNumberArray(itemArray))
-                    {
-                        AddItemTypeError(testMessageResult, kv.Key, DataType.Number.Value);
-                    }
+                    TryParseNumberArray(propertySchemaObject, kv, itemArray, testMessageResult);
                 }
             }
         }
@@ -452,19 +449,38 @@ namespace Totem.Services
             }
         }
 
-        private bool TryParseNumberArray(dynamic itemArray)
+        private static void TryParseNumberArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
         {
+            var itemFormat = propertySchemaObject.Items.Format;
+
             foreach (var item in itemArray)
             {
-                float notFloat;
-                double notDouble;
-                if ((!float.TryParse(item.ToString(), out notFloat)) || (!double.TryParse(item.ToString(), out notDouble)))
+                var isFloat = float.TryParse(item.ToString(), out float _);
+                var isDouble = double.TryParse(item.ToString(), out double _);
+
+                // Validate integer data type, which is int32.
+                if (itemFormat == null && !isFloat)
                 {
-                    return false;
+                    AddItemTypeError(testMessageResult, kv.Key, DataType.Number.Value);
+                    break;
+                }
+
+                if (itemFormat != null)
+                {
+                    // Validate specific integer formats
+                    if (itemFormat.EqualsCaseInsensitive(Format.Float.Value) && !isFloat)
+                    {
+                        AddItemTypeError(testMessageResult, kv.Key, Format.Float.Value);
+                        break;
+                    }
+
+                    if (itemFormat.EqualsCaseInsensitive(Format.Double.Value) && !isDouble)
+                    {
+                        AddItemTypeError(testMessageResult, kv.Key, Format.Double.Value);
+                        break;
+                    }
                 }
             }
-
-            return true;
         }
 
         public bool TryParseJSON(string json, out JsonValue jsonObject)
