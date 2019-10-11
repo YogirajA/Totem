@@ -124,12 +124,12 @@ namespace Totem.Features.API
 
         public static string GenerateSampleData(string type, string format, string pattern = null, CaseInsensitiveDictionary<SchemaObject> properties = null, SchemaObject items = null, int minItems = 0, int maxItems = 0)
         {
-            if (type.EqualsCaseInsensitive("integer"))
+            if (type.EqualsCaseInsensitive(DataType.Integer.Value))
             {
                 return GenerateInteger(format);
             }
 
-            if (type.EqualsCaseInsensitive("number"))
+            if (type.EqualsCaseInsensitive(DataType.Number.Value))
             {
                 return GenerateNumber(format);
             }
@@ -141,7 +141,7 @@ namespace Totem.Features.API
                 return "[]";
             }
 
-            if (type.EqualsCaseInsensitive("object"))
+            if (type.EqualsCaseInsensitive(DataType.Object.Value))
             {
                 // Replace quotes inside nested JSON objects and remove slashes
                 return GenerateObject(properties).Replace(@"\", "").Replace("\"{", "{").Replace("}\"", "}");
@@ -158,20 +158,20 @@ namespace Totem.Features.API
             {
                 foreach (var (key, value) in properties)
                 {
-                    if (value.Type.EqualsCaseInsensitive("integer"))
+                    if (value.Type.EqualsCaseInsensitive(DataType.Integer.Value))
                     {
                         _jsonDictionary[key] = GenerateInteger(value.Format);
                     }
-                    if (value.Type.EqualsCaseInsensitive("number"))
+                    if (value.Type.EqualsCaseInsensitive(DataType.Number.Value))
                     {
                         _jsonDictionary[key] = GenerateNumber(value.Format);
                     }
-                    if (value.Type.EqualsCaseInsensitive("string"))
+                    if (value.Type.EqualsCaseInsensitive(DataType.String.Value))
                     {
                         //Removing extra quotes from string examples in nested objects
                         _jsonDictionary[key] = GenerateString(value.Format, value.Pattern).Replace("\"", ""); ;
                     }
-                    if (value.Type.EqualsCaseInsensitive("object"))
+                    if (value.Type.EqualsCaseInsensitive(DataType.Object.Value))
                     {
                         _jsonDictionary[key] = GenerateObject(value.Properties);
                     }
@@ -191,7 +191,7 @@ namespace Totem.Features.API
 
         public static string GenerateString(string format, string pattern)
         {
-            if (format != null && format.EqualsCaseInsensitive("date-time"))
+            if (format != null && format.EqualsCaseInsensitive(Format.DateTime.Value))
             {
                 var currentDate = DateTime.Now;
                 return $"\"{currentDate.ToString("s", CultureInfo.InvariantCulture)}\"";
@@ -213,11 +213,11 @@ namespace Totem.Features.API
 
         public static string GenerateNumber(string format)
         {
-            if (format != null && format.EqualsCaseInsensitive("Float"))
+            if (format != null && format.EqualsCaseInsensitive(Format.Float.Value))
             {
                 return "10.50";
             }
-            if (format != null && format.EqualsCaseInsensitive("Double"))
+            if (format != null && format.EqualsCaseInsensitive(Format.Double.Value))
             {
                 return "123456789012.34567";
             }
@@ -227,11 +227,11 @@ namespace Totem.Features.API
 
         public static string GenerateInteger(string format)
         {
-            if (format != null && format.EqualsCaseInsensitive("Int32"))
+            if (format != null && format.EqualsCaseInsensitive(Format.Int32.Value))
             {
                 return "5";
             }
-            if (format != null && format.EqualsCaseInsensitive("Int64"))
+            if (format != null && format.EqualsCaseInsensitive(Format.Int64.Value))
             {
                 return "2147483650";
             }
