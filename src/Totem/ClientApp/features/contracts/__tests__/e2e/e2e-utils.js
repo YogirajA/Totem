@@ -4,6 +4,8 @@ import { Selector } from 'testcafe';
 // Input fields and buttons on the AddNewFieldModal
 export const inputFieldName = Selector('#propertyName');
 export const inputType = VueSelector('ref:propertyType');
+export const isArrayCheckbox = Selector('#isArray');
+export const isObjectArrayCheckbox = Selector('#isObjectArray');
 export const inputFieldExample = Selector('#propertyExample');
 
 export const addNewFieldBtn = Selector('#addNewFieldBtn');
@@ -16,6 +18,11 @@ export const modelName = Selector('#modelName');
 export const saveModelBtn = Selector('#saveModelBtn');
 export const cancelModelBtn = Selector('#modelModalWindow').find('#cancelBtn');
 export const addNewFieldNestedBtn = Selector('#nestedContractGrid').find('#addNewFieldBtn');
+
+// Import Contract buttons
+export const importContractBtn = Selector('#importContractFromMessageBtn');
+export const importBtn = Selector('#importContract');
+export const importTextArea = Selector('#import-message');
 
 // Fixture Setup: Login and Go to Edit
 export async function loginAndNavigateToEditContract(t) {

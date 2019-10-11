@@ -5,7 +5,8 @@ import {
   findRowInTreeAndUpdate,
   last,
   findRowInTreeAndDelete,
-  findParent
+  findParent,
+  isValidJSON
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -211,5 +212,27 @@ describe('last', () => {
     const array = [];
     const item = last(array);
     expect(item).toBe(undefined);
+  });
+});
+
+describe('isValidJSON', () => {
+  it('returns true when string is valid JSON', () => {
+    const testString = `{
+      "item1": "test",
+      "item2": {
+        "item3": "test543",
+        "item4": {
+          "item5": "testu436"
+        }
+      }
+    }`;
+    const result = isValidJSON(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is valid JSON', () => {
+    const testString = 'invalid string';
+    const result = isValidJSON(testString);
+    expect(result).toBe(false);
   });
 });

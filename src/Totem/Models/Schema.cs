@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Json;
 using System.Linq;
@@ -67,74 +66,125 @@ namespace Totem.Models
 
         public static PopulatedSchema PopulateReferences(CaseInsensitiveDictionary<SchemaObject> schema)
         {
-            var propertyList = schema["Contract"].Properties.ToList();
-            var errorDictionary = new Dictionary<string, bool>(){};
+            var schemaObject = schema["Contract"];
 
-            PopulateNestedReference(propertyList, errorDictionary, schema, schema["Contract"]);
+            PopulateNestedReference(schemaObject, schema, out var hasReferenceError);
 
             var populatedSchema = new PopulatedSchema
             {
                 SchemaDictionary = schema,
-                HasReferenceError = errorDictionary.ContainsValue(true)
+                HasReferenceError = hasReferenceError
             };
+
             return populatedSchema;
         }
 
-        private static void PopulateNestedReference(List<KeyValuePair<string, SchemaObject>> propertyList, Dictionary<string, bool> error, CaseInsensitiveDictionary<SchemaObject> schema, SchemaObject objectToUpdate)
+        private static void PopulateNestedReference(SchemaObject objectToUpdate, CaseInsensitiveDictionary<SchemaObject> schema, out bool hasError)
         {
-            foreach (var (key, value) in propertyList)
+            hasError = false;
+
+            foreach (var (propertyKey, propertySchemaObject) in objectToUpdate.Properties.ToArray())
             {
-                var valueTypeMatched = false;
-                if (value.Type != null)
+                var dataType = propertySchemaObject.GetDataType();
+
+                if (dataType == DataType.Object)
                 {
-                    valueTypeMatched = value.Type.EqualsCaseInsensitive(DataType.Object.Value);
-                    if(!valueTypeMatched)
-                        continue;
+                    PopulateNestedReference(propertySchemaObject, schema, out var hasErrorNestedReference);
+                    hasError = hasError || hasErrorNestedReference;
                 }
-                
-                if (valueTypeMatched)
+
+                if (HasValidTypeState(propertySchemaObject))
                 {
-                    PopulateNestedReference(value.Properties.ToList(), error, schema, value);
+                    continue;
+                }
+
+                var (referenceName, reference) = GetPropertyReference(propertySchemaObject, schema, out var hasErrorGetRefecence);
+
+                if (hasErrorGetRefecence)
+                {
+                    hasError = true;
+                    continue;
+                }
+
+                var schemaObject = BuildSchemaObject(referenceName, reference, propertySchemaObject.Example ?? reference.Example);
+
+                if (dataType == DataType.Array)
+                {
+                    objectToUpdate.Properties[propertyKey].Items = schemaObject;
+                    objectToUpdate.Properties[propertyKey].Items.Reference = referenceName;
                 }
                 else
                 {
-                    if (value.Reference == null)
-                    {
-                        error.Add(key, true);
-                    }
-                    var referenceName = ParseReferenceName(value.Reference);
-                    schema.TryGetValue(referenceName, out var reference);
-
-                    if (reference == null)
-                    {
-                        error.Add(key, true);
-                    }
-                    else
-                    {
-                        if (objectToUpdate == null) continue;
-                        objectToUpdate.Properties[key] = new SchemaObject()
-                        {
-                            Type = reference.Type,
-                            Properties = reference.Properties,
-                            Items = reference.Items,
-                            MaxItems = reference.MaxItems,
-                            MinItems = reference.MinItems,
-                            MaxLength = reference.MaxLength,
-                            MinLength = reference.MinLength,
-                            Pattern = reference.Pattern,
-                            Format = reference.Format,
-                            Example = value.Example ?? reference.Example,
-                            Reference = referenceName
-                        };
-                    }
+                    objectToUpdate.Properties[propertyKey] = schemaObject;
+                    objectToUpdate.Properties[propertyKey].Reference = referenceName;
                 }
             }
+        }
+
+        private static bool HasValidTypeState(SchemaObject schemaObject)
+        {
+            var isArrayType = schemaObject.GetDataType() == DataType.Array;
+            var arrayItems = schemaObject.Items;
+            var arrayPropertyType = arrayItems?.Type;
+
+            return (!isArrayType && schemaObject.Type != null) ||
+                   (isArrayType && arrayPropertyType != null) ||
+                   (isArrayType && arrayItems == null);
+        }
+
+        private static (string, SchemaObject) GetPropertyReference(SchemaObject schemaObject, CaseInsensitiveDictionary<SchemaObject> schema, out bool hasError)
+        {
+            hasError = false;
+
+            var isArrayType = schemaObject.GetDataType() == DataType.Array;
+
+            var propertyReference = isArrayType ? schemaObject.Items.Reference : schemaObject.Reference;
+
+            if (propertyReference == null)
+            {
+                hasError = true;
+                return default;
+            }
+
+            var referenceName = ParseReferenceName(propertyReference);
+            schema.TryGetValue(referenceName, out var reference);
+
+            if (reference == null)
+            {
+                hasError = true;
+                return default;
+            }
+
+            return (referenceName, reference);
+        }
+
+        private static SchemaObject BuildSchemaObject(string referenceName, SchemaObject reference, object example)
+        {
+            return new SchemaObject
+            {
+                Type = reference.Type,
+                Properties = reference.Properties,
+                Items = reference.Items,
+                MaxItems = reference.MaxItems,
+                MinItems = reference.MinItems,
+                MaxLength = reference.MaxLength,
+                MinLength = reference.MinLength,
+                Pattern = reference.Pattern,
+                Format = reference.Format,
+                Example = example,
+                Reference = referenceName
+            };
         }
 
         public static string ParseReferenceName(string reference)
         {
             // Expects format of "#/ReferenceName"
             return reference.Substring(2);
+        }
+
+        public DataType GetDataType()
+        {
+            return DataType.GetAll().SingleOrDefault(x => x.Value.EqualsCaseInsensitive(Type));
         }
     }
 
@@ -158,6 +208,7 @@ namespace Totem.Models
         public static readonly Format Password = new Format("password", "Password");
         public static readonly Format Byte = new Format("byte", "Byte");
         public static readonly Format Binary = new Format("binary", "Binary");
+        public static readonly Format Guid = new Format("guid", "Guid");
 
         // Number/Integer Formats
         public static readonly Format Float = new Format("float", "Float");

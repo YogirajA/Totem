@@ -4,11 +4,14 @@
   "description": "Contract Testing for Distributed Systems",
   "main": "ClientApp/app.js",
   "scripts": {
-    "runtestps": "@powershell dotnet run ../Totem/Totem.csproj --launch-profile 'Testing'",
-    "runtest": "webpack && npm run runtestps",
+    "runtestps": "@powershell start 'dotnet' -nnw -argumentlist 'run -p ../Totem/Totem.csproj --launch-profile \"Testing\"'",
+    "killapp": "@powershell taskkill /f /im dotnet.exe",
+    "runtest": "webpack && npm run --silent runtestps",
     "e2etest": "testcafe 'chrome:headless' ./ClientApp/features/contracts/__tests__/e2e/*.e2e.js",
-    "e2e": "concurrently --kill-others \"npm run runtest\" \"wait-on tcp:4000 && npm run e2etest\"",
-    "test": "jest",
+    "wait": "wait-on tcp:4000",
+    "e2eparallel": "npm-run-all --parallel \"runtest\" --serial \"wait\" \"e2etest\"",
+    "e2e": "npm run e2eparallel && npm run killapp",
+    "test": "jest && npm run e2e",
     "lint": "eslint --ext .js,.vue ClientApp"
   },
   "jest": {
@@ -29,6 +32,12 @@
       "./ClientApp/features/contracts/__tests__/e2e"
     ]
   },
+  "husky": {
+    "hooks": {
+      "pre-push": "npm run test",
+      "pre-commit": "npm run lint"
+    }
+  },
   "dependencies": {
     "bootstrap": "^4.3.1",
     "jquery": "3.4.0",
@@ -45,7 +54,6 @@
     "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^24.8.0",
     "babel-loader": "8.0.5",
-    "concurrently": "^4.1.2",
     "css-loader": "2.1.1",
     "eslint": "^5.3.0",
     "eslint-config-airbnb": "^17.1.1",
@@ -56,7 +64,9 @@
     "eslint-plugin-react": "^7.14.2",
     "eslint-plugin-vue": "5.2.2",
     "extract-text-webpack-plugin": "3.0.2",
+    "husky": "^3.0.7",
     "jest": "24.7.1",
+    "npm-run-all": "^4.1.5",
     "popper.js": "^1.15.0",
     "prettier": "^1.18.2",
     "sass": "1.19.0",

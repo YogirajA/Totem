@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   parseContractArray,
   formatReferenceName,
@@ -6,7 +7,12 @@ import {
   buildNewObject,
   findRow,
   getExistingOptions,
-  buildNestedOptions
+  buildNestedOptions,
+  getPropertiesCopy,
+  hasProperties,
+  isObjectArray,
+  updateProperties,
+  buildContractFromMessage
 } from '../contractParser';
 
 const sampleContractString = `{
@@ -430,6 +436,7 @@ describe('buildNewObject', () => {
           schemaString: '{"type": "string", "example": "sample string"}'
         }
       },
+      false,
       'field example',
       { parentId: 2 },
       sampleContractString
@@ -437,6 +444,50 @@ describe('buildNewObject', () => {
     expect(result.name).toBe('FieldName');
     expect(result.example).toBe('field example');
     expect(result.type).toBe('string');
+  });
+
+  it('creates a new row object for array to add to its parent when isArray is true', () => {
+    const result = buildNewObject(
+      'FieldName',
+      {
+        displayName: 'string',
+        id: '460e33c1-b075-4038-924a-67c213181fcf',
+        value: {
+          schemaName: 'String',
+          schemaString: '{"type": "string", "example": "sample string"}'
+        }
+      },
+      true,
+      'field example',
+      { parentId: 2 },
+      sampleContractString
+    );
+    expect(result.name).toBe('FieldName');
+    expect(result.example).toBe('field example');
+    expect(result.type).toBe('array');
+  });
+
+  it('creates a new row object for a guid array to add to its parent when isArray is true', () => {
+    const result = buildNewObject(
+      'FieldName',
+      {
+        displayName: 'Guid',
+        id: '460e33c1-b075-4038-924a-67c213181fcf',
+        value: {
+          schemaName: 'Guid',
+          schemaString: '{"type": "string", "example": "a sample guid"}'
+        }
+      },
+      true,
+      'field example',
+      { parentId: 2 },
+      sampleContractString
+    );
+    expect(result.name).toBe('FieldName');
+    expect(result.example).toBe('field example');
+    expect(result.type).toBe('array');
+    expect(result.items.reference).toBe('Guid');
+    expect(result.items.$ref).toBe('#/Guid');
   });
 
   it('maintains the same rowId if editing an existing object', () => {
@@ -450,6 +501,7 @@ describe('buildNewObject', () => {
           schemaString: '{"type": "string", "example": "sample string"}'
         }
       },
+      false,
       'field example edited',
       { parentId: 2, name: 'OriginalName', rowId: 5, example: 'original example', type: 'string' },
       sampleContractString
@@ -457,6 +509,54 @@ describe('buildNewObject', () => {
     expect(result.name).toBe('FieldNameEdited');
     expect(result.example).toBe('field example edited');
     expect(result.type).toBe('string');
+    expect(result.rowId).toBe(5);
+  });
+
+  it('maintains the same rowId if editing an existing array object when isArray is true', () => {
+    const result = buildNewObject(
+      'FieldNameEdited',
+      {
+        displayName: 'string',
+        id: '460e33c1-b075-4038-924a-67c213181fcf',
+        value: {
+          schemaName: 'String',
+          schemaString: '{"type": "string", "example": "sample string"}'
+        }
+      },
+      true,
+      'field example edited',
+      { parentId: 2, name: 'OriginalName', rowId: 5, example: 'original example', type: 'string' },
+      sampleContractString
+    );
+    expect(result.name).toBe('FieldNameEdited');
+    expect(result.example).toBe('field example edited');
+    expect(result.type).toBe('array');
+    expect(result.items.reference).toBeUndefined();
+    expect(result.items.$ref).toBeUndefined();
+    expect(result.rowId).toBe(5);
+  });
+
+  it('maintains the same rowId if editing an existing guid array object when isArray is true', () => {
+    const result = buildNewObject(
+      'FieldNameEdited',
+      {
+        displayName: 'Guid',
+        id: '460e33c1-b075-4038-924a-67c213181fcf',
+        value: {
+          schemaName: 'Guid',
+          schemaString: '{"type": "string", "example": "a sample guid"}'
+        }
+      },
+      true,
+      'field example edited',
+      { parentId: 2, name: 'OriginalName', rowId: 5, example: 'original example', type: 'string' },
+      sampleContractString
+    );
+    expect(result.name).toBe('FieldNameEdited');
+    expect(result.example).toBe('field example edited');
+    expect(result.type).toBe('array');
+    expect(result.items.reference).toBe('Guid');
+    expect(result.items.$ref).toBe('#/Guid');
     expect(result.rowId).toBe(5);
   });
 });
@@ -617,5 +717,327 @@ describe('buildNestedOptions', () => {
     expect(optionArray[1].isObject).toEqual(true);
     expect(optionArray[2].displayName).toEqual('ThirdObject');
     expect(optionArray[2].isObject).toEqual(true);
+  });
+});
+
+describe('getPropertiesCopy', () => {
+  it('should return the properties from an object', () => {
+    const model = {
+      name: 'FullName',
+      properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+    };
+
+    const result = getPropertiesCopy(model);
+
+    expect(result).toEqual([
+      { name: 'FirstName', type: 'string' },
+      { name: 'LastName', type: 'string' }
+    ]);
+  });
+
+  it('should return the properties from an object array', () => {
+    const model = {
+      name: 'FullName',
+      items: {
+        properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+      }
+    };
+
+    const result = getPropertiesCopy(model);
+
+    expect(result).toEqual([
+      { name: 'FirstName', type: 'string' },
+      { name: 'LastName', type: 'string' }
+    ]);
+  });
+
+  it('should return an empty array from an object without properties', () => {
+    const model = {
+      name: 'FullName'
+    };
+
+    const result = getPropertiesCopy(model);
+
+    expect(result).toEqual([]);
+  });
+
+  it('should return an empty array from an array of objects without properties', () => {
+    const model = {
+      name: 'FullName',
+      items: {}
+    };
+
+    const result = getPropertiesCopy(model);
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe('hasProperties', () => {
+  it('should return true from an object with properties', () => {
+    const model = {
+      name: 'FullName',
+      properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+    };
+
+    const result = hasProperties(model);
+
+    expect(result).toEqual(true);
+  });
+
+  it('should return true from an array of objects with properties', () => {
+    const model = {
+      name: 'FullName',
+      items: {
+        properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+      }
+    };
+
+    const result = hasProperties(model);
+
+    expect(result).toEqual(true);
+  });
+
+  it('should return false from an object without properties', () => {
+    const model = {
+      name: 'FullName'
+    };
+
+    const result = hasProperties(model);
+
+    expect(result).toEqual(false);
+  });
+
+  it('should return false from an array of objects without properties', () => {
+    const model = {
+      name: 'FullName',
+      items: {}
+    };
+
+    const result = hasProperties(model);
+
+    expect(result).toEqual(false);
+  });
+});
+
+describe('isObjectArray', () => {
+  it('should return false from an object', () => {
+    const model = {
+      name: 'FullName',
+      properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+    };
+
+    const result = isObjectArray(model);
+
+    expect(result).toEqual(false);
+  });
+
+  it('should return true from an array of objects', () => {
+    const model = {
+      name: 'FullName',
+      items: {
+        properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+      }
+    };
+
+    const result = isObjectArray(model);
+
+    expect(result).toEqual(true);
+  });
+
+  it('should return false from an schema object without properties', () => {
+    const model = {
+      name: 'FullName'
+    };
+
+    const result = isObjectArray(model);
+
+    expect(result).toEqual(false);
+  });
+
+  it('should return false from an array of objects without properties', () => {
+    const model = {
+      name: 'FullName',
+      items: {}
+    };
+
+    const result = isObjectArray(model);
+
+    expect(result).toEqual(false);
+  });
+});
+
+describe('updateProperties', () => {
+  it('should update the properties from an object', () => {
+    const model = {
+      name: 'FullName',
+      properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+    };
+
+    const expectedProperties = [
+      { name: 'FirstName', type: 'string' },
+      { name: 'MiddleName', type: 'string' },
+      { name: 'LastName', type: 'string' }
+    ];
+
+    updateProperties(model, expectedProperties);
+
+    expect(model.properties).toEqual(expectedProperties);
+  });
+
+  it('should update the properties from an array of objects', () => {
+    const model = {
+      name: 'FullName',
+      items: {
+        properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+      }
+    };
+
+    const expectedProperties = [
+      { name: 'FirstName', type: 'string' },
+      { name: 'MiddleName', type: 'string' },
+      { name: 'LastName', type: 'string' }
+    ];
+
+    updateProperties(model, expectedProperties);
+
+    expect(model.items.properties).toEqual(expectedProperties);
+  });
+
+  it('should set the properties in schema.items.properties', () => {
+    const model = {
+      name: 'FullName',
+      properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+    };
+
+    const expectedProperties = [
+      { name: 'FirstName', type: 'string' },
+      { name: 'MiddleName', type: 'string' },
+      { name: 'LastName', type: 'string' }
+    ];
+
+    updateProperties(model, expectedProperties, true);
+
+    expect(model.items.properties).toEqual(expectedProperties);
+    expect(model.properties).toEqual(undefined);
+  });
+
+  it('should set the properties in schema.properties', () => {
+    const model = {
+      name: 'FullName',
+      items: {
+        properties: [{ name: 'FirstName', type: 'string' }, { name: 'LastName', type: 'string' }]
+      }
+    };
+
+    const expectedProperties = [
+      { name: 'FirstName', type: 'string' },
+      { name: 'MiddleName', type: 'string' },
+      { name: 'LastName', type: 'string' }
+    ];
+
+    updateProperties(model, expectedProperties, false);
+
+    expect(model.properties).toEqual(expectedProperties);
+    expect(model.items).toEqual(undefined);
+  });
+});
+
+describe('buildContractFromMessage', () => {
+  it('should generate a contract based on a message', () => {
+    const messageString = `{
+      "item1": "test1",
+      "item2": "test2",
+      "item3": "test3"
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item2: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item3:  {
+        type: 'string',
+        example: 'sample string'
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle nested objects', () => {
+    const messageString = `{
+      "item1": "test",
+      "item2": {
+        "item3": "test543",
+        "item4": {
+          "item5": "testu436"
+        }
+      }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item2: {
+        type: 'object',
+        properties: {
+          item3:  {
+            type: 'string',
+            example: 'sample string'
+          },
+          item4:  {
+            type: 'object',
+            properties: {
+              item5:  {
+                type: 'string',
+                example: 'sample string'
+              }
+            }
+          }
+        }
+      },
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle arrays', () => {
+    const messageString = `{
+      "item1": "test",
+      "item2": ["string1", "string2"]
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'string',
+        example: 'sample string'
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'string',
+          example: 'sample string'
+        },
+        example: '["sample string"]'
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
   });
 });
