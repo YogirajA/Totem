@@ -6,7 +6,9 @@ import {
   last,
   findRowInTreeAndDelete,
   findParent,
-  isValidJSON
+  isValidJSON,
+  isDate,
+  isGUID
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -230,9 +232,37 @@ describe('isValidJSON', () => {
     expect(result).toBe(true);
   });
 
-  it('returns false when string is valid JSON', () => {
+  it('returns false when string is not valid JSON', () => {
     const testString = 'invalid string';
     const result = isValidJSON(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isDate', () => {
+  it('returns true when string is valid Date', () => {
+    const testString = `2019-01-01T18:14:29Z`;
+    const result = isDate(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not valid Date', () => {
+    const testString = 'not a date';
+    const result = isDate(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isGUID', () => {
+  it('returns true when string is valid GUID', () => {
+    const testString = `01234567-abcd-0123-abcd-0123456789ab`;
+    const result = isGUID(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not valid GUID', () => {
+    const testString = 'not a guid';
+    const result = isGUID(testString);
     expect(result).toBe(false);
   });
 });
