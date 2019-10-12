@@ -4,6 +4,8 @@ import { Selector } from 'testcafe';
 // Input fields and buttons on the AddNewFieldModal
 export const inputFieldName = Selector('#propertyName');
 export const inputType = VueSelector('ref:propertyType');
+export const isArrayCheckbox = Selector('#isArray');
+export const isObjectArrayCheckbox = Selector('#isObjectArray');
 export const inputFieldExample = Selector('#propertyExample');
 
 export const addNewFieldBtn = Selector('#addNewFieldBtn');

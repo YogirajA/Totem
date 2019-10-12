@@ -464,6 +464,84 @@ namespace Totem.Tests.Features.Contracts
             createdContract.ShouldMatch(newContract);
         }
 
+        public async Task ShouldCreateWhenValidWithArrayOfObjects()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+            newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""PhoneId"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""reference"": ""Guid"",
+                                                ""$ref"": ""#/Guid""
+                                            },
+                                            ""example"": ""[\""01234567-abcd-0123-abcd-0123456789ab\""]"",
+                                            ""format"": ""guid""
+                                        },
+                                        ""AreaCode"": {
+                                            ""type"": ""integer"",
+                                            ""example"": ""123""
+                                        },
+                                        ""Number"": {
+                                            ""type"": ""integer"",
+                                            ""example"": ""123""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
+        }
+
         public async Task ShouldCreateWhenValidWithNestedObject()
         {
             var oldCount = CountRecords<Contract>();
@@ -510,7 +588,80 @@ namespace Totem.Tests.Features.Contracts
                     }
                 }";
 
-            var command = new Create.Command()
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
+        }
+
+        public async Task ShouldCreateWhenValidWithNestedArrayOfObjects()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+            newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""integer"",
+                                                        ""example"": ""232""
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -584,6 +735,92 @@ namespace Totem.Tests.Features.Contracts
                 }";
 
             var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = newContract.ContractString,
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldValidate();
+            var newContractId = await Send(command);
+            newContract.Id = newContractId;
+
+            CountRecords<Contract>().ShouldBe(oldCount + 1);
+            var createdContract = Query<Contract>(newContractId, command.VersionNumber);
+            createdContract.UpdateInst = newContract.UpdateInst;
+            createdContract.CreatedDate = newContract.CreatedDate;
+
+            createdContract.ShouldMatch(newContract);
+        }
+
+        public async Task ShouldCreateWhenValidWithNestedArrayOfObjectsWithMultiArrays()
+        {
+            var oldCount = CountRecords<Contract>();
+            var newContract = SampleContract(true);
+            newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""integer"",
+                                                        ""example"": ""232""
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        ""ArrayOfIntegers"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""integer"",
+                                                ""example"": ""667""
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""string""
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+
+            var command = new Create.Command
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,
@@ -727,6 +964,176 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
         }
 
+        public void ShouldNotCreateWhenNestedArrayOfObjectsDoesNotHaveItems()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array""
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
+        }
+
+        public void ShouldNotCreateWhenNestedArrayOfObjectsDoesNotHaveProperties()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array"",
+                                                        ""items"": {
+                                                            ""type"": ""object""
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. \"object\" data type requires a 'Properties' object.");
+        }
+
+        public void ShouldNotCreateWhenArrayOfObjectsDoesNotHaveProperties()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""ArrayObjsNoProps"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object""
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The definition of \"ArrayObjsNoProps\" is incorrect. \"object\" data type requires a 'Properties' object.");
+        }
+
         public void ShouldNotCreateWhenContractStringArrayDoesNotHaveItems()
         {
             var newContract = SampleContract();
@@ -855,6 +1262,69 @@ namespace Totem.Tests.Features.Contracts
                                                ""type"": ""array"",
                                                ""items"": {
                                                     ""type"": ""not-a-type""
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. A valid type is required for the Items sub-property.");
+        }
+
+        public void ShouldNotCreateWhenNestedArrayOfObjectsDoesNotHaveAValidItemsType()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array"",
+                                                        ""items"": {
+                                                            ""type"": ""not-a-type""
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -1031,7 +1501,7 @@ namespace Totem.Tests.Features.Contracts
                 VersionNumber = newContract.VersionNumber
             };
 
-            command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.",
+            command.ShouldNotValidate("Reference definition not found.",
                 "The definition of \"Name\" is incorrect. A type or reference is required.");
         }
 

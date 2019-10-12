@@ -60,7 +60,11 @@ import {
   createSchemaString,
   getExistingOptions,
   updateNestedProperty,
-  findRow
+  findRow,
+  getPropertiesCopy,
+  isObjectArray,
+  updateProperties,
+  hasProperties
 } from './features/contracts/contractParser';
 import {
   reorderOptions,
@@ -150,8 +154,8 @@ export default {
           // Can not delete the only child of a parent model
           if (
             row.rowId === field.rowId + 1 &&
-            row.type === 'object' &&
-            row.properties.length === 1
+            (row.type === 'object' || (row.items && row.items.type === 'object')) &&
+            getPropertiesCopy(row).length === 1
           ) {
             return true;
           }
@@ -184,11 +188,13 @@ export default {
       const model = {
         name: row.name || (previousModel && previousModel.name),
         type: 'object',
-        properties: row.properties || (previousModel && previousModel.properties) || [],
         rowId: row.rowId,
         isNewModel,
         parentId
       };
+
+      const properties = previousModel ? getPropertiesCopy(previousModel) : undefined;
+      updateProperties(model, properties, isObjectArray(row));
 
       if (previousModel && previousModel.modalRowId) {
         // Editing an existing model row
@@ -201,7 +207,7 @@ export default {
 
       this.currentParentName = model.name;
       this.editStack.push(deepCopy(model));
-      this.modalRows = deepCopy(model.properties);
+      this.modalRows = getPropertiesCopy(model);
       this.isEditManuallyWindowVisible = false;
       this.isAddFieldWindowVisible = false;
       this.isAddModelWindowVisible = true;
@@ -224,8 +230,9 @@ export default {
         } else {
           // Update the modal window to show the parent's rows
           this.isDescending = !setDescendingFalse;
-          if (last(this.editStack).properties) {
-            this.modalRows = deepCopy(last(this.editStack).properties);
+          const lastItem = last(this.editStack);
+          if (hasProperties(lastItem)) {
+            this.modalRows = getPropertiesCopy(lastItem);
             this.currentParentName = last(this.editStack).name;
           }
         }
@@ -236,14 +243,16 @@ export default {
     saveField(object) {
       const field = deepCopy(object);
       const addingToAModel = this.isAddModelWindowVisible;
+      const parentField = this.editStack[this.editStack.length - 2];
+      const parentFieldProperties = parentField ? getPropertiesCopy(parentField) : undefined;
 
       if (addingToAModel) {
+        // Update the parent model
         const isEditing = field.rowId !== undefined;
         if (isEditing) {
           // Row already exists in modalRows, so update it
-          const parent = deepCopy(this.editStack[this.editStack.length - 2].properties);
-          this.modalRows = updateNestedProperty(field, parent);
-          this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
+          this.modalRows = updateNestedProperty(field, parentFieldProperties);
+          updateProperties(parentField, deepCopy(this.modalRows));
         } else {
           // Creating a new row in the model
           if (field.rowId === undefined) {
@@ -254,20 +263,23 @@ export default {
             const rows = deepCopy(this.modalRows);
             rows.forEach(obj => {
               if (obj.name === this.parentName) {
-                obj.properties.push(field);
+                const properties = getPropertiesCopy(obj);
+                properties.push(field);
+                updateProperties(properties, field);
               }
             });
             const parentObject = rows.find(obj => obj.name === this.parentName);
             if (parentObject) {
-              this.modalRows = deepCopy(parentObject.properties);
+              this.modalRows = getPropertiesCopy(parentObject);
             } else {
               this.modalRows.push(field);
             }
 
-            this.editStack[this.editStack.length - 2].properties.push(field);
+            parentFieldProperties.push(field);
+            updateProperties(parentField, parentFieldProperties);
           } else {
             this.modalRows.push(field);
-            this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
+            updateProperties(parentField, deepCopy(this.modalRows));
           }
         }
       } else if (this.isDescending && this.editStack.length > 1) {
@@ -277,11 +289,9 @@ export default {
           field.rowId = null;
         }
 
-        this.modalRows = this.modalRows.concat(
-          this.editStack[this.editStack.length - 2].properties
-        );
+        this.modalRows = this.modalRows.concat(parentFieldProperties);
         this.modalRows.push(field);
-        this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
+        updateProperties(parentField, deepCopy(this.modalRows));
       } else {
         // Update the root object
         if (field.type === 'object') {
@@ -300,12 +310,14 @@ export default {
 
         const parent = findParent(this.rows, field);
         if (parent) {
-            parent.properties[parent.properties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
-            const parentOption = this.options.find(option => option.displayName === parent.name);
-            parentOption.displayName = parent.name;
-            parentOption.value.schemaName = parent.name;
-            parentOption.value.schemaString = createSchemaString(parent);
-            this.options = reorderOptions(this.options);
+          let parentProperties = getPropertiesCopy(parent);
+          parentProperties[parentProperties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
+          updateProperties(parent, parentProperties)
+          const parentOption = this.options.find(option => option.displayName === parent.name);
+          parentOption.displayName = parent.name;
+          parentOption.value.schemaName = parent.name;
+          parentOption.value.schemaString = createSchemaString(parent);
+          this.options = reorderOptions(this.options);
         }
 
         this.modifiedContract = updateContractString(field, this.rows, this.modifiedContract);
@@ -344,21 +356,23 @@ export default {
           existingOption.value.schemaString = createSchemaString(updatedModel);
         }
         if (parent) {
-            parent.properties[parent.properties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
-            const parentOption = this.options.find(option => option.displayName === parent.name);
-            parentOption.displayName = parent.name;
-            parentOption.value.schemaName = parent.name;
-            parentOption.value.schemaString = createSchemaString(parent);
+          let parentProperties = getPropertiesCopy(parent);
+          parentProperties[parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
+          updateProperties(parent, parentProperties)
+          const parentOption = this.options.find(option => option.displayName === parent.name);
+          parentOption.displayName = parent.name;
+          parentOption.value.schemaName = parent.name;
+          parentOption.value.schemaString = createSchemaString(parent);
         }
         this.options = reorderOptions(this.options);
       }
       this.editStack.pop();
 
-      if (this.editStack.length > 0 && last(this.editStack).properties) {
+      if (this.editStack.length > 0 && hasProperties(last(this.editStack))) {
         // Update the modal window to show the parent's rows
-        this.modalRows = deepCopy(last(this.editStack).properties);
-        updatedModel.modalRowId = getUniqueId();
+        this.modalRows = getPropertiesCopy(last(this.editStack));
         const updatedParent = findRowInTreeAndUpdate(this.modalRows, updatedModel);
+        updatedModel.modalRowId = getUniqueId();
         if (updatedParent) {
           this.modalRows = deepCopy(updatedParent);
         } else {
@@ -366,7 +380,7 @@ export default {
           this.modalRows.push(updatedModel);
         }
         this.currentParentName = last(this.editStack).name;
-        last(this.editStack).properties = deepCopy(this.modalRows);
+        updateProperties(last(this.editStack), deepCopy(this.modalRows));
       } else {
         // update root contract
         this.modifiedContract = updateContractString(
@@ -399,9 +413,10 @@ export default {
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
       } else {
         // Update the parent model
-        const deepCopyParent = deepCopy(this.editStack[this.editStack.length - 2].properties);
+        const parentField = this.editStack[this.editStack.length - 2];
+        const deepCopyParent = getPropertiesCopy(parentField);
         this.modalRows = updateNestedProperty(deepCopyObject, deepCopyParent, true);
-        this.editStack[this.editStack.length - 2].properties = deepCopy(this.modalRows);
+        updateProperties(parentField, deepCopy(this.modalRows));
       }
       this.closeModal('addField', false, true);
     },
