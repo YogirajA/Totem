@@ -114,6 +114,7 @@ namespace Totem.Features.Shared
             {
                 if (propertyObject == null) continue;
                 var type = propertyObject.Type;
+                var dataType = propertyObject.GetDataType();
                 var format = propertyObject.Format;
                 var example = propertyObject.Example?.ToString();
                 var reference = propertyObject.Reference;
@@ -134,7 +135,7 @@ namespace Totem.Features.Shared
                             $"The definition of \"{propertyName}\" is incorrect. \"{type}\" is not an allowed data type.");
                     }
 
-                    if (type == DataType.Object.Value)
+                    if (dataType == DataType.Object)
                     {
                         if (propertyObject.Properties == null)
                         {
@@ -146,7 +147,7 @@ namespace Totem.Features.Shared
                         }
                     }
 
-                    if (type == DataType.Array.Value)
+                    if (dataType == DataType.Array)
                     {
                         if (propertyObject.Items == null)
                         {
@@ -154,9 +155,23 @@ namespace Totem.Features.Shared
                         }
                         else
                         {
-                            if (propertyObject.Items.Type == null || !CheckDataType(propertyObject.Items.Type))
+                            var hasValidDataType = propertyObject.Items.Type != null && CheckDataType(propertyObject.Items.Type);
+
+                            if (propertyObject.Items.Reference == null && !hasValidDataType)
                             {
                                 context.AddFailure($"The definition of \"{propertyName}\" is incorrect. A valid type is required for the Items sub-property.");
+                            }
+
+                            if (hasValidDataType && propertyObject.Items.GetDataType() == DataType.Object)
+                            {
+                                if (propertyObject.Items.Properties == null)
+                                {
+                                    context.AddFailure($"The definition of \"{propertyName}\" is incorrect. \"{DataType.Object.Value}\" data type requires a 'Properties' object.");
+                                }
+                                else
+                                {
+                                    CheckProperties(propertyObject.Items.Properties, context);
+                                }
                             }
                         }
                     }
@@ -169,7 +184,7 @@ namespace Totem.Features.Shared
                 }
 
                 if (string.IsNullOrEmpty(example)) continue;
-                if (type.EqualsCaseInsensitive(DataType.Integer.Value))
+                if (dataType == DataType.Integer)
                 {
                     var isExampleInteger = int.TryParse(example, out _) || long.TryParse(example, out _);
                     // Validate example is integer data type
@@ -179,7 +194,7 @@ namespace Totem.Features.Shared
                     }
                 }
 
-                if (type.EqualsCaseInsensitive(DataType.Number.Value))
+                if (dataType == DataType.Number)
                 {
                     var isExampleNumber = double.TryParse(example, out _) || float.TryParse(example, out _);
                     // Validate example is number data type
@@ -189,7 +204,7 @@ namespace Totem.Features.Shared
                     }
                 }
 
-                if (type.EqualsCaseInsensitive(DataType.String.Value))
+                if (dataType == DataType.String)
                 {
                     // Validate  example is date-time data type
                     if (format != null)

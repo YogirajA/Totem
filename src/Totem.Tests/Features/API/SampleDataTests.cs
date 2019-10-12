@@ -82,41 +82,41 @@ namespace Totem.Tests.Features.API
 
         public void GeneratesProperIntegerSampleData()
         {
-            var sampleInt32 = SampleData.GenerateSampleData("Integer", "Int32");
+            var sampleInt32 = SampleData.GenerateSampleData(DataType.Integer, Format.Int32);
             int.TryParse(sampleInt32, out _).ShouldBe(true);
 
-            var sampleInt64 = SampleData.GenerateSampleData("Integer", "Int64");
+            var sampleInt64 = SampleData.GenerateSampleData(DataType.Integer, Format.Int64);
             long.TryParse(sampleInt64, out _).ShouldBe(true);
 
-            var sampleInt = SampleData.GenerateSampleData("Integer", null);
+            var sampleInt = SampleData.GenerateSampleData(DataType.Integer, null);
             long.TryParse(sampleInt, out _).ShouldBe(true);
         }
 
         public void GeneratesProperNumberSampleData()
         {
-            var sampleFloat = SampleData.GenerateSampleData("Number", "Float");
+            var sampleFloat = SampleData.GenerateSampleData(DataType.Number, Format.Float);
             float.TryParse(sampleFloat, out _).ShouldBe(true);
 
-            var sampleDouble = SampleData.GenerateSampleData("Number", "Double");
+            var sampleDouble = SampleData.GenerateSampleData(DataType.Number, Format.Double);
             double.TryParse(sampleDouble, out _).ShouldBe(true);
 
-            var sampleNumber = SampleData.GenerateSampleData("Number", null);
+            var sampleNumber = SampleData.GenerateSampleData(DataType.Number, null);
             double.TryParse(sampleNumber, out _).ShouldBe(true);
         }
 
         public void GeneratesProperStringSampleData()
         {
-            var dateTimeString = SampleData.GenerateSampleData("string", "date-time");
+            var dateTimeString = SampleData.GenerateSampleData(DataType.String, Format.DateTime);
             dateTimeString = dateTimeString.Replace("\"", "");
             DateTime.TryParse(dateTimeString, out _).ShouldBe(true);
 
-            var sampleData = SampleData.GenerateSampleData("string", null);
+            var sampleData = SampleData.GenerateSampleData(DataType.String, null);
             sampleData.GetType().ShouldBe(typeof(string));
         }
 
         public void GeneratesProperGuidSampleData()
         {
-            var guidString = SampleData.GenerateSampleData("string", null,
+            var guidString = SampleData.GenerateSampleData(DataType.String, null,
                 "^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
             Guid.TryParse(guidString, out _).ShouldBe(true);
@@ -125,7 +125,7 @@ namespace Totem.Tests.Features.API
         public void SampleDataHandlesInvalidPatternRegex()
         {
             // mismatched parens to test invalid pattern
-            var guidString = SampleData.GenerateSampleData("string", null, "^(([0-9a-f]))-([0-9a-f]){12})$");
+            var guidString = SampleData.GenerateSampleData(DataType.String, null, "^(([0-9a-f]))-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
             guidString.ShouldBe("Invalid pattern");
         }
@@ -153,7 +153,7 @@ namespace Totem.Tests.Features.API
                     }}
             });
 
-            var objectString = SampleData.GenerateSampleData("object", null, properties: propertyDictionary);
+            var objectString = SampleData.GenerateSampleData(DataType.Object, null, properties: propertyDictionary);
             objectString = objectString.Replace("\"\"", "\"");
             objectString.ShouldBe("{\"IntegerProp\":\"30\",\"StringProp\":\"String text\",\"ObjectProp\":{\"InnerProp\":\"30\"}}");
         }
@@ -164,7 +164,7 @@ namespace Totem.Tests.Features.API
             {
                 Type = "String",
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
             sampleData = sampleData.Replace("\"\"", "\"");
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
@@ -181,7 +181,7 @@ namespace Totem.Tests.Features.API
                 Type = "Integer",
                 Format = "int32"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
@@ -197,7 +197,7 @@ namespace Totem.Tests.Features.API
                 Type = "Number",
                 Format = "float"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
@@ -213,7 +213,7 @@ namespace Totem.Tests.Features.API
                 Type = "String",
                 Format = "date-time"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
             sampleData = sampleData.Replace("\"\"", "\"");
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
