@@ -194,6 +194,16 @@ namespace Totem.Features.Shared
                     }
                 }
 
+                if (dataType == DataType.Number)
+                {
+                    var isExampleNumber = double.TryParse(example, out _) || float.TryParse(example, out _);
+                    // Validate example is number data type
+                    if (!isExampleNumber)
+                    {
+                        AddExampleError(context, example, propertyName, type);
+                    }
+                }
+
                 if (dataType == DataType.String)
                 {
                     // Validate  example is date-time data type
