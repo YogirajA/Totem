@@ -8,7 +8,11 @@ import {
   findParent,
   isValidJSON,
   isDate,
-  isGUID
+  isGUID,
+  isFloat,
+  isInt32,
+  isInt64,
+  isNumeric
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -263,6 +267,62 @@ describe('isGUID', () => {
   it('returns false when string is not valid GUID', () => {
     const testString = 'not a guid';
     const result = isGUID(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isNumeric', () => {
+  it('returns true when string is numeric (only numbers and symbols)', () => {
+    const testString = `3`;
+    const result = isNumeric(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not numeric', () => {
+    const testString = 'not a number';
+    const result = isNumeric(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isInt32', () => {
+  it('returns true when string is an int32 integer', () => {
+    const testString = `4`;
+    const result = isInt32(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not an int32 integer', () => {
+    const testString = '2147483657';
+    const result = isInt32(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isInt64', () => {
+  it('returns true when string is an int64 integer', () => {
+    const testString = `2147483648`;
+    const result = isInt64(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not an int64 integer', () => {
+    const testString = 'not an int64';
+    const result = isInt64(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isFloat', () => {
+  it('returns true when string is a float', () => {
+    const testString = `10.25`;
+    const result = isFloat(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not a float', () => {
+    const testString = 'not a float';
+    const result = isFloat(testString);
     expect(result).toBe(false);
   });
 });
