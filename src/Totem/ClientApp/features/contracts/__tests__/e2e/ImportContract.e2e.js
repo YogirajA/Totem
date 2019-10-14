@@ -104,6 +104,34 @@ test('Import a contract with numeric formats', async t => {
     .contains('number (float)');
 });
 
+test('Import a contract with boolean fields', async t => {
+  await t.click(utils.importContractBtn);
+
+  await t.expect(utils.importTextArea.value).eql('');
+
+  const messageString = `{
+    "item1": true,
+    "item2": false
+  }`;
+  await t.typeText(utils.importTextArea, messageString, { replace: true });
+  await t.click(utils.importBtn);
+
+  const item1Row = Selector('tr.treegrid-body-row').withText('item1');
+  const item2Row = Selector('tr.treegrid-body-row').withText('item2');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(2)
+    .expect(item1Row.exists)
+    .eql(true)
+    .expect(item1Row.textContent)
+    .contains('boolean')
+    .expect(item2Row.exists)
+    .eql(true)
+    .expect(item2Row.textContent)
+    .contains('boolean');
+});
+
 test('Import a nested contract', async t => {
   await t.click(utils.importContractBtn);
 

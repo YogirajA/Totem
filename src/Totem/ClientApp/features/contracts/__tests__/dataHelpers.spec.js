@@ -12,7 +12,8 @@ import {
   isFloat,
   isInt32,
   isInt64,
-  isNumeric
+  isNumeric,
+  isBool
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -323,6 +324,20 @@ describe('isFloat', () => {
   it('returns false when string is not a float', () => {
     const testString = 'not a float';
     const result = isFloat(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isBool', () => {
+  it('returns true when string is a bool', () => {
+    const testString = `true`;
+    const result = isBool(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not a bool', () => {
+    const testString = 'not a bool';
+    const result = isBool(testString);
     expect(result).toBe(false);
   });
 });
