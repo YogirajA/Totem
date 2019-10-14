@@ -12,11 +12,11 @@ namespace SalesOrderApp
     public class PlaceOrderTests
     {
         public static HttpClient Client = new HttpClient();
-        private readonly TotemSettings _contractTesterSettings;
+        private readonly TotemSettings _totemSettings;
 
         public PlaceOrderTests()
         {
-            _contractTesterSettings = Testing.GetTotemApplicationConfigurationSettings();
+            _totemSettings = Testing.GetTotemApplicationConfigurationSettings();
         }
         
         public async Task ShouldReturnSuccessForValidContract()
@@ -30,7 +30,7 @@ namespace SalesOrderApp
 
             var placeOrderMessage = new PlaceOrderContract
             {
-                ContractId = Guid.Parse(_contractTesterSettings.ValidPlaceOrderContractId),
+                ContractId = Guid.Parse(_totemSettings.ValidPlaceOrderContractId),
                 Message = new PlaceOrderMessageDetails
                 {
                     Id = Guid.NewGuid(),
@@ -42,7 +42,7 @@ namespace SalesOrderApp
             };
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
-            var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            var response = await Client.PostAsync(_totemSettings.TestMessageApiUrl, stringContent);
 
             await DisplayErrors(response);
             response.EnsureSuccessStatusCode();
@@ -59,7 +59,7 @@ namespace SalesOrderApp
 
             var placeOrderMessage = new PlaceOrderContract
             {
-                ContractId = Guid.Parse(_contractTesterSettings.ValidPlaceOrderContractId),
+                ContractId = Guid.Parse(_totemSettings.ValidPlaceOrderContractId),
                 Message = new PlaceOrderMessageDetails
                 {
                     Id = null,
@@ -71,7 +71,7 @@ namespace SalesOrderApp
             };
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
-            var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            var response = await Client.PostAsync(_totemSettings.TestMessageApiUrl, stringContent);
             await DisplayErrors(response);
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -105,7 +105,7 @@ namespace SalesOrderApp
             };
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
-            var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            var response = await Client.PostAsync(_totemSettings.TestMessageApiUrl, stringContent);
             await DisplayErrors(response);
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -125,7 +125,7 @@ namespace SalesOrderApp
 
             var placeOrderMessage = new PlaceOrderContract
             {
-                ContractId = Guid.Parse(_contractTesterSettings.ValidPlaceOrderContractId),
+                ContractId = Guid.Parse(_totemSettings.ValidPlaceOrderContractId),
                 Message = new MessageDetailsWithAdditionalField
                 {
                     Id = Guid.NewGuid(),
@@ -135,7 +135,7 @@ namespace SalesOrderApp
             };
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
-            var response = await Client.PostAsync(_contractTesterSettings.TestMessageApiUrl, stringContent);
+            var response = await Client.PostAsync(_totemSettings.TestMessageApiUrl, stringContent);
             await DisplayErrors(response);
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
