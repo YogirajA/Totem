@@ -4,10 +4,8 @@
       class="treegrid"
       :data="rows"
       :columns="columns"
-      :is-ellipsis-menu-visible="isEllipsisMenuVisible"
-      @editClick="handleEditClick"
-      @editManually="$emit('editManually')"
-      @showFieldWindow="$emit('showFieldWindow')"
+      :menu="menu"
+      @editRowClick="handleEditClick"
     >
       <template slot="editableTemplate" slot-scope="scope">
         <i v-if="scope.row.isLocked" class="fas edit fa-lock" />
@@ -22,6 +20,7 @@
 
 <script>
 import TreeGrid from '../../components/TreeGrid.vue';
+import EllipsisMenu from '../../components/EllipsisMenu.vue';
 import { getDisplayType } from './dataHelpers';
 
 export default {
@@ -32,6 +31,10 @@ export default {
   props: {
     rows: { type: Array, default: () => [] },
     isEllipsisMenuVisible: {
+      type: Boolean,
+      default: true
+    },
+    isImportButtonVisible: {
       type: Boolean,
       default: true
     }
@@ -72,8 +75,57 @@ export default {
         this.$emit('showFieldWindow', row);
       }
     },
+    showEditContractModal() {
+      this.$emit('editManually');
+    },
+    showAddNewFieldModal() {
+      this.$emit('showFieldWindow');
+    },
+    showImportModal() {
+      this.$emit('importFromMessage');
+    },
     getType(property) {
       return getDisplayType(property);
+    },
+    menu(column, table) {
+      const menu = {
+        body: null,
+        className: null
+      };
+      if (column.key === 'example') {
+        menu.body = table.$slots.buttongroup ? (
+          table.$slots.buttongroup
+        ) : (
+          <div class="btn-group">
+            {this.isImportButtonVisible && (
+              <button
+                id="importContractFromMessageBtn"
+                class="ui-button btn grid-btn"
+                onClick={this.showImportModal}
+                type="button"
+              >
+                <i class="fa fa-upload" />
+                Import
+              </button>
+            )}
+            <button
+              id="addNewFieldBtn"
+              class="ui-button btn grid-btn"
+              onClick={this.showAddNewFieldModal}
+              type="button"
+            >
+              <i class="fa fa-plus" />
+              Add New Field
+            </button>
+            {this.isEllipsisMenuVisible && (
+              // eslint-disable-next-line react/no-string-refs
+              <EllipsisMenu ref="ellipsisMenu" onShowModal={this.showEditContractModal} />
+            )}
+          </div>
+        );
+        menu.className = 'menu-header';
+      }
+      return menu;
     }
   }
 };

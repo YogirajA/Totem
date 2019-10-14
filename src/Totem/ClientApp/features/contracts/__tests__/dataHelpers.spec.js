@@ -5,7 +5,14 @@ import {
   findRowInTreeAndUpdate,
   last,
   findRowInTreeAndDelete,
-  findParent
+  findParent,
+  isValidJSON,
+  isDate,
+  isGUID,
+  isFloat,
+  isInt32,
+  isInt64,
+  isNumeric
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -211,5 +218,111 @@ describe('last', () => {
     const array = [];
     const item = last(array);
     expect(item).toBe(undefined);
+  });
+});
+
+describe('isValidJSON', () => {
+  it('returns true when string is valid JSON', () => {
+    const testString = `{
+      "item1": "test",
+      "item2": {
+        "item3": "test543",
+        "item4": {
+          "item5": "testu436"
+        }
+      }
+    }`;
+    const result = isValidJSON(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not valid JSON', () => {
+    const testString = 'invalid string';
+    const result = isValidJSON(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isDate', () => {
+  it('returns true when string is valid Date', () => {
+    const testString = `2019-01-01T18:14:29Z`;
+    const result = isDate(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not valid Date', () => {
+    const testString = 'not a date';
+    const result = isDate(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isGUID', () => {
+  it('returns true when string is valid GUID', () => {
+    const testString = `01234567-abcd-0123-abcd-0123456789ab`;
+    const result = isGUID(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not valid GUID', () => {
+    const testString = 'not a guid';
+    const result = isGUID(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isNumeric', () => {
+  it('returns true when string is numeric (only numbers and symbols)', () => {
+    const testString = `3`;
+    const result = isNumeric(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not numeric', () => {
+    const testString = 'not a number';
+    const result = isNumeric(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isInt32', () => {
+  it('returns true when string is an int32 integer', () => {
+    const testString = `4`;
+    const result = isInt32(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not an int32 integer', () => {
+    const testString = '2147483657';
+    const result = isInt32(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isInt64', () => {
+  it('returns true when string is an int64 integer', () => {
+    const testString = `2147483648`;
+    const result = isInt64(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not an int64 integer', () => {
+    const testString = 'not an int64';
+    const result = isInt64(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isFloat', () => {
+  it('returns true when string is a float', () => {
+    const testString = `10.25`;
+    const result = isFloat(testString);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not a float', () => {
+    const testString = 'not a float';
+    const result = isFloat(testString);
+    expect(result).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { deepCopy } from './dataHelpers';
+import { deepCopy, isDate, isGUID, isFloat, isNumeric, isInt32, isInt64 } from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -85,6 +85,107 @@ export const findRow = (rowId, rows) => {
 
   rows.some(searchForRow);
   return result;
+};
+
+/* getPropertyObjectFromValue: builds and returns a property object from the property value */
+export const getPropertyObjectFromValue = field => {
+  const prop = field.toString();
+  let propObject = {
+    type: 'string',
+    example: 'sample string'
+  };
+  if (isGUID(prop)) {
+    propObject = {
+      $ref: '#/Guid'
+    };
+  } else if (isNumeric(prop)) {
+    propObject = {
+      type: 'number',
+      example: '5.5'
+    };
+    if (isInt32(prop)) {
+      propObject = {
+        type: 'integer',
+        format: 'int32',
+        example: '5'
+      };
+    } else if (isInt64(prop)) {
+      propObject = {
+        type: 'integer',
+        format: 'int64',
+        example: '2147483650'
+      };
+    } else if (isFloat(prop)) {
+      propObject = {
+        type: 'number',
+        format: 'float',
+        example: '10.50'
+      };
+    }
+  } else if (isDate(prop)) {
+    propObject = {
+      type: 'string',
+      format: 'date-time',
+      example: '2019-01-01T18:14:29Z'
+    };
+  }
+  return propObject;
+};
+
+/* buildPropertiesFromMessage: build the properties for an object from the given message */
+export const buildPropertiesFromMessage = (parentObject, messageObject) => {
+  const updatedParentObject = deepCopy(parentObject);
+  Object.keys(messageObject).forEach(key => {
+    if (Array.isArray(messageObject[key])) {
+      const prop = {
+        type: 'array',
+        example: '["sample string"]',
+        items: {
+          type: 'string',
+          example: 'sample string'
+        }
+      };
+      updatedParentObject.properties[key] = prop;
+    } else if (messageObject[key] instanceof Object) {
+      const prop = {
+        type: 'object',
+        properties: {}
+      };
+      updatedParentObject.properties[key] = prop;
+      updatedParentObject.properties[key] = buildPropertiesFromMessage(
+        updatedParentObject.properties[key],
+        messageObject[key]
+      );
+    } else {
+      updatedParentObject.properties[key] = getPropertyObjectFromValue(messageObject[key]);
+    }
+  });
+  return updatedParentObject;
+};
+
+/* buildContractFromMessage: build a contract from the given message */
+export const buildContractFromMessage = message => {
+  const messageObject = JSON.parse(message);
+  const baseContractObject = {
+    Contract: {
+      type: 'object',
+      properties: {}
+    }
+  };
+  baseContractObject.Contract = buildPropertiesFromMessage(
+    baseContractObject.Contract,
+    messageObject
+  );
+  if (JSON.stringify(baseContractObject.Contract).includes('#/Guid')) {
+    baseContractObject.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+  return baseContractObject;
 };
 
 /* updateNestedProperty: finds the existing row by rowId and replaces it with the edited value */
@@ -208,12 +309,16 @@ export const isObjectArray = schema => {
 /* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
 export const updateProperties = (schema, properties, isArray) => {
   if (properties === undefined) {
+    // eslint-disable-next-line no-param-reassign
     properties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
+    // eslint-disable-next-line no-param-reassign
     isArray = isObjectArray(schema);
   }
+  // eslint-disable-next-line no-param-reassign
   schema.properties = isArray ? undefined : properties;
+  // eslint-disable-next-line no-param-reassign
   schema.items = isArray ? { type: 'object', properties } : undefined;
 };
 

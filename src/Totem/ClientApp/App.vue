@@ -4,9 +4,8 @@
       ref="rootContractGrid"
       id="rootGrid"
       :rows="rows"
-      :hide-ellipsis-menu="false"
-      :edit-stack="editStack"
       @editManually="showEditManuallyWindow"
+      @importFromMessage="showImportWindow"
       @showFieldWindow="showFieldWindow(...arguments)"
       @showModelWindow="showModelWindow(...arguments)"
     />
@@ -16,6 +15,12 @@
       :contract-string="modifiedContract"
       @close="closeModal('editManually')"
       @updateData="updateContractManually"
+    />
+    <BuildContractFromMessageModalWindow
+      v-show="isImportWindowVisible"
+      title="Import Contract"
+      @close="closeModal('importContract')"
+      @importContract="importContract"
     />
     <AddModelModalWindow
       v-show="isAddModelWindowVisible"
@@ -51,6 +56,7 @@
 import $ from 'jquery';
 import _ from 'lodash';
 import EditContractModalWindow from './features/contracts/EditContractModalWindow.vue';
+import BuildContractFromMessageModalWindow from './features/contracts/BuildContractFromMessageModalWindow.vue';
 import AddNewFieldModalWindow from './features/contracts/AddNewFieldModalWindow.vue';
 import AddModelModalWindow from './features/contracts/AddModelModalWindow.vue';
 import ContractGrid from './features/contracts/ContractGrid.vue';
@@ -61,6 +67,7 @@ import {
   getExistingOptions,
   updateNestedProperty,
   findRow,
+  buildContractFromMessage,
   getPropertiesCopy,
   isObjectArray,
   updateProperties,
@@ -80,6 +87,7 @@ export default {
   components: {
     ContractGrid,
     EditContractModalWindow,
+    BuildContractFromMessageModalWindow,
     AddModelModalWindow,
     AddNewFieldModalWindow
   },
@@ -96,6 +104,7 @@ export default {
       isEditManuallyWindowVisible: false,
       isAddFieldWindowVisible: false,
       isAddModelWindowVisible: false,
+      isImportWindowVisible: false,
       disableDelete: false
     };
   },
@@ -144,7 +153,15 @@ export default {
     showEditManuallyWindow() {
       this.isAddFieldWindowVisible = false;
       this.isAddModelWindowVisible = false;
+      this.isImportWindowVisible = false;
       this.isEditManuallyWindowVisible = true;
+    },
+
+    showImportWindow() {
+      this.isAddFieldWindowVisible = false;
+      this.isAddModelWindowVisible = false;
+      this.isEditManuallyWindowVisible = false;
+      this.isImportWindowVisible = true;
     },
 
     showFieldWindow(field) {
@@ -176,6 +193,7 @@ export default {
         this.editStack.push({ parentId: null });
       }
       this.isEditManuallyWindowVisible = false;
+      this.isImportWindowVisible = false;
       this.isAddFieldWindowVisible = true;
     },
 
@@ -209,6 +227,7 @@ export default {
       this.editStack.push(deepCopy(model));
       this.modalRows = getPropertiesCopy(model);
       this.isEditManuallyWindowVisible = false;
+      this.isImportWindowVisible = false;
       this.isAddFieldWindowVisible = false;
       this.isAddModelWindowVisible = true;
     },
@@ -216,6 +235,8 @@ export default {
     closeModal(modal, alreadyAdjusted = false, setDescendingFalse = false) {
       if (modal === 'editManually') {
         this.isEditManuallyWindowVisible = false;
+      } else if (modal === 'importContract') {
+        this.isImportWindowVisible = false;
       } else if (modal === 'addField') {
         if (this.editStack.length > 0 && !alreadyAdjusted) {
           this.editStack.pop();
@@ -310,9 +331,11 @@ export default {
 
         const parent = findParent(this.rows, field);
         if (parent) {
-          let parentProperties = getPropertiesCopy(parent);
-          parentProperties[parentProperties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
-          updateProperties(parent, parentProperties)
+          const parentProperties = getPropertiesCopy(parent);
+          parentProperties[
+            parentProperties.findIndex(prop => prop.rowId === field.rowId)
+          ] = deepCopy(field);
+          updateProperties(parent, parentProperties);
           const parentOption = this.options.find(option => option.displayName === parent.name);
           parentOption.displayName = parent.name;
           parentOption.value.schemaName = parent.name;
@@ -356,9 +379,11 @@ export default {
           existingOption.value.schemaString = createSchemaString(updatedModel);
         }
         if (parent) {
-          let parentProperties = getPropertiesCopy(parent);
-          parentProperties[parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
-          updateProperties(parent, parentProperties)
+          const parentProperties = getPropertiesCopy(parent);
+          parentProperties[
+            parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)
+          ] = deepCopy(updatedModel);
+          updateProperties(parent, parentProperties);
           const parentOption = this.options.find(option => option.displayName === parent.name);
           parentOption.displayName = parent.name;
           parentOption.value.schemaName = parent.name;
@@ -448,16 +473,32 @@ export default {
       this.closeModal('editManually');
       $('#contract-raw').scrollTop(0);
     },
-
     updateSaveButtonState() {
       if (typeof setSaveButton === 'function') {
-          // setSaveButton is defined in Create.cshtml and Edit.cshtml
-          if (this.rows.length === 0 && setSaveButton.length > 0){
-            setSaveButton(true); // eslint-disable-line no-undef
-          } else {
-            setSaveButton(); // eslint-disable-line no-undef
-          }
+        // setSaveButton is defined in Create.cshtml and Edit.cshtml
+        const setSaveButtonHasArguments = setSaveButton.length > 0; // eslint-disable-line no-undef
+        if (this.rows.length === 0 && setSaveButtonHasArguments) {
+          setSaveButton(true); // eslint-disable-line no-undef
+        } else {
+          setSaveButton(); // eslint-disable-line no-undef
+        }
       }
+    },
+    importContract() {
+      const message = $('#import-message')[0].value;
+      const contractBasedOnMessage = buildContractFromMessage(message);
+      this.rows = parseContractArray(
+        JSON.stringify(contractBasedOnMessage),
+        'contract-string-validation'
+      );
+      $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
+      $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
+      this.closeModal('importContract');
+      if (typeof setSaveButton === 'function') {
+        // setSaveButton is defined in Edit.cshtml
+        setSaveButton(); // eslint-disable-line no-undef
+      }
+      $('#contract-raw').scrollTop(0);
     }
   }
 };

@@ -19,6 +19,11 @@ export const saveModelBtn = Selector('#saveModelBtn');
 export const cancelModelBtn = Selector('#modelModalWindow').find('#cancelBtn');
 export const addNewFieldNestedBtn = Selector('#nestedContractGrid').find('#addNewFieldBtn');
 
+// Import Contract buttons
+export const importContractBtn = Selector('#importContractFromMessageBtn');
+export const importBtn = Selector('#importContract');
+export const importTextArea = Selector('#import-message');
+
 // Fixture Setup: Login and Go to Edit
 export async function loginAndNavigateToEditContract(t) {
   const goToLoginButton = Selector('#loginBtn');

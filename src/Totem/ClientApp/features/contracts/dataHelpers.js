@@ -1,4 +1,6 @@
 import _ from 'lodash';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import validator from 'validator';
 
 export const reorderOptions = oldOptions => {
   // pull out the "Define new" option if it exists, and order the rest alphabetically
@@ -50,22 +52,23 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
   let rowUpdated = false;
 
   function searchAndUpdateRow(row) {
+    const updatedRow = row;
     if (
       (row.rowId !== undefined && row.rowId === updatedModel.rowId) ||
       (row.modalRowId !== undefined && row.modalRowId === updatedModel.modalRowId)
     ) {
-      row.name = updatedModel.name;
-      row.modalRowId = updatedModel.modalRowId;
-      row.properties = updatedModel.properties;
-      row.items = updatedModel.items;
+      updatedRow.name = updatedModel.name;
+      updatedRow.modalRowId = updatedModel.modalRowId;
+      updatedRow.properties = updatedModel.properties;
+      updatedRow.items = updatedModel.items;
       rowUpdated = true;
       return true;
     }
     return (
-      (Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow)) ||
-      (row.items &&
-        Array.isArray(row.items.properties) &&
-        row.items.properties.some(searchAndUpdateRow))
+      (Array.isArray(updatedRow.properties) && updatedRow.properties.some(searchAndUpdateRow)) ||
+      (updatedRow.items &&
+        Array.isArray(updatedRow.items.properties) &&
+        updatedRow.items.properties.some(searchAndUpdateRow))
     );
   }
 
@@ -136,6 +139,63 @@ export const findParent = (tree, childRow) => {
   }
 
   return parentRow;
+};
+
+export const isValidJSON = msg => {
+  try {
+    JSON.parse(msg);
+  } catch (e) {
+    return false;
+  }
+  return true;
+};
+
+export const isDate = msg => {
+  if (Number.isNaN(Date.parse(msg))) {
+    return false;
+  }
+  return true;
+};
+
+export const isGUID = msg => {
+  if (validator.isUUID(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isNumeric = msg => {
+  if (validator.isNumeric(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isFloat = msg => {
+  if (validator.isFloat(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isInt32 = msg => {
+  const options = {
+    max: 2147483647
+  };
+  if (validator.isInt(msg, options)) {
+    return true;
+  }
+  return false;
+};
+
+export const isInt64 = msg => {
+  const options = {
+    max: 9223372036854775807
+  };
+  if (validator.isInt(msg, options)) {
+    return true;
+  }
+  return false;
 };
 
 export const last = array => array[array.length - 1];
