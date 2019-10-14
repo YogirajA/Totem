@@ -76,6 +76,10 @@ textarea.tall {
   color: #f00;
 }
 
+.result-message.warning {
+  color: #F09D51;
+}
+
 .row-actions {
   max-width: 340px;
 }
