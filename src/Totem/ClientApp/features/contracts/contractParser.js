@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { deepCopy, isDate, isGUID } from './dataHelpers';
+import { deepCopy, isDate, isGUID, isFloat, isNumeric, isInt32, isInt64 } from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -88,7 +88,8 @@ export const findRow = (rowId, rows) => {
 };
 
 /* getPropertyObjectFromValue: builds and returns a property object from the property value */
-export const getPropertyObjectFromValue = prop => {
+export const getPropertyObjectFromValue = field => {
+  const prop = field.toString();
   let propObject = {
     type: 'string',
     example: 'sample string'
@@ -97,6 +98,30 @@ export const getPropertyObjectFromValue = prop => {
     propObject = {
       $ref: '#/Guid'
     };
+  } else if (isNumeric(prop)) {
+    propObject = {
+      type: 'number',
+      example: '5.5'
+    };
+    if (isInt32(prop)) {
+      propObject = {
+        type: 'integer',
+        format: 'int32',
+        example: '5'
+      };
+    } else if (isInt64(prop)) {
+      propObject = {
+        type: 'integer',
+        format: 'int64',
+        example: '2147483650'
+      };
+    } else if (isFloat(prop)) {
+      propObject = {
+        type: 'number',
+        format: 'float',
+        example: '10.50'
+      };
+    }
   } else if (isDate(prop)) {
     propObject = {
       type: 'string',
