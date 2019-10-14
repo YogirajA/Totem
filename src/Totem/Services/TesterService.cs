@@ -159,6 +159,11 @@ namespace Totem.Services
                 CheckNumberType(propertySchemaObject, kv, testMessageResult);
             }
 
+            if (dataType == DataType.Boolean)
+            {
+                CheckBooleanType(propertySchemaObject, kv, testMessageResult);
+            }
+
             if (dataType == DataType.String)
             {
                 CheckStringType(propertySchemaObject, kv, testMessageResult);
@@ -225,6 +230,18 @@ namespace Totem.Services
                 {
                     AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.Double);
                 }
+            }
+        }
+
+        private static void CheckBooleanType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
+            TestMessageResult testMessageResult)
+        {
+            var isBool = bool.TryParse(kv.Value.ToString(), out _);
+            
+            // Validate number data type
+            if (!isBool)
+            {
+                AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, propertySchemaObject.Type);
             }
         }
 
@@ -297,6 +314,11 @@ namespace Totem.Services
                 if (dataType == DataType.Number)
                 {
                     TryParseNumberArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                }
+
+                if (dataType == DataType.Boolean)
+                {
+                    TryParseBooleanArray(propertySchemaObject, kv, itemArray, testMessageResult);
                 }
             }
         }
@@ -482,6 +504,23 @@ namespace Totem.Services
                         AddItemTypeError(testMessageResult, kv.Key, DataType.Number, Format.Double);
                         break;
                     }
+                }
+            }
+        }
+
+        private void TryParseBooleanArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
+        {
+            var itemFormat = propertySchemaObject.Items.GetFormat();
+
+            foreach (var item in itemArray)
+            {
+                var isBool = bool.TryParse(item.ToString(), out bool _);
+
+                // Validate boolean data type
+                if (itemFormat == null && !isBool)
+                {
+                    AddItemTypeError(testMessageResult, kv.Key, DataType.Boolean);
+                    break;
                 }
             }
         }

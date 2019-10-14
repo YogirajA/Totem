@@ -145,6 +145,11 @@ namespace Totem.Features.API
                 return GenerateNumber(format);
             }
 
+            if (dataType == DataType.Boolean)
+            {
+                return GenerateBoolean();
+            }
+
             if (dataType == DataType.Array)
             {
                 return items != null ? GenerateArray(dataType, items.GetFormat(), minItems, maxItems, items.Pattern) : "[]";
@@ -180,6 +185,10 @@ namespace Totem.Features.API
                 if (dataType == DataType.Number)
                 {
                     JsonDictionary[key] = GenerateNumber(value.GetFormat());
+                }
+                if (dataType == DataType.Boolean)
+                {
+                    JsonDictionary[key] = GenerateBoolean();
                 }
                 if (dataType == DataType.String)
                 {
@@ -239,6 +248,11 @@ namespace Totem.Features.API
             return "5.5"; // format not included or unknown
         }
 
+        public static string GenerateBoolean()
+        {
+            return "false";
+        }
+
         public static string GenerateInteger(Format format)
         {
             if (format == Format.Int32)
@@ -270,6 +284,14 @@ namespace Totem.Features.API
                 for (var i = 0; i < length; i++)
                 {
                     returnArray.Add(GenerateNumber(itemFormat));
+                }
+            }
+
+            if (dataType == DataType.Boolean)
+            {
+                for (var i = 0; i < length; i++)
+                {
+                    returnArray.Add(GenerateBoolean());
                 }
             }
 

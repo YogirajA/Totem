@@ -204,6 +204,16 @@ namespace Totem.Features.Shared
                     }
                 }
 
+                if (dataType == DataType.Boolean)
+                {
+                    var isExampleBool = bool.TryParse(example, out _);
+                    // Validate example is boolean data type
+                    if (!isExampleBool)
+                    {
+                        AddExampleError(context, example, propertyName, type);
+                    }
+                }
+
                 if (dataType == DataType.String)
                 {
                     // Validate  example is date-time data type

@@ -303,7 +303,9 @@ export const buildNewObject = (name, type, isArray, example, currentModel, modif
       }
     }
   }
-  if (example || example === '') {
+  if (type.displayName === 'Boolean' && example !== '') {
+    newObject.example = example.toString();
+  } else if (example || example === '') {
     newObject.example = example;
   }
   if (currentModel && currentModel.parentId !== undefined) {
