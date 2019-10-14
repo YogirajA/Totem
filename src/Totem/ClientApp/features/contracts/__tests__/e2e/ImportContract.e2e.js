@@ -70,6 +70,40 @@ test('Import a contract with string formats', async t => {
     .contains('string');
 });
 
+test('Import a contract with numeric formats', async t => {
+  await t.click(utils.importContractBtn);
+
+  await t.expect(utils.importTextArea.value).eql('');
+
+  const messageString = `{
+    "item1": 3,
+    "item2": 2147483650,
+    "item3": 5.5
+  }`;
+  await t.typeText(utils.importTextArea, messageString, { replace: true });
+  await t.click(utils.importBtn);
+
+  const item1Row = Selector('tr.treegrid-body-row').withText('item1');
+  const item2Row = Selector('tr.treegrid-body-row').withText('item2');
+  const item3Row = Selector('tr.treegrid-body-row').withText('item3');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(3)
+    .expect(item1Row.exists)
+    .eql(true)
+    .expect(item1Row.textContent)
+    .contains('integer (int32)')
+    .expect(item2Row.exists)
+    .eql(true)
+    .expect(item2Row.textContent)
+    .contains('integer (int64)')
+    .expect(item3Row.exists)
+    .eql(true)
+    .expect(item3Row.textContent)
+    .contains('number (float)');
+});
+
 test('Import a nested contract', async t => {
   await t.click(utils.importContractBtn);
 
