@@ -178,6 +178,13 @@ export const isFloat = msg => {
   return false;
 };
 
+export const isBool = msg => {
+  if (validator.isBoolean(msg)) {
+    return true;
+  }
+  return false;
+};
+
 export const isInt32 = msg => {
   const options = {
     max: 2147483647

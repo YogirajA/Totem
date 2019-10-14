@@ -1,5 +1,14 @@
 import $ from 'jquery';
-import { deepCopy, isDate, isGUID, isFloat, isNumeric, isInt32, isInt64 } from './dataHelpers';
+import {
+  deepCopy,
+  isDate,
+  isGUID,
+  isFloat,
+  isNumeric,
+  isInt32,
+  isInt64,
+  isBool
+} from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -127,6 +136,11 @@ export const getPropertyObjectFromValue = field => {
       type: 'string',
       format: 'date-time',
       example: '2019-01-01T18:14:29Z'
+    };
+  } else if (isBool(prop)) {
+    propObject = {
+      type: 'boolean',
+      example: false
     };
   }
   return propObject;
