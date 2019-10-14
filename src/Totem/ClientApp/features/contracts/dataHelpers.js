@@ -164,4 +164,38 @@ export const isGUID = msg => {
   return false;
 };
 
+export const isNumeric = msg => {
+  if (validator.isNumeric(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isFloat = msg => {
+  if (validator.isFloat(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isInt32 = msg => {
+  const options = {
+    max: 2147483647
+  };
+  if (validator.isInt(msg, options)) {
+    return true;
+  }
+  return false;
+};
+
+export const isInt64 = msg => {
+  const options = {
+    max: 9223372036854775807
+  };
+  if (validator.isInt(msg, options)) {
+    return true;
+  }
+  return false;
+};
+
 export const last = array => array[array.length - 1];
