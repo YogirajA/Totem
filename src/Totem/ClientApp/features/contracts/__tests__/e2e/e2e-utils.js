@@ -4,6 +4,8 @@ import { Selector } from 'testcafe';
 // Input fields and buttons on the AddNewFieldModal
 export const inputFieldName = Selector('#propertyName');
 export const inputType = VueSelector('ref:propertyType');
+export const isArrayCheckbox = Selector('#isArray');
+export const isObjectArrayCheckbox = Selector('#isObjectArray');
 export const inputFieldExample = Selector('#propertyExample');
 
 export const addNewFieldBtn = Selector('#addNewFieldBtn');
@@ -30,7 +32,7 @@ export async function loginAndNavigateToEditContract(t) {
   const loginButton = Selector('#loginSubmit');
   await t.click(loginButton);
 
-  const contractEditButton = Selector('.edit-contract').nth(1);
+  const contractEditButton = Selector('.edit-contract').nth(2);
   await t.click(contractEditButton);
 }
 

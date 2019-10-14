@@ -61,34 +61,44 @@ namespace Totem.Features.Shared
                         {
                             if (!CheckDataType(contractObject.Type))
                             {
-                                context.AddFailure($"Contract does not have a valid type.");
+                                context.AddFailure("Contract does not have a valid type.");
                             }
                         }
 
-                        var idKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("ID"));
-                        if (idKey == null || (contractObject.Properties[idKey].Type != null &&
-                                              !contractObject.Properties[idKey].Type.Equals(DataType.String.Value)) ||
-                            contractObject.Properties[idKey].Reference != "Guid" || contractDictionary["Guid"] == null)
+                        if (contractObject.Properties.Count == 0)
                         {
-                            context.AddFailure("Contract must include a property ID of type Guid.");
-                        }
-
-                        var timestampKey =
-                            contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("Timestamp"));
-                        if (timestampKey == null)
-                        {
-                            context.AddFailure("Contract must include a property Timestamp of format date-time.");
+                            context.AddFailure("An empty contract cannot be saved.");
                         }
                         else
                         {
-                            if (contractObject.Properties[timestampKey].Format == null || !contractObject
-                                    .Properties[timestampKey].Format.Equals(Format.DateTime.Value))
-                            {
-                                context.AddFailure("The Timestamp property must have a format of date-time.");
-                            }
-                        }
+                            var idKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("ID"));
 
-                        CheckProperties(contractObject.Properties, context);
+                            if (idKey != null)
+                            {
+                                var idProperty = contractObject.Properties[idKey];
+
+                                if (idProperty.Type != null && !idProperty.Type.Equals(DataType.String.Value) ||
+                                    idProperty.Reference != "Guid" ||
+                                    contractDictionary["Guid"] == null)
+                                {
+                                    context.AddFailure("Contract must include a property ID of type Guid.");
+                                }
+                            }
+
+                            var timestampKey = contractObject.Properties.Keys.FirstOrDefault(k => k.EqualsCaseInsensitive("Timestamp"));
+
+                            if (timestampKey != null)
+                            {
+                                var timestampProperty = contractObject.Properties[timestampKey];
+
+                                if (timestampProperty.Format == null || !timestampProperty.Format.Equals(Format.DateTime.Value))
+                                {
+                                    context.AddFailure("The Timestamp property must have a format of date-time.");
+                                }
+                            }
+
+                            CheckProperties(contractObject.Properties, context);
+                        }
                     }
                     catch (Exception)
                     {
@@ -104,6 +114,7 @@ namespace Totem.Features.Shared
             {
                 if (propertyObject == null) continue;
                 var type = propertyObject.Type;
+                var dataType = propertyObject.GetDataType();
                 var format = propertyObject.Format;
                 var example = propertyObject.Example?.ToString();
                 var reference = propertyObject.Reference;
@@ -124,7 +135,7 @@ namespace Totem.Features.Shared
                             $"The definition of \"{propertyName}\" is incorrect. \"{type}\" is not an allowed data type.");
                     }
 
-                    if (type == DataType.Object.Value)
+                    if (dataType == DataType.Object)
                     {
                         if (propertyObject.Properties == null)
                         {
@@ -136,7 +147,7 @@ namespace Totem.Features.Shared
                         }
                     }
 
-                    if (type == DataType.Array.Value)
+                    if (dataType == DataType.Array)
                     {
                         if (propertyObject.Items == null)
                         {
@@ -144,9 +155,23 @@ namespace Totem.Features.Shared
                         }
                         else
                         {
-                            if (propertyObject.Items.Type == null || !CheckDataType(propertyObject.Items.Type))
+                            var hasValidDataType = propertyObject.Items.Type != null && CheckDataType(propertyObject.Items.Type);
+
+                            if (propertyObject.Items.Reference == null && !hasValidDataType)
                             {
                                 context.AddFailure($"The definition of \"{propertyName}\" is incorrect. A valid type is required for the Items sub-property.");
+                            }
+
+                            if (hasValidDataType && propertyObject.Items.GetDataType() == DataType.Object)
+                            {
+                                if (propertyObject.Items.Properties == null)
+                                {
+                                    context.AddFailure($"The definition of \"{propertyName}\" is incorrect. \"{DataType.Object.Value}\" data type requires a 'Properties' object.");
+                                }
+                                else
+                                {
+                                    CheckProperties(propertyObject.Items.Properties, context);
+                                }
                             }
                         }
                     }
@@ -159,7 +184,7 @@ namespace Totem.Features.Shared
                 }
 
                 if (string.IsNullOrEmpty(example)) continue;
-                if (type.EqualsCaseInsensitive(DataType.Integer.Value))
+                if (dataType == DataType.Integer)
                 {
                     var isExampleInteger = int.TryParse(example, out _) || long.TryParse(example, out _);
                     // Validate example is integer data type
@@ -169,7 +194,17 @@ namespace Totem.Features.Shared
                     }
                 }
 
-                if (type.EqualsCaseInsensitive(DataType.String.Value))
+                if (dataType == DataType.Number)
+                {
+                    var isExampleNumber = double.TryParse(example, out _) || float.TryParse(example, out _);
+                    // Validate example is number data type
+                    if (!isExampleNumber)
+                    {
+                        AddExampleError(context, example, propertyName, type);
+                    }
+                }
+
+                if (dataType == DataType.String)
                 {
                     // Validate  example is date-time data type
                     if (format != null)
