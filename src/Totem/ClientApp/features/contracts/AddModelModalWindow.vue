@@ -8,27 +8,25 @@
       :class-name="`modal-scrollable`"
     >
       <template v-slot:body>
-        <div class="container">
-          <div class="row">
-            <div class="form-group col-md-10">
-              <label for="modelName" class="control-label">Property Name</label>
-              <input
-                id="modelName"
-                v-model="modalFieldName"
-                class="form-control"
-                placeholder="Property Name"
-              />
-            </div>
-            <div class="form-check form-group col-md-2 mt-auto">
-              <input
-                id="isObjectArray"
-                v-model="isArray"
-                class="form-check-input"
-                type="checkbox"
-                @change="onCheckboxChange"
-              />
-              <label for="isObjectArray" class="control-label">Array</label>
-            </div>
+        <div class="row">
+          <div class="form-group col-10">
+            <label for="modelName" class="control-label">Property Name</label>
+            <input
+              id="modelName"
+              v-model="modalFieldName"
+              class="form-control"
+              placeholder="Property Name"
+            />
+          </div>
+          <div class="form-check form-group col-2 mt-auto">
+            <input
+              id="isObjectArray"
+              v-model="isArray"
+              class="form-check-input"
+              type="checkbox"
+              @change="onCheckboxChange"
+            />
+            <label for="isObjectArray" class="control-label">Array</label>
           </div>
         </div>
         <ContractGrid

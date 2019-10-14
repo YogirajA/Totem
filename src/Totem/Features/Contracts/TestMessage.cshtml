@@ -1,4 +1,4 @@
-﻿@using Totem.Features.Contracts
+@using Totem.Features.Contracts
 @model TestMessage.ViewModel
 @inject SignInManager<IdentityUser> SignInManager
 
@@ -75,7 +75,7 @@
         </div>
     </div>
 </div>
-<div class="row">
+<div class="row footer">
     <div class="col-12">
         @if (SignInManager.IsSignedIn(User))
         {
