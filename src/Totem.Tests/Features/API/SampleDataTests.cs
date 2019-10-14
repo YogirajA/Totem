@@ -82,10 +82,10 @@ namespace Totem.Tests.Features.API
 
         public void GeneratesProperIntegerSampleData()
         {
-            var sampleInt32 = SampleData.GenerateSampleData(DataType.Integer, "Int32");
+            var sampleInt32 = SampleData.GenerateSampleData(DataType.Integer, Format.Int32);
             int.TryParse(sampleInt32, out _).ShouldBe(true);
 
-            var sampleInt64 = SampleData.GenerateSampleData(DataType.Integer, "Int64");
+            var sampleInt64 = SampleData.GenerateSampleData(DataType.Integer, Format.Int64);
             long.TryParse(sampleInt64, out _).ShouldBe(true);
 
             var sampleInt = SampleData.GenerateSampleData(DataType.Integer, null);
@@ -94,10 +94,10 @@ namespace Totem.Tests.Features.API
 
         public void GeneratesProperNumberSampleData()
         {
-            var sampleFloat = SampleData.GenerateSampleData(DataType.Number, "Float");
+            var sampleFloat = SampleData.GenerateSampleData(DataType.Number, Format.Float);
             float.TryParse(sampleFloat, out _).ShouldBe(true);
 
-            var sampleDouble = SampleData.GenerateSampleData(DataType.Number, "Double");
+            var sampleDouble = SampleData.GenerateSampleData(DataType.Number, Format.Double);
             double.TryParse(sampleDouble, out _).ShouldBe(true);
 
             var sampleNumber = SampleData.GenerateSampleData(DataType.Number, null);
@@ -106,7 +106,7 @@ namespace Totem.Tests.Features.API
 
         public void GeneratesProperStringSampleData()
         {
-            var dateTimeString = SampleData.GenerateSampleData(DataType.String, "date-time");
+            var dateTimeString = SampleData.GenerateSampleData(DataType.String, Format.DateTime);
             dateTimeString = dateTimeString.Replace("\"", "");
             DateTime.TryParse(dateTimeString, out _).ShouldBe(true);
 

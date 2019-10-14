@@ -133,7 +133,11 @@ export const findParent = (tree, childRow) => {
         row.items.properties.forEach(containsChild))
     );
   }
-  tree.forEach(containsChild);
+
+  if (childRowId) {
+    tree.forEach(containsChild);
+  }
+
   return parentRow;
 };
 

@@ -192,12 +192,14 @@ test('Deleting a previously saved root field', async t => {
 test('Delete all root fields', async t => {
   const rowCount = await Selector('tr.treegrid-body-row').count;
 
-  for (let i = 0; i < rowCount; i++) {
+  for (let i = 0; i < rowCount; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
     await t.click(
       Selector('tr.treegrid-body-row')
         .nth(0)
         .find('.edit-action')
     );
+    // eslint-disable-next-line no-await-in-loop
     await t.click(utils.deleteFieldBtn);
   }
 

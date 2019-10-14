@@ -10,7 +10,7 @@ namespace Totem.Tests.Services
 {
     public class TesterServiceTests
     {
-        [TestingConvention.Input(SampleContractString)]
+        [Input(SampleContractString)]
         public void DeserializeContractToTupleTest(string contract)
         {
             var testDictionary = new CaseInsensitiveDictionary<SchemaObject>();
@@ -28,7 +28,7 @@ namespace Totem.Tests.Services
             testDictionary.Count.ShouldBe(2);
         }
 
-        [TestingConvention.Input(SampleContractString, @"{}")]
+        [Input(SampleContractString, @"{}")]
         public void MessageShouldNotBeEmptyJSON(string contract, string message)
         {
             var testService = new TesterService();
@@ -40,7 +40,7 @@ namespace Totem.Tests.Services
             result.MessageErrors[0].ShouldBe("Message contains empty JSON.");
         }
 
-        [TestingConvention.Input(SampleContractString, @"\\}")]
+        [Input(SampleContractString, @"\\}")]
         public void MessageShouldNotBeInvalidJSON(string contract, string message)
         {
             var testService = new TesterService();
@@ -52,7 +52,7 @@ namespace Totem.Tests.Services
             result.MessageErrors[0].ShouldBe("Message contains invalid JSON.");
         }
 
-        [TestingConvention.Input(SampleContractString, @"{""Id"":""01234567-abcd-0123-abcd-0123456789ab"",""Timestamp"":""2019-05-12T18:14:29"",""Name"":""Emil"",""Age"":""31""}")]
+        [Input(SampleContractString, @"{""Id"":""01234567-abcd-0123-abcd-0123456789ab"",""Timestamp"":""2019-05-12T18:14:29"",""Name"":""Emil"",""Age"":""31""}")]
         public void MessageShouldBeAValidContract(string contract, string message)
         {
             var testService = new TesterService();
@@ -62,7 +62,7 @@ namespace Totem.Tests.Services
             result.IsMessageValid.ShouldBeTrue();
         }
 
-        [TestingConvention.Input(@"{""test"":""id""}",
+        [Input(@"{""test"":""id""}",
             @"{""Id"":""01234567-abcd-0123-abcd-0123456789ab"",""Timestamp"":""2019-05-12T18:14:29"",""Name"":""Emil"",""Age"":""31""}")]
         public void ContractShouldHaveValidOpenAPISchema(string contract, string message)
         {
@@ -76,7 +76,7 @@ namespace Totem.Tests.Services
         }
 
 
-        [TestingConvention.Input(SampleContractStringWithReferenceError, @"{""Id"":""01234567-abcd-0123-abcd-0123456789ab"",""Timestamp"":""2019-05-12T18:14:29"",""Name"":""Emil"",""Age"":""31""}")]
+        [Input(SampleContractStringWithReferenceError, @"{""Id"":""01234567-abcd-0123-abcd-0123456789ab"",""Timestamp"":""2019-05-12T18:14:29"",""Name"":""Emil"",""Age"":""31""}")]
         public void ContractShouldHaveAValidReferenceDefinition(string contract, string message)
         {
             var testService = new TesterService();
@@ -374,12 +374,14 @@ namespace Totem.Tests.Services
             result.IsMessageValid.ShouldBeFalse();
             result.MessageErrors[0].ShouldBe("\"Array\" does not have the required property(Items) for type(Array).");
         }
-        
-        [Input("String", "date-time", "not a datetime")]
-        [Input("Integer", "int32", "not an integer")]
-        [Input("Integer", "int64", "not an integer")]
-        [Input("Number", "float", "not a number")]
-        [Input("Number", "double", "not a number")]
+
+        [Input("string", "date-time", "not a datetime")]
+        [Input("integer", null, "not an integer")]
+        [Input("integer", "int32", "not an integer")]
+        [Input("integer", "int64", "not an integer")]
+        [Input("number", "double", "not a number")]
+        [Input("number", "float", "not a number")]
+        [Input("number", null, "not a number")]
         public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType, string format, string itemString)
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
@@ -387,10 +389,10 @@ namespace Totem.Tests.Services
                 { "Array", new SchemaObject
                 {
                     Type = "Array",
-                    Items = new SchemaObject()
+                    Items = new SchemaObject
                     {
                         Type = dataType,
-                        Format = format,
+                        Format = format
                     }
                 }}
             };
@@ -405,7 +407,7 @@ namespace Totem.Tests.Services
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
             result.IsMessageValid.ShouldBeFalse();
-            result.MessageErrors[0].ShouldBe($"An item in the Items array for Array does not match the required data type ({format}).");
+            result.MessageErrors[0].ShouldBe($"An item in the Items array for Array does not match the required data type ({format ?? dataType}).");
         }
 
         public void ShouldFailValidationForArrayTypeWithGreaterThanMaxItems()

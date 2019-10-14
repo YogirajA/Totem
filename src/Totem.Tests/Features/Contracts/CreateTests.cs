@@ -589,7 +589,6 @@ namespace Totem.Tests.Features.Contracts
                 }";
 
             var command = new Create.Command
-
             {
                 Description = newContract.Description,
                 ContractString = newContract.ContractString,

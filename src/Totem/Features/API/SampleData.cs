@@ -66,7 +66,7 @@ namespace Totem.Features.API
                 }
                 else if (schemaObject.Example != null)
                 {
-                    if (dataType == DataType.String && schemaObject.Format.EqualsCaseInsensitive(Format.DateTime.Value))
+                    if (dataType == DataType.String && schemaObject.GetFormat() == Format.DateTime)
                     {
                         var date = (DateTime)schemaObject.Example;
                         sampleString = $"\"{date:yyyy-MM-ddTHH:mm:ssZ}\"";
@@ -96,7 +96,7 @@ namespace Totem.Features.API
                 }
                 else
                 {
-                    var sampleValue = GenerateSampleData(schemaObject.GetDataType(), schemaObject.Format, schemaObject.Pattern, schemaObject.Properties,
+                    var sampleValue = GenerateSampleData(schemaObject.GetDataType(), schemaObject.GetFormat(), schemaObject.Pattern, schemaObject.Properties,
                         schemaObject.Items, schemaObject.MinItems, schemaObject.MaxItems);
                     sampleString = sampleValue;
                 }
@@ -133,7 +133,7 @@ namespace Totem.Features.API
             return new Result();
         }
 
-        public static string GenerateSampleData(DataType dataType, string format, string pattern = null, CaseInsensitiveDictionary<SchemaObject> properties = null, SchemaObject items = null, int minItems = 0, int maxItems = 0)
+        public static string GenerateSampleData(DataType dataType, Format format, string pattern = null, CaseInsensitiveDictionary<SchemaObject> properties = null, SchemaObject items = null, int minItems = 0, int maxItems = 0)
         {
             if (dataType == DataType.Integer)
             {
@@ -147,7 +147,7 @@ namespace Totem.Features.API
 
             if (dataType == DataType.Array)
             {
-                return items != null ? GenerateArray(dataType, items.Format, minItems, maxItems, items.Pattern) : "[]";
+                return items != null ? GenerateArray(dataType, items.GetFormat(), minItems, maxItems, items.Pattern) : "[]";
             }
 
             if (dataType == DataType.Object)
@@ -175,16 +175,16 @@ namespace Totem.Features.API
 
                 if (dataType == DataType.Integer)
                 {
-                    JsonDictionary[key] = GenerateInteger(value.Format);
+                    JsonDictionary[key] = GenerateInteger(value.GetFormat());
                 }
                 if (dataType == DataType.Number)
                 {
-                    JsonDictionary[key] = GenerateNumber(value.Format);
+                    JsonDictionary[key] = GenerateNumber(value.GetFormat());
                 }
                 if (dataType == DataType.String)
                 {
                     //Removing extra quotes from string examples in nested objects
-                    JsonDictionary[key] = GenerateString(value.Format, value.Pattern).Replace("\"", "");
+                    JsonDictionary[key] = GenerateString(value.GetFormat(), value.Pattern).Replace("\"", "");
                 }
                 if (dataType == DataType.Object)
                 {
@@ -203,9 +203,9 @@ namespace Totem.Features.API
             return JsonConvert.SerializeObject(objectDictionary);
         }
 
-        public static string GenerateString(string format, string pattern)
+        public static string GenerateString(Format format, string pattern)
         {
-            if (format != null && format.EqualsCaseInsensitive(Format.DateTime.Value))
+            if (format == Format.DateTime)
             {
                 var currentDate = DateTime.Now;
                 return $"\"{currentDate.ToString("s", CultureInfo.InvariantCulture)}\"";
@@ -225,13 +225,13 @@ namespace Totem.Features.API
             }
         }
 
-        public static string GenerateNumber(string format)
+        public static string GenerateNumber(Format format)
         {
-            if (format != null && format.EqualsCaseInsensitive(Format.Float.Value))
+            if (format == Format.Float)
             {
                 return "10.50";
             }
-            if (format != null && format.EqualsCaseInsensitive(Format.Double.Value))
+            if (format == Format.Double)
             {
                 return "123456789012.34567";
             }
@@ -239,13 +239,13 @@ namespace Totem.Features.API
             return "5.5"; // format not included or unknown
         }
 
-        public static string GenerateInteger(string format)
+        public static string GenerateInteger(Format format)
         {
-            if (format != null && format.EqualsCaseInsensitive(Format.Int32.Value))
+            if (format == Format.Int32)
             {
                 return "5";
             }
-            if (format != null && format.EqualsCaseInsensitive(Format.Int64.Value))
+            if (format == Format.Int64)
             {
                 return "2147483650";
             }
@@ -253,7 +253,7 @@ namespace Totem.Features.API
             return "30"; // format not included or unknown
         }
 
-        public static string GenerateArray(DataType dataType, string itemFormat, int minItems, int maxItems, string pattern)
+        public static string GenerateArray(DataType dataType, Format itemFormat, int minItems, int maxItems, string pattern)
         {
             var length = GetArrayLength(minItems, maxItems);
             var returnArray = new List<string>();

@@ -186,6 +186,11 @@ namespace Totem.Models
         {
             return DataType.GetAll().SingleOrDefault(x => x.Value.EqualsCaseInsensitive(Type));
         }
+
+        public Format GetFormat()
+        {
+            return Models.Format.GetAll().SingleOrDefault(x => x.Value.EqualsCaseInsensitive(Format));
+        }
     }
 
     public class DataType : Enumeration<DataType, string>
