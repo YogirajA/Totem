@@ -63,6 +63,7 @@ namespace Totem.Services
             return new TestMessageResult
             {
                 IsMessageValid = TestCases.All(x => x.IsMessageValid),
+                Warnings = TestCases.SelectMany(x => x.Warnings).ToList(),
                 MessageErrors = TestCases.SelectMany(x => x.MessageErrors).ToList()
             };
         }
@@ -99,8 +100,8 @@ namespace Totem.Services
             {
                 if (contractDictionary.Keys.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase)) continue;
 
-                result.IsMessageValid = false;
-                result.MessageErrors.Add($"Message property \"{kv.Key}\" is not part of the contract.");
+                result.IsMessageValid = true;
+                result.Warnings.Add($"Message property \"{kv.Key}\" is not part of the contract.");
             }
 
             return result;
@@ -134,10 +135,6 @@ namespace Totem.Services
                 if (propertySchemaObject != null)
                 {
                     ChecksForMessage(propertySchemaObject, kv, testMessageResult);
-                }
-                else
-                {
-                    AddSchemaNotFoundError(testMessageResult, kv.Key);
                 }
             }
 
@@ -504,6 +501,7 @@ namespace Totem.Services
         {
             public bool IsMessageValid { get; set; } = true;
             public List<string> MessageErrors { get; set; } = new List<string>();
+            public List<string> Warnings { get; set; } = new List<string>();
         }
     }
 }
