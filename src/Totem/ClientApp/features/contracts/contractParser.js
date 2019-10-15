@@ -207,6 +207,7 @@ export const isObjectArray = schema => {
 
 /* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
 export const updateProperties = (schema, properties, isArray) => {
+  /* eslint-disable */
   if (properties === undefined) {
     properties = getPropertiesCopy(schema);
   }
@@ -215,6 +216,7 @@ export const updateProperties = (schema, properties, isArray) => {
   }
   schema.properties = isArray ? undefined : properties;
   schema.items = isArray ? { type: 'object', properties } : undefined;
+  /* eslint-enable */
 };
 
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
