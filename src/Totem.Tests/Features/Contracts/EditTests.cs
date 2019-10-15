@@ -61,6 +61,101 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.DisplayOnContractList.ShouldBe(sampleContract.DisplayOnContractList);
         }
 
+        public async Task ShouldEditContractWithoutOptionalFields()
+        {
+            var initialContract = await AlreadyInDatabaseContract(newContract =>
+            {
+                newContract.Type = string.Empty;
+                newContract.Namespace = string.Empty;
+                newContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string"",
+                        ""pattern"": ""^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$"",
+                        ""minLength"": 36,
+                        ""maxLength"": 36,
+                        ""example"": ""01234567-abcd-0123-abcd-0123456789ab""
+                    }
+                }"; // No Id and no Timestamp
+            });
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber,
+                DisplayOnContractList = initialContract.DisplayOnContractList
+            };
+
+            var sampleContract = SampleContract(!initialContract.DisplayOnContractList);
+
+            sampleContract.ContractString = @"{
+                ""Contract"": {
+                    ""type"": ""object"",
+                    ""properties"": {
+                        ""EditedName"": {
+                            ""type"": ""string"",
+                            ""example"": ""John Doe""
+                        },
+                        ""EditedAge"": {
+                            ""type"": ""integer"",
+                            ""format"": ""int32"",
+                            ""example"": ""30""
+                        }
+                    }
+                }
+            }"; // No Id and no Timestamp
+
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber,
+                DisplayOnContractList = sampleContract.DisplayOnContractList // Edited
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel,
+                UniqueDisplayedContractVersion = false
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+            modifiedContract.DisplayOnContractList.ShouldBe(sampleContract.DisplayOnContractList);
+        }
+
         public async Task ShouldEditWithDisplayOnContractListAsTrueWhenUniqueDisplayedContractVersion()
         {
             var initialContract = await AlreadyInDatabaseContract();
@@ -127,7 +222,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldValidateDifferentFormsOfVersionNumber(string versionNumber)
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -137,7 +232,7 @@ namespace Totem.Tests.Features.Contracts
                 VersionNumber = initialContract.VersionNumber
             };
 
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -172,7 +267,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotValidateInvalidFormsOfVersionNumber(string versionNumber)
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -182,7 +277,7 @@ namespace Totem.Tests.Features.Contracts
                 VersionNumber = initialContract.VersionNumber
             };
 
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -256,7 +351,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenRequiredFieldsEmpty()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -266,7 +361,7 @@ namespace Totem.Tests.Features.Contracts
                 VersionNumber = initialContract.VersionNumber
             };
 
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = Guid.Empty,
                 Description = "",
@@ -286,16 +381,53 @@ namespace Totem.Tests.Features.Contracts
                 "'Contract' must not be empty.",
                 "'Description' must not be empty.",
                 "'Id' must not be empty.",
-                "'Namespace' must not be empty.",
-                "'Type' must not be empty.",
                 "'Version Number' must follow semantic version system.",
                 "'Version Number' must not be empty.");
         }
 
-        public async Task ShouldNotEditWhenVersionIsNotValid()
+        public async Task ShouldNotEditWhenContractHasNoFields()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                        }
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("An empty contract cannot be saved.");
+        }
+
+        public async Task ShouldEditWhenContractDoesNotHaveOptionalFields()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -306,7 +438,69 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            sampleContract.Type = "";
+            sampleContract.Namespace = "";
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            }
+                        }
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = sampleContract.Namespace, // Edited
+                Type = sampleContract.Type, // Edited
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(initialContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(sampleContract.Namespace);
+            modifiedContract.Type.ShouldBe(sampleContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
+        public async Task ShouldNotEditWhenVersionIsNotValid()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -328,7 +522,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenContractStringNotValidJson()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -339,7 +533,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -361,7 +555,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenContractStringNotValidSchema()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -372,7 +566,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -391,64 +585,10 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.");
         }
 
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveTimestamp()
-        {
-            var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = initialContract.Description,
-                ContractString = initialContract.ContractString,
-                Namespace = initialContract.Namespace,
-                Type = initialContract.Type,
-                VersionNumber = initialContract.VersionNumber
-            };
-
-            var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = sampleContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Id"": {
-                                ""$ref"": ""#/Guid""
-                            },
-                            ""Name"": {
-                                ""type"": ""string"",
-                                ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                                ""type"": ""integer"",
-                                ""format"": ""int32"",
-                                ""example"": ""30""
-                            }
-                        }
-                    },
-                    ""Guid"": {
-                        ""type"": ""string""
-                    }
-                }",
-                Namespace = initialContract.Namespace,
-                Type = sampleContract.Type,
-                VersionNumber = sampleContract.VersionNumber
-            };
-
-            var command = new Edit.Command()
-            {
-                InitialContract = initialContractModel,
-                ModifiedContract = modifiedContractModel
-            };
-
-            command.ShouldNotValidate("Contract must include a property Timestamp of format date-time.");
-        }
-
         public async Task ShouldNotEditWhenContractStringTimestampDoesNotHaveFormat()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -459,7 +599,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -503,65 +643,12 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The Timestamp property must have a format of date-time.");
         }
 
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveId()
-        {
-            var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = initialContract.Description,
-                ContractString = initialContract.ContractString,
-                Namespace = initialContract.Namespace,
-                Type = initialContract.Type,
-                VersionNumber = initialContract.VersionNumber
-            };
-
-            var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
-            {
-                Id = initialContract.Id,
-                Description = sampleContract.Description,
-                ContractString = @"{
-                    ""Contract"": {
-                        ""type"": ""object"",
-                        ""properties"": {
-                            ""Timestamp"": {
-                            ""type"": ""string"",
-                            ""format"": ""date-time"",
-                            ""example"": ""2019-05-12T18:14:29Z""
-                            },
-                            ""Name"": {
-                            ""type"": ""string"",
-                            ""example"": ""John Doe""
-                            },
-                            ""Age"": {
-                            ""type"": ""integer"",
-                            ""format"": ""int32"",
-                            ""example"": ""30""
-                            }
-                        }
-                    }
-                }",
-                Namespace = initialContract.Namespace,
-                Type = sampleContract.Type,
-                VersionNumber = sampleContract.VersionNumber
-            };
-
-            var command = new Edit.Command()
-            {
-                InitialContract = initialContractModel,
-                ModifiedContract = modifiedContractModel
-            };
-
-            command.ShouldNotValidate("Contract must include a property ID of type Guid.");
-        }
-
         public async Task ShouldEditWhenValidWithArray()
         {
             var initialContract = await AlreadyInDatabaseContract();
             var oldCount = CountRecords<Contract>();
 
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -605,7 +692,7 @@ namespace Totem.Tests.Features.Contracts
                         ""type"": ""string""
                     }
                 }";
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description, // Edited
@@ -616,6 +703,104 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
+        public async Task ShouldEditWhenValidWithArrayOfObjects()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""PhoneId"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""reference"": ""Guid"",
+                                                ""$ref"": ""#/Guid""
+                                            },
+                                            ""example"": ""[\""01234567-abcd-0123-abcd-0123456789ab\""]"",
+                                            ""format"": ""guid""
+                                        },
+                                        ""AreaCode"": {
+                                            ""type"": ""integer"",
+                                            ""example"": ""123""
+                                        },
+                                        ""Number"": {
+                                            ""type"": ""integer"",
+                                            ""example"": ""123""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command
             {
                 InitialContract = initialContractModel,
                 ModifiedContract = modifiedContractModel
@@ -640,7 +825,7 @@ namespace Totem.Tests.Features.Contracts
             var initialContract = await AlreadyInDatabaseContract();
             var oldCount = CountRecords<Contract>();
 
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -692,7 +877,7 @@ namespace Totem.Tests.Features.Contracts
                         ""type"": ""string""
                     }
                 }";
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description, // Edited
@@ -722,12 +907,105 @@ namespace Totem.Tests.Features.Contracts
             modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
         }
 
+        public async Task ShouldEditWhenValidWithNestedArrayOfObjects()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""integer"",
+                                                        ""example"": ""232""
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
         public async Task ShouldEditWhenValidWithArrayAndNestedObject()
         {
             var initialContract = await AlreadyInDatabaseContract();
             var oldCount = CountRecords<Contract>();
 
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -778,6 +1056,112 @@ namespace Totem.Tests.Features.Contracts
                                 ""items"": {
                                     ""type"": ""string""
                                 }                                            
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }";
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description, // Edited
+                ContractString = sampleContract.ContractString, // Edited
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldValidate();
+            await Send(command);
+
+            CountRecords<Contract>().ShouldBe(oldCount);
+
+            var modifiedContract = Query<Contract>(initialContract.Id, initialContract.VersionNumber);
+
+            modifiedContract.Id.ShouldBe(initialContract.Id);
+            modifiedContract.Description.ShouldBe(sampleContract.Description);
+            modifiedContract.ContractString.ShouldBe(sampleContract.ContractString);
+            modifiedContract.Namespace.ShouldBe(initialContract.Namespace);
+            modifiedContract.Type.ShouldBe(initialContract.Type);
+            modifiedContract.VersionNumber.ShouldBe(initialContract.VersionNumber);
+        }
+
+        public async Task ShouldEditWhenValidWithNestedArrayOfObjectsWithMultiArrays()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var oldCount = CountRecords<Contract>();
+
+            var initialContractModel = new Edit.EditModel()
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            sampleContract.ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""integer"",
+                                                        ""example"": ""232""
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        ""ArrayOfIntegers"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""integer"",
+                                                ""example"": ""667""
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            ""PhoneNumbers"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""string""
+                                }
                             }
                         }
                     },
@@ -820,7 +1204,7 @@ namespace Totem.Tests.Features.Contracts
             var initialContract = await AlreadyInDatabaseContract();
             var oldCount = CountRecords<Contract>();
 
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -874,7 +1258,7 @@ namespace Totem.Tests.Features.Contracts
                         ""type"": ""string""
                     }
                 }";
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description, // Edited
@@ -907,7 +1291,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenContractStringArrayDoesNotHaveItems()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -918,7 +1302,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -968,7 +1352,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenNestedArrayDoesNotHaveItems()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -979,7 +1363,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1036,10 +1420,10 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
         }
 
-        public async Task ShouldNotEditWhenContractStringArrayDoesNotHaveAValidItemsType()
+        public async Task ShouldNotEditWhenNestedArrayOfObjectsDoesNotHaveItems()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1050,7 +1434,84 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array""
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
+        }
+
+        public async Task ShouldNotEditWhenContractStringArrayDoesNotHaveAValidItemsType()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1103,7 +1564,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenNestedArrayDoesNotHaveAValidItemsType()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1114,7 +1575,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1174,10 +1635,10 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. A valid type is required for the Items sub-property.");
         }
 
-        public async Task ShouldNotEditWhenContractStringDoesNotHaveValidType()
+        public async Task ShouldNotEditWhenNestedArrayOfObjectsDoesNotHaveAValidItemsType()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1188,7 +1649,231 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array"",
+                                                        ""items"": {
+                                                            ""type"": ""not-a-type""
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. A valid type is required for the Items sub-property.");
+        }
+
+        public async Task ShouldNotEditWhenNestedArrayOfObjectsDoesNotHaveProperties()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object"",
+                                    ""properties"": {
+                                        ""LevelTwo"": {
+                                            ""type"": ""array"",
+                                            ""items"": {
+                                                ""type"": ""object"",
+                                                ""properties"": {
+                                                    ""LevelThree"": {
+                                                        ""type"": ""array"",
+                                                        ""items"": {
+                                                            ""type"": ""object""
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. \"object\" data type requires a 'Properties' object.");
+        }
+
+        public async Task ShouldNotEditWhenArrayOfObjectsDoesNotHaveProperties()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""ArrayObjsNoProps"": {
+                                ""type"": ""array"",
+                                ""items"": {
+                                    ""type"": ""object""
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+            command.ShouldNotValidate("The definition of \"ArrayObjsNoProps\" is incorrect. \"object\" data type requires a 'Properties' object.");
+        }
+
+        public async Task ShouldNotEditWhenContractStringDoesNotHaveValidType()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1235,7 +1920,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenContractStringDoesNotHaveValidFormat()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1246,7 +1931,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1293,7 +1978,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenContractStringDoesNotHaveAProperFormat()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1304,7 +1989,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1352,7 +2037,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenContractStringPropertyDoesNotHaveAType()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1363,7 +2048,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1398,14 +2083,14 @@ namespace Totem.Tests.Features.Contracts
                 InitialContract = initialContractModel,
                 ModifiedContract = modifiedContractModel
             };
-            command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.",
+            command.ShouldNotValidate("Reference definition not found.",
                 "The definition of \"Name\" is incorrect. A type or reference is required.");
         }
 
         public async Task ShouldNotEditWhenNonIntegerTypeExampleForIntegerType()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1416,7 +2101,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1461,10 +2146,10 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The example 'not-an-integer-example' for 'Age' does not match the required data type or format 'integer'.");
         }
 
-        public async Task ShouldNotEditWhenNonDateTimeExampleForDateTimeFormat()
+        public async Task ShouldNotEditWhenNonNumberTypeExampleForNumberType()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1475,7 +2160,66 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = sampleContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Height"": {
+                                ""type"": ""number"",
+                                ""format"": ""float"",
+                                ""example"": ""not-a-number-example""
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = initialContract.Namespace,
+                Type = sampleContract.Type,
+                VersionNumber = sampleContract.VersionNumber
+            };
+
+            var command = new Edit.Command()
+            {
+                InitialContract = initialContractModel,
+                ModifiedContract = modifiedContractModel
+            };
+
+            command.ShouldNotValidate("The example 'not-a-number-example' for 'Height' does not match the required data type or format 'number'.");
+        }
+
+        public async Task ShouldNotEditWhenNonDateTimeExampleForDateTimeFormat()
+        {
+            var initialContract = await AlreadyInDatabaseContract();
+            var initialContractModel = new Edit.EditModel
+            {
+                Id = initialContract.Id,
+                Description = initialContract.Description,
+                ContractString = initialContract.ContractString,
+                Namespace = initialContract.Namespace,
+                Type = initialContract.Type,
+                VersionNumber = initialContract.VersionNumber
+            };
+
+            var sampleContract = SampleContract();
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1523,7 +2267,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenNonGuidExampleForGuid()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1534,7 +2278,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1586,7 +2330,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenNestedExamplesDoNotMatchType()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1597,7 +2341,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description,
@@ -1653,7 +2397,7 @@ namespace Totem.Tests.Features.Contracts
         public async Task ShouldNotEditWhenVersionNumberExistOnAnotherContractWithSameId()
         {
             var initialContract = await AlreadyInDatabaseContract();
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1669,7 +2413,7 @@ namespace Totem.Tests.Features.Contracts
                 x.VersionNumber = "1.0.1";
             });
 
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1692,7 +2436,7 @@ namespace Totem.Tests.Features.Contracts
             var initialContract = await AlreadyInDatabaseContract();
             var oldCount = CountRecords<Contract>();
 
-            var initialContractModel = new Edit.EditModel()
+            var initialContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = initialContract.Description,
@@ -1704,7 +2448,7 @@ namespace Totem.Tests.Features.Contracts
             };
 
             var sampleContract = SampleContract();
-            var modifiedContractModel = new Edit.EditModel()
+            var modifiedContractModel = new Edit.EditModel
             {
                 Id = initialContract.Id,
                 Description = sampleContract.Description, // Edited

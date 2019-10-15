@@ -73,54 +73,59 @@ namespace Totem.Tests.Features.API
             var result = await Send(command);
 
             var messageDictionary = JsonConvert.DeserializeObject<CaseInsensitiveDictionary<object>>(result.SampleData);
-            var time = DateTime.Parse(messageDictionary["Timestamp"].ToString());
-            var guid = Guid.Parse(messageDictionary["ID"].ToString());
+            Guid.TryParse(messageDictionary["ID"].ToString(), out _).ShouldBe(true);
+            DateTime.TryParse(messageDictionary["Timestamp"].ToString(), out _).ShouldBe(true);
 
-            guid.GetType().ShouldBe(typeof(Guid));
-            time.GetType().ShouldBe(typeof(DateTime));
             messageDictionary["Name"].ShouldBe("String text");
             messageDictionary["Age"].ShouldBe(5);
         }
 
         public void GeneratesProperIntegerSampleData()
         {
-            var sampleInt32 = SampleData.GenerateSampleData("Integer", "Int32");
-            var int32Value = int.Parse(sampleInt32);
-            int32Value.GetType().ShouldBe(typeof(int));
+            var sampleInt32 = SampleData.GenerateSampleData(DataType.Integer, Format.Int32);
+            int.TryParse(sampleInt32, out _).ShouldBe(true);
 
-            var sampleInt64 = SampleData.GenerateSampleData("Integer", "Int64");
-            var int64Value = long.Parse(sampleInt64);
-            int64Value.GetType().ShouldBe(typeof(long));
+            var sampleInt64 = SampleData.GenerateSampleData(DataType.Integer, Format.Int64);
+            long.TryParse(sampleInt64, out _).ShouldBe(true);
 
-            var sampleInt = SampleData.GenerateSampleData("Integer", null);
-            var intValue = long.Parse(sampleInt);
-            intValue.GetType().ShouldBe(typeof(long));
+            var sampleInt = SampleData.GenerateSampleData(DataType.Integer, null);
+            long.TryParse(sampleInt, out _).ShouldBe(true);
+        }
+
+        public void GeneratesProperNumberSampleData()
+        {
+            var sampleFloat = SampleData.GenerateSampleData(DataType.Number, Format.Float);
+            float.TryParse(sampleFloat, out _).ShouldBe(true);
+
+            var sampleDouble = SampleData.GenerateSampleData(DataType.Number, Format.Double);
+            double.TryParse(sampleDouble, out _).ShouldBe(true);
+
+            var sampleNumber = SampleData.GenerateSampleData(DataType.Number, null);
+            double.TryParse(sampleNumber, out _).ShouldBe(true);
         }
 
         public void GeneratesProperStringSampleData()
         {
-            var dateTimeString = SampleData.GenerateSampleData("string", "date-time");
+            var dateTimeString = SampleData.GenerateSampleData(DataType.String, Format.DateTime);
             dateTimeString = dateTimeString.Replace("\"", "");
-            var sampleDateTime = DateTime.Parse(dateTimeString);
-            sampleDateTime.GetType().ShouldBe(typeof(DateTime));
+            DateTime.TryParse(dateTimeString, out _).ShouldBe(true);
 
-            var sampleData = SampleData.GenerateSampleData("string", null);
+            var sampleData = SampleData.GenerateSampleData(DataType.String, null);
             sampleData.GetType().ShouldBe(typeof(string));
         }
 
         public void GeneratesProperGuidSampleData()
         {
-            var guidString = SampleData.GenerateSampleData("string", null,
+            var guidString = SampleData.GenerateSampleData(DataType.String, null,
                 "^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
-            var sampleGuid = Guid.Parse(guidString);
-            sampleGuid.GetType().ShouldBe(typeof(Guid));
+            Guid.TryParse(guidString, out _).ShouldBe(true);
         }
 
         public void SampleDataHandlesInvalidPatternRegex()
         {
             // mismatched parens to test invalid pattern
-            var guidString = SampleData.GenerateSampleData("string", null, "^(([0-9a-f]))-([0-9a-f]){12})$");
+            var guidString = SampleData.GenerateSampleData(DataType.String, null, "^(([0-9a-f]))-([0-9a-f]){12})$");
             guidString = guidString.Replace("\"", "");
             guidString.ShouldBe("Invalid pattern");
         }
@@ -148,7 +153,7 @@ namespace Totem.Tests.Features.API
                     }}
             });
 
-            var objectString = SampleData.GenerateSampleData("object", null, properties: propertyDictionary);
+            var objectString = SampleData.GenerateSampleData(DataType.Object, null, properties: propertyDictionary);
             objectString = objectString.Replace("\"\"", "\"");
             objectString.ShouldBe("{\"IntegerProp\":\"30\",\"StringProp\":\"String text\",\"ObjectProp\":{\"InnerProp\":\"30\"}}");
         }
@@ -159,7 +164,7 @@ namespace Totem.Tests.Features.API
             {
                 Type = "String",
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
             sampleData = sampleData.Replace("\"\"", "\"");
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
@@ -176,13 +181,28 @@ namespace Totem.Tests.Features.API
                 Type = "Integer",
                 Format = "int32"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
             {
-                var parsedItem = int.Parse(item);
-                parsedItem.GetType().ShouldBe(typeof(int));
+                int.TryParse(item, out _).ShouldBe(true);
+            }
+        }
+
+        public void GeneratesProperNumberArraySampleData()
+        {
+            var arrayItem = new SchemaObject()
+            {
+                Type = "Number",
+                Format = "float"
+            };
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
+
+            var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
+            foreach (var item in items)
+            {
+                float.TryParse(item, out _).ShouldBe(true);
             }
         }
 
@@ -193,14 +213,13 @@ namespace Totem.Tests.Features.API
                 Type = "String",
                 Format = "date-time"
             };
-            var sampleData = SampleData.GenerateSampleData("array", null, items: arrayItem);
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
             sampleData = sampleData.Replace("\"\"", "\"");
 
             var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
             foreach (var item in items)
             {
-                var parsedItem = DateTime.Parse(item);
-                parsedItem.GetType().ShouldBe(typeof(DateTime));
+                DateTime.TryParse(item, out _).ShouldBe(true);
             }
         }
 

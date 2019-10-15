@@ -8,12 +8,16 @@ global
   .beforeEach(utils.loginAndNavigateToEditContract)
   .afterEach(utils.logOut);
 
-async function addNewModelAtRoot(t) {
+async function addNewModelAtRoot(t, isObjectArray = false) {
   await t.click(utils.addNewFieldBtn);
 
   // Add a new model
   await t.typeText(utils.inputFieldName, 'testModel');
   await t.click(utils.inputType).click(Selector('li').withText('Define a new model'));
+
+  if (isObjectArray === true) {
+    await t.click(utils.isObjectArrayCheckbox);
+  }
 
   // Add a new field to the model
   await t.click(utils.addNewFieldNestedBtn);
@@ -189,8 +193,172 @@ test('Add a new model using previous model', async t => {
     .eql(2);
 });
 
+test('Edit a previous model and add a new model using the previous model with the edits', async t => {
+  await addNewModelAtRoot(t);
+  // Add a new field to the model and save
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  await t.click(utils.addNewFieldNestedBtn);
+
+  await t.typeText(utils.inputFieldName, 'newTestModelProperty');
+  await t.click(utils.inputType).click(Selector('li').withText('DateTime'));
+
+  await t.click(utils.saveFieldBtn);
+
+  await t.click(utils.saveModelBtn);
+
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  // Add a new field based on previous model
+  await t.click(utils.addNewFieldBtn);
+
+  await t.typeText(utils.inputFieldName, 'testNewModel');
+  await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
+
+  await t.click(utils.saveFieldBtn);
+
+  const newlyAddedModelField = Selector('tr.treegrid-body-row').withText('testNewModel');
+  const nestedRows = await Selector('tr.treegrid-body-row').withText('testProperty');
+  const newTestModelRows = await Selector('tr.treegrid-body-row').withText('newTestModelProperty');
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 3)
+    .expect(newlyAddedModelField.exists)
+    .eql(true)
+    .expect(nestedRows.exists)
+    .eql(true)
+    .expect(nestedRows.count)
+    .eql(2)
+    .expect(newTestModelRows.exists)
+    .eql(true)
+    .expect(newTestModelRows.count)
+    .eql(2);
+});
+
 test('Edit a non-root level field from the root table', async t => {
   await addNewModelAtRoot(t);
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  const nestedRowToEdit = Selector('tr.treegrid-body-row').withText('testProperty');
+  const editFieldBtn = nestedRowToEdit.find('.edit-action');
+
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+  await t.expect(utils.inputFieldExample.value).eql('123');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+
+  await t.typeText(utils.inputFieldName, 'nestedPropertyEdited', { replace: true });
+  await t.click(utils.inputType).click(Selector('li').withText('DateTime'));
+  await t.typeText(utils.inputFieldExample, 'nestedPropertyExample', { replace: true });
+
+  await t.click(utils.saveFieldBtn);
+
+  const oldModelRow = Selector('tr.treegrid-body-row').withText('testModel');
+  const oldNestedRow = Selector('tr.treegrid-body-row').withText('testProperty');
+  const newNestedRow = Selector('tr.treegrid-body-row').withText('nestedPropertyEdited');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount)
+    .expect(oldModelRow.exists)
+    .eql(true)
+    .expect(newNestedRow.exists)
+    .eql(true)
+    .expect(newNestedRow.textContent)
+    .contains('date-time')
+    .expect(newNestedRow.textContent)
+    .contains('nestedPropertyExample')
+    .expect(oldNestedRow.exists)
+    .eql(false);
+});
+
+test('Add a new array of objects field at the root', async t => {
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  await addNewModelAtRoot(t, true);
+
+  const newlyAddedModel = Selector('tr.treegrid-body-row').withText('testModel');
+  const newlyAddedNestedRow = Selector('tr.treegrid-body-row').withText('testProperty');
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 2)
+    .expect(newlyAddedModel.exists)
+    .eql(true)
+    .expect(newlyAddedNestedRow.exists)
+    .eql(true);
+});
+
+test('Edit root level model name of an array of objects', async t => {
+  await addNewModelAtRoot(t, true);
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  // The edit
+  await t.typeText(utils.modelName, 'editTestModel', { replace: true });
+
+  const saveModelBtn = Selector('#saveModelBtn');
+  await t.click(saveModelBtn);
+
+  const oldModelRow = Selector('tr.treegrid-body-row').withText('testModel');
+  const newModelRow = Selector('tr.treegrid-body-row').withText('editTestModel');
+  const nestedRow = Selector('tr.treegrid-body-row').withText('testProperty');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount)
+    .expect(oldModelRow.exists)
+    .eql(false)
+    .expect(newModelRow.exists)
+    .eql(true)
+    .expect(nestedRow.exists)
+    .eql(true);
+});
+
+test('Convert an array of objects into an object', async t => {
+  await addNewModelAtRoot(t, true);
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+
+  await t.expect(objectRowToEdit.textContent).contains('array (object)');
+
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  // The edit
+  await t.click(utils.isObjectArrayCheckbox);
+
+  const saveModelBtn = Selector('#saveModelBtn');
+  await t.click(saveModelBtn);
+
+  const modelRow = Selector('tr.treegrid-body-row').withText('testModel');
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount)
+    .expect(objectRowToEdit.textContent)
+    .notContains('array (object)')
+    .expect(objectRowToEdit.textContent)
+    .contains('object')
+    .expect(modelRow.exists)
+    .eql(true);
+});
+
+test('Edit a non-root level field from the root table of an array objects', async t => {
+  await addNewModelAtRoot(t, true);
   const initialRowCount = await Selector('tr.treegrid-body-row').count;
 
   const nestedRowToEdit = Selector('tr.treegrid-body-row').withText('testProperty');

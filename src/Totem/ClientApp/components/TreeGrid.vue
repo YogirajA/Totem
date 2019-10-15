@@ -15,10 +15,12 @@
 import GridHeader from './GridHeader';
 import GridBody from './GridBody';
 
-function getBodyData(data, isTreeType, childrenProp, isFold, level = 1) {
+function getBodyData(data, isTreeType, childrenProp, arrayItemsProp, isFold, level = 1) {
   let bodyData = [];
   data.forEach((row, index) => {
-    const children = row[childrenProp];
+    const arrayItems = row[arrayItemsProp];
+    const arrayChildren = arrayItems ? arrayItems[childrenProp] : undefined;
+    const children = arrayChildren || row[childrenProp];
     const childrenLen =
       Object.prototype.toString.call(children).slice(8, -1) === 'Array' ? children.length : 0;
     bodyData.push({
@@ -31,7 +33,9 @@ function getBodyData(data, isTreeType, childrenProp, isFold, level = 1) {
     });
     if (isTreeType) {
       if (childrenLen > 0) {
-        bodyData = bodyData.concat(getBodyData(children, true, childrenProp, isFold, level + 1));
+        bodyData = bodyData.concat(
+          getBodyData(children, true, childrenProp, arrayItemsProp, isFold, level + 1)
+        );
       }
     }
   });
@@ -42,7 +46,13 @@ function initialState(table) {
   return {
     bodyHeight: 'auto',
     treeProp: 'name',
-    bodyData: getBodyData(table.data, table.treeType, table.childrenProp, table.isFold)
+    bodyData: getBodyData(
+      table.data,
+      table.treeType,
+      table.childrenProp,
+      table.arrayItemsProp,
+      table.isFold
+    )
   };
 }
 
@@ -121,6 +131,10 @@ export default {
       type: String,
       default: 'properties'
     },
+    arrayItemsProp: {
+      type: String,
+      default: 'items'
+    },
     isFold: {
       type: Boolean,
       default: false
@@ -129,12 +143,18 @@ export default {
       type: String,
       default: 'None'
     },
+    isEllipsisMenuVisible: {
+      type: Boolean,
+      default: true
+    },
+    /* eslint-disable */
     menu: Function,
     rowKey: Function,
     rowClassName: [String, Function],
     cellClassName: [String, Function],
     rowStyle: [Object, Function],
     cellStyle: [Object, Function]
+    /* eslint-enable */
   },
   data() {
     return {
