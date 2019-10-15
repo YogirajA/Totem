@@ -54,10 +54,11 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
       (row.rowId !== undefined && row.rowId === updatedModel.rowId) ||
       (row.modalRowId !== undefined && row.modalRowId === updatedModel.modalRowId)
     ) {
-      row.name = updatedModel.name;
-      row.modalRowId = updatedModel.modalRowId;
-      row.properties = updatedModel.properties;
-      row.items = updatedModel.items;
+      const model = row;
+      model.name = updatedModel.name;
+      model.modalRowId = updatedModel.modalRowId;
+      model.properties = updatedModel.properties;
+      model.items = updatedModel.items;
       rowUpdated = true;
       return true;
     }

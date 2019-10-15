@@ -28,7 +28,7 @@ export default {
     }
   },
   render() {
-    function getClassName(type, { headerAlign, prop }) {
+    function getClassName(type, { headerAlign, prop }, table) {
       if (type === 'cell' || type === 'inner') {
         const classList = [];
         if (type === 'cell') {
@@ -39,7 +39,7 @@ export default {
         }
         if (type === 'inner') {
           classList.push('treegrid-cell-inner');
-          if (this.table.treeType && this.table.treeProp === prop) {
+          if (table.treeType && table.treeProp === prop) {
             classList.push('treegrid-tree-header-inner');
           }
         }
@@ -88,8 +88,8 @@ export default {
                 className = 'menu-header';
               }
               return (
-                <th class={`${getClassName.call(this, 'cell', column)} ${className}`}>
-                  <div class={getClassName.call(this, 'inner', column)}>
+                <th class={`${getClassName.call(this, 'cell', column, this.table)} ${className}`}>
+                  <div class={getClassName.call(this, 'inner', column, this.table)}>
                     <div>{renderLabel.call(this, column, columnIndex)}</div>
                     {menu}
                   </div>

@@ -1,8 +1,8 @@
 <template>
   <div id="contract-list">
     <ContractGrid
-      ref="rootContractGrid"
       id="rootGrid"
+      ref="rootContractGrid"
       :rows="rows"
       :hide-ellipsis-menu="false"
       :edit-stack="editStack"
@@ -310,9 +310,11 @@ export default {
 
         const parent = findParent(this.rows, field);
         if (parent) {
-          let parentProperties = getPropertiesCopy(parent);
-          parentProperties[parentProperties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
-          updateProperties(parent, parentProperties)
+          const parentProperties = getPropertiesCopy(parent);
+          parentProperties[
+            parentProperties.findIndex(prop => prop.rowId === field.rowId)
+          ] = deepCopy(field);
+          updateProperties(parent, parentProperties);
           const parentOption = this.options.find(option => option.displayName === parent.name);
           parentOption.displayName = parent.name;
           parentOption.value.schemaName = parent.name;
@@ -356,9 +358,11 @@ export default {
           existingOption.value.schemaString = createSchemaString(updatedModel);
         }
         if (parent) {
-          let parentProperties = getPropertiesCopy(parent);
-          parentProperties[parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
-          updateProperties(parent, parentProperties)
+          const parentProperties = getPropertiesCopy(parent);
+          parentProperties[
+            parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)
+          ] = deepCopy(updatedModel);
+          updateProperties(parent, parentProperties);
           const parentOption = this.options.find(option => option.displayName === parent.name);
           parentOption.displayName = parent.name;
           parentOption.value.schemaName = parent.name;
@@ -450,14 +454,16 @@ export default {
     },
 
     updateSaveButtonState() {
+      /* eslint-disable */
       if (typeof setSaveButton === 'function') {
-          // setSaveButton is defined in Create.cshtml and Edit.cshtml
-          if (this.rows.length === 0 && setSaveButton.length > 0){
-            setSaveButton(true); // eslint-disable-line no-undef
-          } else {
-            setSaveButton(); // eslint-disable-line no-undef
-          }
+        // setSaveButton is defined in Create.cshtml and Edit.cshtml
+        if (this.rows.length === 0 && setSaveButton.length > 0) {
+          setSaveButton(true);
+        } else {
+          setSaveButton();
+        }
       }
+      /* eslint-enable */
     }
   }
 };
