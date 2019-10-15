@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Json;
 using System.Linq;
@@ -267,36 +268,44 @@ namespace Totem.Services
             {
                 var itemSchema = propertySchemaObject.Items;
                 dynamic itemArray = JsonConvert.DeserializeObject(kv.Value.ToString());
-                var count = 0;
-                foreach (var _ in itemArray)
+                Type arrayType = itemArray.GetType();
+                if (arrayType.IsArray || itemArray is IList)
                 {
-                    count += 1;
-                }
-                if (propertySchemaObject.MinItems != 0 && count < propertySchemaObject.MinItems)
-                {
-                    AddArrayMinLengthError(testMessageResult, kv.Key, propertySchemaObject.MinItems);
-                }
+                    var count = 0;
+                    foreach (var _ in itemArray)
+                    {
+                        count += 1;
+                    }
+                    if (propertySchemaObject.MinItems != 0 && count < propertySchemaObject.MinItems)
+                    {
+                        AddArrayMinLengthError(testMessageResult, kv.Key, propertySchemaObject.MinItems);
+                    }
 
-                if (propertySchemaObject.MaxItems != 0 && count > propertySchemaObject.MaxItems)
-                {
-                    AddArrayMaxLengthError(testMessageResult, kv.Key, propertySchemaObject.MaxItems);
+                    if (propertySchemaObject.MaxItems != 0 && count > propertySchemaObject.MaxItems)
+                    {
+                        AddArrayMaxLengthError(testMessageResult, kv.Key, propertySchemaObject.MaxItems);
+                    }
+
+                    var dataType = itemSchema.GetDataType();
+
+                    if (dataType == DataType.String)
+                    {
+                        TryParseStringArray(propertySchemaObject, kv, itemArray, testMessageResult, itemSchema.Reference == "Guid");
+                    }
+
+                    if (dataType == DataType.Integer)
+                    {
+                        TryParseIntegerArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                    }
+
+                    if (dataType == DataType.Number)
+                    {
+                        TryParseNumberArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                    }
                 }
-
-                var dataType = itemSchema.GetDataType();
-
-                if (dataType == DataType.String)
+                else
                 {
-                    TryParseStringArray(propertySchemaObject, kv, itemArray, testMessageResult, itemSchema.Reference == "Guid");
-                }
-
-                if (dataType == DataType.Integer)
-                {
-                    TryParseIntegerArray(propertySchemaObject, kv, itemArray, testMessageResult);
-                }
-
-                if (dataType == DataType.Number)
-                {
-                    TryParseNumberArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                    AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, DataType.Array.Value);
                 }
             }
         }
