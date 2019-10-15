@@ -742,6 +742,33 @@ namespace Totem.Tests.Services
             result.MessageErrors[0].ShouldBe("\"not an object\" does not match the required data type for Object (Object).");
         }
 
+        public void ShouldFailValidationForNonArrayType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "TestArray", new SchemaObject
+                {
+                    Type = "Array",
+                    Items = new SchemaObject()
+                    {
+                        Type = "Integer"
+                    },
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "TestArray",  "123"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeFalse();
+            result.MessageErrors[0].ShouldBe("\"123\" does not match the required data type for TestArray (array).");
+        }
+
         public void ShouldFailValidationIfSchemaNotFound()
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
