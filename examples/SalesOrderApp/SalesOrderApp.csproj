@@ -1,11 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <GenerateProgramFile>false</GenerateProgramFile>
+    <ApplicationIcon />
+    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject />
+    <IsTestProject>true</IsTestProject>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,17 +25,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Totem\Totem.csproj" />
+    <Content Remove="appsettings.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
+    <None Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>
