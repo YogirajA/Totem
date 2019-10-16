@@ -268,8 +268,7 @@ namespace Totem.Services
             {
                 var itemSchema = propertySchemaObject.Items;
                 dynamic itemArray = JsonConvert.DeserializeObject(kv.Value.ToString());
-                Type arrayType = itemArray.GetType();
-                if (arrayType.IsArray || itemArray is IList)
+                if (itemArray is IEnumerable)
                 {
                     var count = 0;
                     foreach (var _ in itemArray)
