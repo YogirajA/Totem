@@ -16,7 +16,7 @@
               v-model="modalFieldName"
               class="form-control"
               placeholder="Property Name"
-              autocomplete="off"
+              autocomplete="no"
             />
           </div>
           <div class="form-check form-group col-2 mt-auto">
