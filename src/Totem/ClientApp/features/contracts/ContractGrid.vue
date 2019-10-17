@@ -4,8 +4,8 @@
       class="treegrid"
       :data="rows"
       :columns="columns"
-      :is-ellipsis-menu-visible="isEllipsisMenuVisible"
-      @editClick="handleEditClick"
+      :menu="menu"
+      @editRowClick="handleEditClick"
       @editManually="$emit('editManually')"
       @showFieldWindow="$emit('showFieldWindow')"
     >
@@ -13,15 +13,14 @@
         <i v-if="scope.row.isLocked" class="fas edit fa-lock" />
         <i v-else class="fas edit fa-pencil-alt" />
       </template>
-      <template slot="typeTemplate" slot-scope="scope">
-        {{ getType(scope.row) }}
-      </template>
+      <template slot="typeTemplate" slot-scope="scope">{{ getType(scope.row) }}</template>
     </TreeGrid>
   </div>
 </template>
 
 <script>
 import TreeGrid from '../../components/TreeGrid.vue';
+import EllipsisMenu from '../../components/EllipsisMenu.vue';
 import { getDisplayType } from './dataHelpers';
 
 export default {
@@ -72,8 +71,45 @@ export default {
         this.$emit('showFieldWindow', row);
       }
     },
+    showEditContractModal() {
+      this.$emit('editManually');
+    },
+    showAddNewFieldModal() {
+      this.$emit('showFieldWindow');
+    },
     getType(property) {
       return getDisplayType(property);
+    },
+    menu(column, table) {
+      const menu = {
+        body: null,
+        className: null
+      };
+      if (column.key === 'example') {
+        menu.body = table.$slots.buttongroup ? (
+          table.$slots.buttongroup
+        ) : (
+          /* eslint-disable */
+          <div class="btn-group">
+            <button
+              id="addNewFieldBtn"
+              class="ui-button btn grid-btn"
+              onClick={this.showAddNewFieldModal}
+              type="button"
+            >
+              <i class="fa fa-plus" />
+              Add New Field
+            </button>
+            {/* eslint-enable */
+            this.isEllipsisMenuVisible && (
+              // eslint-disable-next-line react/no-string-refs
+              <EllipsisMenu ref="ellipsisMenu" onShowModal={this.showEditContractModal} />
+            )}
+          </div>
+        );
+        menu.className = 'menu-header';
+      }
+      return menu;
     }
   }
 };

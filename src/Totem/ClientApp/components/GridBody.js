@@ -59,7 +59,7 @@ export default {
         );
       }
       if (type === 'cell' && eventType === 'click' && column.key === 'edit' && !row.isLocked) {
-        this.table.$emit('editClick', row, column, columnIndex, $event);
+        this.table.$emit('editRowClick', row, column, columnIndex, $event);
       }
       if (type === 'cell') {
         return this.table.$emit(

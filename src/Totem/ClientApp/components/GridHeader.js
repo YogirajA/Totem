@@ -1,30 +1,13 @@
 /* TreeGrid, GridHeader, and GridBody components simplified from https://github.com/MisterTaki/vue-table-with-tree-grid */
-
-import EllipsisMenu from './EllipsisMenu.vue';
-
 export default {
   name: 'GridHeader',
-  components: {
-    EllipsisMenu
-  },
   props: {
-    isEllipsisMenuVisible: {
-      type: Boolean,
-      default: false
-    }
+    addMenu: Function
   },
   data: () => ({}),
   computed: {
     table() {
       return this.$parent;
-    }
-  },
-  methods: {
-    showEditContractModal() {
-      this.$emit('editManually');
-    },
-    showAddNewFieldModal() {
-      this.$emit('showFieldWindow');
     }
   },
   render() {
@@ -63,35 +46,16 @@ export default {
         <thead>
           <tr class="treegrid-header-row">
             {this.table.tableColumns.map((column, columnIndex) => {
-              let menu = null;
-              let className = null;
-              if (column.key === 'example') {
-                menu = this.table.$slots.buttongroup ? (
-                  this.table.$slots.buttongroup
-                ) : (
-                  <div class="btn-group">
-                    <button
-                      id="addNewFieldBtn"
-                      class="ui-button btn grid-btn"
-                      onClick={this.showAddNewFieldModal}
-                      type="button"
-                    >
-                      <i class="fa fa-plus" />
-                      Add New Field
-                    </button>
-                    {this.isEllipsisMenuVisible && (
-                      // eslint-disable-next-line react/no-string-refs
-                      <EllipsisMenu ref="ellipsisMenu" onShowModal={this.showEditContractModal} />
-                    )}
-                  </div>
-                );
-                className = 'menu-header';
-              }
+              const menu = this.addMenu(column, this.table);
               return (
-                <th class={`${getClassName.call(this, 'cell', column, this.table)} ${className}`}>
+                <th
+                  class={`${getClassName.call(this, 'cell', column, this.table)} ${
+                    menu.className !== null ? menu.className : ''
+                  }`}
+                >
                   <div class={getClassName.call(this, 'inner', column, this.table)}>
                     <div>{renderLabel.call(this, column, columnIndex)}</div>
-                    {menu}
+                    {menu.body !== null ? menu.body : ''}
                   </div>
                 </th>
               );
