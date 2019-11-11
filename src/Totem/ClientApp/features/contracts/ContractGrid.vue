@@ -11,7 +11,9 @@
         <i v-if="scope.row.isLocked" class="fas edit fa-lock" />
         <i v-else class="fas edit fa-pencil-alt" />
       </template>
-      <template slot="typeTemplate" slot-scope="scope">{{ getType(scope.row) }}</template>
+      <template slot="typeTemplate" slot-scope="scope">
+        {{ getType(scope.row) }}
+      </template>
     </TreeGrid>
   </div>
 </template>

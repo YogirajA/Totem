@@ -472,7 +472,36 @@ export default {
       this.rows = parseContractArray(newValue, 'contract-string-validation');
       this.closeModal('editManually');
       $('#contract-raw').scrollTop(0);
+    },
 
+    importContract() {
+      const message = $('#import-message')[0].value;
+      const contractBasedOnMessage = buildContractFromMessage(message);
+      this.rows = parseContractArray(
+        JSON.stringify(contractBasedOnMessage),
+        'contract-string-validation'
+      );
+      $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
+      $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
+      this.closeModal('importContract');
+      if (typeof setSaveButton === 'function') {
+        // setSaveButton is defined in Edit.cshtml
+        setSaveButton(); // eslint-disable-line no-undef
+      }
+      $('#contract-raw').scrollTop(0);
+    },
+
+    updateSaveButtonState() {
+      /* eslint-disable */
+      if (typeof setSaveButton === 'function') {
+        // setSaveButton is defined in Create.cshtml and Edit.cshtml
+        if (this.rows.length === 0 && setSaveButton.length > 0) {
+          setSaveButton(true);
+        } else {
+          setSaveButton();
+        }
+      }
+      /* eslint-enable */
     }
   }
 };
