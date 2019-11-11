@@ -503,6 +503,6 @@ export default {
       }
       /* eslint-enable */
     }
-  }	
+  }
 };
 </script>
