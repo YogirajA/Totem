@@ -158,7 +158,7 @@ export const isDate = msg => {
 };
 
 export const isGUID = msg => {
-  if (validator.isUUID(msg)) {
+  if ((typeof msg === 'string' || msg instanceof String) && validator.isUUID(msg)) {
     return true;
   }
   return false;
