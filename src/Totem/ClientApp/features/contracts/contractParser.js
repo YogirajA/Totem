@@ -163,6 +163,19 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   return updatedParentObject;
 };
 
+function handleCustomTypes(contractObject) {
+  const contract = contractObject;
+  if (JSON.stringify(contract.Contract).includes('#/Guid')) {
+    contract.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+}
+
 /* buildContractFromMessage: build a contract from the given message */
 export const buildContractFromMessage = message => {
   const messageObject = JSON.parse(message);
@@ -176,15 +189,7 @@ export const buildContractFromMessage = message => {
     baseContractObject.Contract,
     messageObject
   );
-  if (JSON.stringify(baseContractObject.Contract).includes('#/Guid')) {
-    baseContractObject.Guid = {
-      type: 'string',
-      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
-      minLength: 36,
-      maxLength: 36,
-      example: '01234567-abcd-0123-abcd-0123456789ab'
-    };
-  }
+  handleCustomTypes(baseContractObject);
   return baseContractObject;
 };
 
@@ -266,6 +271,9 @@ export const createContractString = (rows, schema) => {
       newContractObject[model] = schema[model];
     }
   });
+
+  handleCustomTypes(newContractObject);
+
   return JSON.stringify(newContractObject);
 };
 
