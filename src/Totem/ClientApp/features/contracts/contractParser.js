@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { deepCopy } from './dataHelpers';
+import { deepCopy, isDate, isGUID } from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -87,6 +87,26 @@ export const findRow = (rowId, rows) => {
   return result;
 };
 
+/* getPropertyObjectFromValue: builds and returns a property object from the property value */
+export const getPropertyObjectFromValue = prop => {
+  let propObject = {
+    type: 'string',
+    example: 'sample string'
+  };
+  if (isGUID(prop)) {
+    propObject = {
+      $ref: '#/Guid'
+    };
+  } else if (isDate(prop)) {
+    propObject = {
+      type: 'string',
+      format: 'date-time',
+      example: '2019-01-01T18:14:29Z'
+    };
+  }
+  return propObject;
+};
+
 /* buildPropertiesFromMessage: build the properties for an object from the given message */
 export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   const updatedParentObject = deepCopy(parentObject);
@@ -112,15 +132,24 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
         messageObject[key]
       );
     } else {
-      const prop = {
-        type: 'string',
-        example: 'sample string'
-      };
-      updatedParentObject.properties[key] = prop;
+      updatedParentObject.properties[key] = getPropertyObjectFromValue(messageObject[key]);
     }
   });
   return updatedParentObject;
 };
+
+function handleCustomTypes(contractObject) {
+  const contract = contractObject;
+  if (JSON.stringify(contract.Contract).includes('#/Guid')) {
+    contract.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+}
 
 /* buildContractFromMessage: build a contract from the given message */
 export const buildContractFromMessage = message => {
@@ -135,6 +164,7 @@ export const buildContractFromMessage = message => {
     baseContractObject.Contract,
     messageObject
   );
+  handleCustomTypes(baseContractObject);
   return baseContractObject;
 };
 
@@ -217,15 +247,7 @@ export const createContractString = (rows, schema) => {
     }
   });
 
-  if (JSON.stringify(newContractObject).includes('#/Guid')) {
-    newContractObject.Guid = {
-      type: 'string',
-      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
-      minLength: 36,
-      maxLength: 36,
-      example: '01234567-abcd-0123-abcd-0123456789ab'
-    };
-  }
+  handleCustomTypes(newContractObject);
 
   return JSON.stringify(newContractObject);
 };

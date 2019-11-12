@@ -972,6 +972,43 @@ describe('buildContractFromMessage', () => {
     expect(result.Contract.properties).toEqual(expectedProperties);
   });
 
+  it('should handle GUID and Date string formats', () => {
+    const messageString = `{
+      "dateprop": "2019-01-01T18:14:29Z",
+      "guidprop": "01234567-abcd-0123-abcd-0123456789ab",
+      "stringprop": "test3"
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      dateprop: {
+        type: 'string',
+        format: 'date-time',
+        example: '2019-01-01T18:14:29Z'
+      },
+      guidprop: {
+        $ref: '#/Guid'
+      },
+      stringprop:  {
+        type: 'string',
+        example: 'sample string'
+      }
+    };
+
+    const expectedGuidReference = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    }
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Guid).toEqual(expectedGuidReference);
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
   it('should handle nested objects', () => {
     const messageString = `{
       "item1": "test",
