@@ -6,14 +6,14 @@
       :columns="columns"
       :menu="menu"
       @editRowClick="handleEditClick"
-      @editManually="$emit('editManually')"
-      @showFieldWindow="$emit('showFieldWindow')"
     >
       <template slot="editableTemplate" slot-scope="scope">
         <i v-if="scope.row.isLocked" class="fas edit fa-lock" />
         <i v-else class="fas edit fa-pencil-alt" />
       </template>
-      <template slot="typeTemplate" slot-scope="scope">{{ getType(scope.row) }}</template>
+      <template slot="typeTemplate" slot-scope="scope">
+        {{ getType(scope.row) }}
+      </template>
     </TreeGrid>
   </div>
 </template>
@@ -31,6 +31,10 @@ export default {
   props: {
     rows: { type: Array, default: () => [] },
     isEllipsisMenuVisible: {
+      type: Boolean,
+      default: true
+    },
+    isImportButtonVisible: {
       type: Boolean,
       default: true
     }
@@ -77,6 +81,9 @@ export default {
     showAddNewFieldModal() {
       this.$emit('showFieldWindow');
     },
+    showImportModal() {
+      this.$emit('importFromMessage');
+    },
     getType(property) {
       return getDisplayType(property);
     },
@@ -91,6 +98,17 @@ export default {
         ) : (
           /* eslint-disable */
           <div class="btn-group">
+            {this.isImportButtonVisible && (
+              <button
+                id="importContractFromMessageBtn"
+                class="ui-button btn grid-btn"
+                onClick={this.showImportModal}
+                type="button"
+              >
+                <i class="fa fa-upload" />
+                Import
+              </button>
+            )}
             <button
               id="addNewFieldBtn"
               class="ui-button btn grid-btn"

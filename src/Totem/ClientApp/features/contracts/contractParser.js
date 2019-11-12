@@ -87,6 +87,57 @@ export const findRow = (rowId, rows) => {
   return result;
 };
 
+/* buildPropertiesFromMessage: build the properties for an object from the given message */
+export const buildPropertiesFromMessage = (parentObject, messageObject) => {
+  const updatedParentObject = deepCopy(parentObject);
+  Object.keys(messageObject).forEach(key => {
+    if (Array.isArray(messageObject[key])) {
+      const prop = {
+        type: 'array',
+        example: '["sample string"]',
+        items: {
+          type: 'string',
+          example: 'sample string'
+        }
+      };
+      updatedParentObject.properties[key] = prop;
+    } else if (messageObject[key] instanceof Object) {
+      const prop = {
+        type: 'object',
+        properties: {}
+      };
+      updatedParentObject.properties[key] = prop;
+      updatedParentObject.properties[key] = buildPropertiesFromMessage(
+        updatedParentObject.properties[key],
+        messageObject[key]
+      );
+    } else {
+      const prop = {
+        type: 'string',
+        example: 'sample string'
+      };
+      updatedParentObject.properties[key] = prop;
+    }
+  });
+  return updatedParentObject;
+};
+
+/* buildContractFromMessage: build a contract from the given message */
+export const buildContractFromMessage = message => {
+  const messageObject = JSON.parse(message);
+  const baseContractObject = {
+    Contract: {
+      type: 'object',
+      properties: {}
+    }
+  };
+  baseContractObject.Contract = buildPropertiesFromMessage(
+    baseContractObject.Contract,
+    messageObject
+  );
+  return baseContractObject;
+};
+
 /* updateNestedProperty: finds the existing row by rowId and replaces it with the edited value */
 export const updateNestedProperty = (editedRow, rows, isDelete) => {
   const updatedRows = deepCopy(rows);
@@ -165,6 +216,17 @@ export const createContractString = (rows, schema) => {
       newContractObject[model] = schema[model];
     }
   });
+
+  if (JSON.stringify(newContractObject).includes('#/Guid')) {
+    newContractObject.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+
   return JSON.stringify(newContractObject);
 };
 
@@ -209,9 +271,11 @@ export const isObjectArray = schema => {
 export const updateProperties = (schema, properties, isArray) => {
   /* eslint-disable */
   if (properties === undefined) {
+    // eslint-disable-next-line no-param-reassign
     properties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
+    // eslint-disable-next-line no-param-reassign
     isArray = isObjectArray(schema);
   }
   schema.properties = isArray ? undefined : properties;

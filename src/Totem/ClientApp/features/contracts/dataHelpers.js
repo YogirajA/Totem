@@ -139,4 +139,13 @@ export const findParent = (tree, childRow) => {
   return parentRow;
 };
 
+export const isValidJSON = msg => {
+  try {
+    JSON.parse(msg);
+  } catch (e) {
+    return false;
+  }
+  return true;
+};
+
 export const last = array => array[array.length - 1];
