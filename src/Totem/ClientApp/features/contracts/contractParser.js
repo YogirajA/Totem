@@ -241,6 +241,17 @@ export const createContractString = (rows, schema) => {
       newContractObject[model] = schema[model];
     }
   });
+
+  if (JSON.stringify(newContractObject).includes('#/Guid')) {
+    newContractObject.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+
   return JSON.stringify(newContractObject);
 };
 
