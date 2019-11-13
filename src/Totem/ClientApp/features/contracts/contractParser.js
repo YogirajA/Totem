@@ -1,5 +1,14 @@
 import $ from 'jquery';
-import { deepCopy, isDate, isGUID, isFloat, isNumeric, isInt32, isInt64 } from './dataHelpers';
+import {
+  deepCopy,
+  isDate,
+  isGUID,
+  isFloat,
+  isDouble,
+  isNumber,
+  isInt32,
+  isInt64
+} from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -89,40 +98,45 @@ export const findRow = (rowId, rows) => {
 
 /* getPropertyObjectFromValue: builds and returns a property object from the property value */
 export const getPropertyObjectFromValue = field => {
-  const prop = field.toString();
   let propObject = {
     type: 'string',
     example: 'sample string'
   };
-  if (isGUID(prop)) {
+  if (isGUID(field)) {
     propObject = {
       $ref: '#/Guid'
     };
-  } else if (isNumeric(prop)) {
+  } else if (isNumber(field)) {
     propObject = {
       type: 'number',
       example: '5.5'
     };
-    if (isInt32(prop)) {
+    if (isInt32(field)) {
       propObject = {
         type: 'integer',
         format: 'int32',
         example: '5'
       };
-    } else if (isInt64(prop)) {
+    } else if (isInt64(field)) {
       propObject = {
         type: 'integer',
         format: 'int64',
         example: '2147483650'
       };
-    } else if (isFloat(prop)) {
+    } else if (isFloat(field)) {
       propObject = {
         type: 'number',
         format: 'float',
         example: '10.50'
       };
+    } else if (isDouble(field)) {
+      propObject = {
+        type: 'number',
+        format: 'double',
+        example: '22.5030'
+      };
     }
-  } else if (isDate(prop)) {
+  } else if (isDate(field)) {
     propObject = {
       type: 'string',
       format: 'date-time',

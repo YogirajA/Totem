@@ -164,35 +164,70 @@ export const isGUID = msg => {
   return false;
 };
 
-export const isNumeric = msg => {
-  if (validator.isNumeric(msg)) {
+export const isNumber = msg => {
+  if (typeof msg === 'number') {
     return true;
   }
   return false;
 };
 
 export const isFloat = msg => {
-  if (validator.isFloat(msg)) {
+  const minValue = 1.5e-45;
+  const maxValue = 3.4e38;
+  if (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  ) {
+    return true;
+  }
+  return false;
+};
+
+export const isDouble = msg => {
+  const minValue = 5.0e-324;
+  const maxValue = 1.7e308;
+  if (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  ) {
     return true;
   }
   return false;
 };
 
 export const isInt32 = msg => {
+  const minValue = -2147483648;
+  const maxValue = 2147483647;
   const options = {
-    max: 2147483647
+    max: maxValue
   };
-  if (validator.isInt(msg, options)) {
+  if (
+    isNumber(msg, options) &&
+    validator.isInt(msg.toString()) &&
+    msg >= minValue &&
+    msg <= maxValue
+  ) {
     return true;
   }
   return false;
 };
 
 export const isInt64 = msg => {
+  const minValue = -9223372036854775808;
+  const maxValue = 9223372036854775807;
   const options = {
-    max: 9223372036854775807
+    max: maxValue
   };
-  if (validator.isInt(msg, options)) {
+  if (
+    isNumber(msg) &&
+    validator.isInt(msg.toString(), options) &&
+    msg >= minValue &&
+    msg <= maxValue
+  ) {
     return true;
   }
   return false;
