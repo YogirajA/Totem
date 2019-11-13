@@ -1,6 +1,7 @@
 import _ from 'lodash';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import validator from 'validator';
+import moment from 'moment';
 
 export const reorderOptions = oldOptions => {
   // pull out the "Define new" option if it exists, and order the rest alphabetically
@@ -151,10 +152,11 @@ export const isValidJSON = msg => {
 };
 
 export const isDate = msg => {
-  if (Number.isNaN(Date.parse(msg))) {
-    return false;
+  const formats = [moment.ISO_8601, moment.defaultFormat, moment.defaultFormatUtc];
+  if (moment(msg, formats, true).isValid()) {
+    return true;
   }
-  return true;
+  return false;
 };
 
 export const isGUID = msg => {

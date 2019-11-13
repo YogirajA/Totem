@@ -256,6 +256,12 @@ describe('isDate', () => {
     const result = isDate(testString);
     expect(result).toBe(false);
   });
+
+  it('returns false when string number is not valid Date', () => {
+    const testString = '5.5';
+    const result = isDate(testString);
+    expect(result).toBe(false);
+  });
 });
 
 describe('isGUID', () => {
