@@ -548,7 +548,7 @@ namespace Totem.Tests.Services
 
             var messageKeyDictionary = new CaseInsensitiveDictionary<object>
             {
-                { "Number",  "123456789012.34567"}
+                { "Number",  "1.56e105"}
             };
 
             var testerService = new TesterService();
@@ -578,7 +578,7 @@ namespace Totem.Tests.Services
 
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
-            result.IsMessageValid.ShouldBeFalse("\"123456789012.34567\" does not match the required format for Number (Float).");
+            result.IsMessageValid.ShouldBeFalse("\"10.5\" does not match the required format for Number (Float).");
         }
 
         public void ShouldValidateDateTimeFormat()

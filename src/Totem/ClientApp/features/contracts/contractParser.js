@@ -127,13 +127,13 @@ export const getPropertyObjectFromValue = field => {
       propObject = {
         type: 'number',
         format: 'float',
-        example: '10.50'
+        example: '10.5'
       };
     } else if (isDouble(field)) {
       propObject = {
         type: 'number',
         format: 'double',
-        example: '22.5030'
+        example: '1.56e105'
       };
     }
   } else if (isDate(field)) {
