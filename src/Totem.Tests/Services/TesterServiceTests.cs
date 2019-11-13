@@ -593,7 +593,7 @@ namespace Totem.Tests.Services
 
             var messageKeyDictionary = new CaseInsensitiveDictionary<object>
             {
-                { "Number",  "123456789012.34567"}
+                { "Number",  "1.56e105"}
             };
 
             var testerService = new TesterService();
@@ -623,7 +623,7 @@ namespace Totem.Tests.Services
 
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
-            result.IsMessageValid.ShouldBeFalse("\"123456789012.34567\" does not match the required format for Number (Float).");
+            result.IsMessageValid.ShouldBeFalse("\"10.5\" does not match the required format for Number (Float).");
         }
 
         public void ShouldValidateDateTimeFormat()
@@ -785,6 +785,33 @@ namespace Totem.Tests.Services
 
             result.IsMessageValid.ShouldBeFalse();
             result.MessageErrors[0].ShouldBe("\"not an object\" does not match the required data type for Object (Object).");
+        }
+
+        public void ShouldFailValidationForNonArrayType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "TestArray", new SchemaObject
+                {
+                    Type = "Array",
+                    Items = new SchemaObject()
+                    {
+                        Type = "Integer"
+                    },
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "TestArray",  "123"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeFalse();
+            result.MessageErrors[0].ShouldBe("\"123\" does not match the required data type for TestArray (array).");
         }
 
         public void ShouldFailValidationIfSchemaNotFound()

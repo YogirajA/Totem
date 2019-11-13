@@ -143,12 +143,18 @@ export default {
       type: String,
       default: 'None'
     },
+    isEllipsisMenuVisible: {
+      type: Boolean,
+      default: true
+    },
+    /* eslint-disable */
     menu: Function,
     rowKey: Function,
     rowClassName: [String, Function],
     cellClassName: [String, Function],
     rowStyle: [Object, Function],
     cellStyle: [Object, Function]
+    /* eslint-enable */
   },
   data() {
     return {

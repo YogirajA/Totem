@@ -15,7 +15,7 @@
           <input
             id="propertyName"
             v-model="fieldName"
-            autocomplete="off"
+            autocomplete="no"
             class="field-name form-control"
             placeholder="Property Name"
           />

@@ -8,27 +8,26 @@
       :class-name="`modal-scrollable`"
     >
       <template v-slot:body>
-        <div class="container">
-          <div class="row">
-            <div class="form-group col-md-10">
-              <label for="modelName" class="control-label">Property Name</label>
-              <input
-                id="modelName"
-                v-model="modalFieldName"
-                class="form-control"
-                placeholder="Property Name"
-              />
-            </div>
-            <div class="form-check form-group col-md-2 mt-auto">
-              <input
-                id="isObjectArray"
-                v-model="isArray"
-                class="form-check-input"
-                type="checkbox"
-                @change="onCheckboxChange"
-              />
-              <label for="isObjectArray" class="control-label">Array</label>
-            </div>
+        <div class="row">
+          <div class="form-group col-10">
+            <label for="modelName" class="control-label">Property Name</label>
+            <input
+              id="modelName"
+              v-model="modalFieldName"
+              class="form-control"
+              placeholder="Property Name"
+              autocomplete="no"
+            />
+          </div>
+          <div class="form-check form-group col-2 mt-auto">
+            <input
+              id="isObjectArray"
+              v-model="isArray"
+              class="form-check-input"
+              type="checkbox"
+              @change="onCheckboxChange"
+            />
+            <label for="isObjectArray" class="control-label">Array</label>
           </div>
         </div>
         <ContractGrid
@@ -220,9 +219,9 @@ export default {
 
     showModelWindow(field) {
       const model = field;
-      let parent = findParent(this.$parent.rows, field);
+      let parent = findParent(this.$parent.rows, model);
       if (parent === null) {
-        parent = findParent(this.$parent.modalRows, field);
+        parent = findParent(this.$parent.modalRows, model);
       }
       model.parentId = parent == null ? null : parent.rowId;
       this.editStack.push(deepCopy(model));

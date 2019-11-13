@@ -1,8 +1,8 @@
 <template>
   <div id="contract-list">
     <ContractGrid
-      ref="rootContractGrid"
       id="rootGrid"
+      ref="rootContractGrid"
       :rows="rows"
       @editManually="showEditManuallyWindow"
       @importFromMessage="showImportWindow"
@@ -473,17 +473,7 @@ export default {
       this.closeModal('editManually');
       $('#contract-raw').scrollTop(0);
     },
-    updateSaveButtonState() {
-      if (typeof setSaveButton === 'function') {
-        // setSaveButton is defined in Create.cshtml and Edit.cshtml
-        const setSaveButtonHasArguments = setSaveButton.length > 0; // eslint-disable-line no-undef
-        if (this.rows.length === 0 && setSaveButtonHasArguments) {
-          setSaveButton(true); // eslint-disable-line no-undef
-        } else {
-          setSaveButton(); // eslint-disable-line no-undef
-        }
-      }
-    },
+
     importContract() {
       const message = $('#import-message')[0].value;
       const contractBasedOnMessage = buildContractFromMessage(message);
@@ -499,6 +489,19 @@ export default {
         setSaveButton(); // eslint-disable-line no-undef
       }
       $('#contract-raw').scrollTop(0);
+    },
+
+    updateSaveButtonState() {
+      /* eslint-disable */
+      if (typeof setSaveButton === 'function') {
+        // setSaveButton is defined in Create.cshtml and Edit.cshtml
+        if (this.rows.length === 0 && setSaveButton.length > 0) {
+          setSaveButton(true);
+        } else {
+          setSaveButton();
+        }
+      }
+      /* eslint-enable */
     }
   }
 };

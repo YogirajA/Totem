@@ -10,9 +10,10 @@ import {
   isDate,
   isGUID,
   isFloat,
+  isDouble,
   isInt32,
   isInt64,
-  isNumeric,
+  isNumber,
   isBool
 } from '../dataHelpers';
 
@@ -256,6 +257,12 @@ describe('isDate', () => {
     const result = isDate(testString);
     expect(result).toBe(false);
   });
+
+  it('returns false when string number is not valid Date', () => {
+    const testString = '5.5';
+    const result = isDate(testString);
+    expect(result).toBe(false);
+  });
 });
 
 describe('isGUID', () => {
@@ -272,72 +279,128 @@ describe('isGUID', () => {
   });
 });
 
-describe('isNumeric', () => {
-  it('returns true when string is numeric (only numbers and symbols)', () => {
-    const testString = `3`;
-    const result = isNumeric(testString);
+describe('isNumber', () => {
+  it('returns true when parameter is a number', () => {
+    const testValue = 3;
+    const result = isNumber(testValue);
     expect(result).toBe(true);
   });
 
-  it('returns false when string is not numeric', () => {
-    const testString = 'not a number';
-    const result = isNumeric(testString);
+  it('returns false when value is not numeric', () => {
+    const testValue = 'not a number';
+    const result = isNumber(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when number is a string', () => {
+    const testValue = '3';
+    const result = isNumber(testValue);
     expect(result).toBe(false);
   });
 });
 
 describe('isInt32', () => {
-  it('returns true when string is an int32 integer', () => {
-    const testString = `4`;
-    const result = isInt32(testString);
+  it('returns true when parameter is an int32 integer', () => {
+    const testValue = 4;
+    const result = isInt32(testValue);
     expect(result).toBe(true);
   });
 
-  it('returns false when string is not an int32 integer', () => {
-    const testString = '2147483657';
-    const result = isInt32(testString);
+  it('returns false when value is not an int32 integer', () => {
+    const testValue = 2147483657;
+    const result = isInt32(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when an int32 integer is a string', () => {
+    const testValue = '4';
+    const result = isInt32(testValue);
     expect(result).toBe(false);
   });
 });
 
 describe('isInt64', () => {
-  it('returns true when string is an int64 integer', () => {
-    const testString = `2147483648`;
-    const result = isInt64(testString);
+  it('returns true when parameter is an int64 integer', () => {
+    const testValue = 2147483648;
+    const result = isInt64(testValue);
     expect(result).toBe(true);
   });
 
-  it('returns false when string is not an int64 integer', () => {
-    const testString = 'not an int64';
-    const result = isInt64(testString);
+  it('returns false when value is not an int64 integer', () => {
+    const testValue = 'not an int64';
+    const result = isInt64(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when an int64 integer is a string', () => {
+    const testValue = '2147483648';
+    const result = isInt64(testValue);
     expect(result).toBe(false);
   });
 });
 
 describe('isFloat', () => {
-  it('returns true when string is a float', () => {
-    const testString = `10.25`;
-    const result = isFloat(testString);
+  it('returns true when value is a float', () => {
+    const testValue = 10.25;
+    const result = isFloat(testValue);
     expect(result).toBe(true);
   });
 
-  it('returns false when string is not a float', () => {
-    const testString = 'not a float';
-    const result = isFloat(testString);
+  it('returns false when value is not a float', () => {
+    const testValue = 'not a float';
+    const result = isFloat(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when a float is a string', () => {
+    const testValue = `10.25`;
+    const result = isFloat(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when value is a double', () => {
+    const testValue = 10.25e55;
+    const result = isFloat(testValue);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isDouble', () => {
+  it('returns true when value is a double', () => {
+    const testValue = 10.25e55;
+    const result = isDouble(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when value is not a double', () => {
+    const testValue = 'not a double';
+    const result = isDouble(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when a double is a string', () => {
+    const testValue = `10.25e34`;
+    const result = isDouble(testValue);
     expect(result).toBe(false);
   });
 });
 
 describe('isBool', () => {
   it('returns true when string is a bool', () => {
-    const testString = `true`;
-    const result = isBool(testString);
+    const testValue = true;
+    const result = isBool(testValue);
     expect(result).toBe(true);
   });
 
   it('returns false when string is not a bool', () => {
-    const testString = 'not a bool';
-    const result = isBool(testString);
+    const testValue = 'not a bool';
+    const result = isBool(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when a bool is a string', () => {
+    const testValue = `true`;
+    const result = isBool(testValue);
     expect(result).toBe(false);
   });
 });

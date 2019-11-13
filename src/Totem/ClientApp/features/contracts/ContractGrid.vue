@@ -96,6 +96,7 @@ export default {
         menu.body = table.$slots.buttongroup ? (
           table.$slots.buttongroup
         ) : (
+          /* eslint-disable */
           <div class="btn-group">
             {this.isImportButtonVisible && (
               <button
@@ -117,7 +118,8 @@ export default {
               <i class="fa fa-plus" />
               Add New Field
             </button>
-            {this.isEllipsisMenuVisible && (
+            {/* eslint-enable */
+            this.isEllipsisMenuVisible && (
               // eslint-disable-next-line react/no-string-refs
               <EllipsisMenu ref="ellipsisMenu" onShowModal={this.showEditContractModal} />
             )}

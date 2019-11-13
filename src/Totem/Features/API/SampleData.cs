@@ -238,11 +238,11 @@ namespace Totem.Features.API
         {
             if (format == Format.Float)
             {
-                return "10.50";
+                return "10.5";
             }
             if (format == Format.Double)
             {
-                return "123456789012.34567";
+                return "1.56e105";
             }
 
             return "5.5"; // format not included or unknown

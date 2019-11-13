@@ -1,6 +1,7 @@
 import _ from 'lodash';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import validator from 'validator';
+import moment from 'moment';
 
 export const reorderOptions = oldOptions => {
   // pull out the "Define new" option if it exists, and order the rest alphabetically
@@ -52,23 +53,23 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
   let rowUpdated = false;
 
   function searchAndUpdateRow(row) {
-    const updatedRow = row;
     if (
       (row.rowId !== undefined && row.rowId === updatedModel.rowId) ||
       (row.modalRowId !== undefined && row.modalRowId === updatedModel.modalRowId)
     ) {
-      updatedRow.name = updatedModel.name;
-      updatedRow.modalRowId = updatedModel.modalRowId;
-      updatedRow.properties = updatedModel.properties;
-      updatedRow.items = updatedModel.items;
+      const model = row;
+      model.name = updatedModel.name;
+      model.modalRowId = updatedModel.modalRowId;
+      model.properties = updatedModel.properties;
+      model.items = updatedModel.items;
       rowUpdated = true;
       return true;
     }
     return (
-      (Array.isArray(updatedRow.properties) && updatedRow.properties.some(searchAndUpdateRow)) ||
-      (updatedRow.items &&
-        Array.isArray(updatedRow.items.properties) &&
-        updatedRow.items.properties.some(searchAndUpdateRow))
+      (Array.isArray(row.properties) && row.properties.some(searchAndUpdateRow)) ||
+      (row.items &&
+        Array.isArray(row.items.properties) &&
+        row.items.properties.some(searchAndUpdateRow))
     );
   }
 
@@ -151,55 +152,91 @@ export const isValidJSON = msg => {
 };
 
 export const isDate = msg => {
-  if (Number.isNaN(Date.parse(msg))) {
-    return false;
-  }
-  return true;
-};
-
-export const isGUID = msg => {
-  if (validator.isUUID(msg)) {
+  const formats = [moment.ISO_8601, moment.defaultFormat, moment.defaultFormatUtc];
+  if (moment(msg, formats, true).isValid()) {
     return true;
   }
   return false;
 };
 
-export const isNumeric = msg => {
-  if (validator.isNumeric(msg)) {
+export const isGUID = msg => {
+  if ((typeof msg === 'string' || msg instanceof String) && validator.isUUID(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isNumber = msg => {
+  if (typeof msg === 'number') {
     return true;
   }
   return false;
 };
 
 export const isFloat = msg => {
-  if (validator.isFloat(msg)) {
+  const minValue = 1.5e-45;
+  const maxValue = 3.4e38;
+  if (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  ) {
     return true;
   }
   return false;
 };
 
-export const isBool = msg => {
-  if (validator.isBoolean(msg)) {
+export const isDouble = msg => {
+  const minValue = 5.0e-324;
+  const maxValue = 1.7e308;
+  if (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  ) {
     return true;
   }
   return false;
 };
 
 export const isInt32 = msg => {
+  const minValue = -2147483648;
+  const maxValue = 2147483647;
   const options = {
-    max: 2147483647
+    max: maxValue
   };
-  if (validator.isInt(msg, options)) {
+  if (
+    isNumber(msg, options) &&
+    validator.isInt(msg.toString()) &&
+    msg >= minValue &&
+    msg <= maxValue
+  ) {
     return true;
   }
   return false;
 };
 
 export const isInt64 = msg => {
+  const minValue = -9223372036854775808;
+  const maxValue = 9223372036854775807;
   const options = {
-    max: 9223372036854775807
+    max: maxValue
   };
-  if (validator.isInt(msg, options)) {
+  if (
+    isNumber(msg) &&
+    validator.isInt(msg.toString(), options) &&
+    msg >= minValue &&
+    msg <= maxValue
+  ) {
+    return true;
+  }
+  return false;
+};
+
+export const isBool = msg => {
+  if (typeof msg === 'boolean') {
     return true;
   }
   return false;

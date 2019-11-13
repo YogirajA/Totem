@@ -4,7 +4,8 @@ import {
   isDate,
   isGUID,
   isFloat,
-  isNumeric,
+  isDouble,
+  isNumber,
   isInt32,
   isInt64,
   isBool
@@ -98,46 +99,51 @@ export const findRow = (rowId, rows) => {
 
 /* getPropertyObjectFromValue: builds and returns a property object from the property value */
 export const getPropertyObjectFromValue = field => {
-  const prop = field.toString();
   let propObject = {
     type: 'string',
     example: 'sample string'
   };
-  if (isGUID(prop)) {
+  if (isGUID(field)) {
     propObject = {
       $ref: '#/Guid'
     };
-  } else if (isNumeric(prop)) {
+  } else if (isNumber(field)) {
     propObject = {
       type: 'number',
       example: '5.5'
     };
-    if (isInt32(prop)) {
+    if (isInt32(field)) {
       propObject = {
         type: 'integer',
         format: 'int32',
         example: '5'
       };
-    } else if (isInt64(prop)) {
+    } else if (isInt64(field)) {
       propObject = {
         type: 'integer',
         format: 'int64',
         example: '2147483650'
       };
-    } else if (isFloat(prop)) {
+    } else if (isFloat(field)) {
       propObject = {
         type: 'number',
         format: 'float',
-        example: '10.50'
+        example: '10.5'
+      };
+    } else if (isDouble(field)) {
+      propObject = {
+        type: 'number',
+        format: 'double',
+        example: '1.56e105'
       };
     }
-  } else if (isDate(prop)) {
+  } else if (isDate(field)) {
     propObject = {
       type: 'string',
       format: 'date-time',
       example: '2019-01-01T18:14:29Z'
     };
-  } else if (isBool(prop)) {
+  } else if (isBool(field)) {
     propObject = {
       type: 'boolean',
       example: false
@@ -177,6 +183,19 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   return updatedParentObject;
 };
 
+function handleCustomTypes(contractObject) {
+  const contract = contractObject;
+  if (JSON.stringify(contract.Contract).includes('#/Guid')) {
+    contract.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+}
+
 /* buildContractFromMessage: build a contract from the given message */
 export const buildContractFromMessage = message => {
   const messageObject = JSON.parse(message);
@@ -190,15 +209,7 @@ export const buildContractFromMessage = message => {
     baseContractObject.Contract,
     messageObject
   );
-  if (JSON.stringify(baseContractObject.Contract).includes('#/Guid')) {
-    baseContractObject.Guid = {
-      type: 'string',
-      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
-      minLength: 36,
-      maxLength: 36,
-      example: '01234567-abcd-0123-abcd-0123456789ab'
-    };
-  }
+  handleCustomTypes(baseContractObject);
   return baseContractObject;
 };
 
@@ -280,6 +291,9 @@ export const createContractString = (rows, schema) => {
       newContractObject[model] = schema[model];
     }
   });
+
+  handleCustomTypes(newContractObject);
+
   return JSON.stringify(newContractObject);
 };
 
@@ -322,6 +336,7 @@ export const isObjectArray = schema => {
 
 /* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
 export const updateProperties = (schema, properties, isArray) => {
+  /* eslint-disable */
   if (properties === undefined) {
     // eslint-disable-next-line no-param-reassign
     properties = getPropertiesCopy(schema);
@@ -334,6 +349,7 @@ export const updateProperties = (schema, properties, isArray) => {
   schema.properties = isArray ? undefined : properties;
   // eslint-disable-next-line no-param-reassign
   schema.items = isArray ? { type: 'object', properties } : undefined;
+  /* eslint-enable */
 };
 
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
