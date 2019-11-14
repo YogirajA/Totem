@@ -271,39 +271,32 @@ namespace Totem.Features.API
         {
             var length = GetArrayLength(minItems, maxItems);
             var returnArray = new List<string>();
-            if (dataType == DataType.Integer)
+
+            for (var i = 0; i < length; i++)
             {
-                for (var i = 0; i < length; i++)
+                if (dataType == DataType.Integer)
                 {
                     returnArray.Add(GenerateInteger(itemFormat));
                 }
-            }
 
-            if (dataType == DataType.Number)
-            {
-                for (var i = 0; i < length; i++)
+                if (dataType == DataType.Number)
                 {
                     returnArray.Add(GenerateNumber(itemFormat));
                 }
-            }
 
-            if (dataType == DataType.Boolean)
-            {
-                for (var i = 0; i < length; i++)
+                if (dataType == DataType.Boolean)
                 {
                     returnArray.Add(GenerateBoolean());
                 }
-            }
 
-            if (dataType == DataType.String)
-            {
-                for (var i = 0; i < length; i++)
+                if (dataType == DataType.String)
                 {
                     returnArray.Add(GenerateString(itemFormat, pattern));
                 }
             }
 
             var arrayString = $"[{string.Join(", ", returnArray.Select(x => $"{x}"))}]";
+
             return arrayString;
         }
 

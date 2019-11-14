@@ -261,6 +261,20 @@ export default {
       this.updateSaveButtonState();
     },
 
+    addNewModelToOptions(model) {
+      this.options.push({
+        displayName: model.name,
+        id: this.options.length,
+        value: {
+          id: this.options.length,
+          schemaName: model.name,
+          schemaString: createSchemaString(model)
+        },
+        isObject: true
+      });
+      this.options = reorderOptions(this.options);
+    },
+
     saveField(object) {
       const field = deepCopy(object);
       const addingToAModel = this.isAddModelWindowVisible;
@@ -316,17 +330,7 @@ export default {
       } else {
         // Update the root object
         if (field.type === 'object') {
-          this.options.push({
-            displayName: field.name,
-            id: this.options.length,
-            value: {
-              id: this.options.length,
-              schemaName: field.name,
-              schemaString: createSchemaString(field)
-            },
-            isObject: true
-          });
-          this.options = reorderOptions(this.options);
+          this.addNewModelToOptions(field);
         }
 
         const parent = findParent(this.rows, field);
@@ -358,17 +362,7 @@ export default {
 
       if (updatedModel.isNewModel === true) {
         // Add the newly added model name to the dropdown options
-        this.options.push({
-          displayName: updatedModel.name,
-          id: this.options.length,
-          value: {
-            id: this.options.length,
-            schemaName: updatedModel.name,
-            schemaString: createSchemaString(updatedModel)
-          },
-          isObject: true
-        });
-        this.options = reorderOptions(this.options);
+        this.addNewModelToOptions(updatedModel);
       } else {
         const existingOption = this.options.find(option => option.displayName === model.name);
         const parent = findParent(this.rows, updatedModel);

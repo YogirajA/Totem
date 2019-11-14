@@ -224,11 +224,7 @@ namespace Totem.Tests.Features.Contracts
                 VersionNumber = versionNumber
             };
 
-            command.ShouldNotValidate(
-                "'Version " +
-                "Number" +
-                "" +
-                "' must follow semantic version system.");
+            command.ShouldNotValidate("'Version Number' must follow semantic version system.");
         }
 
         public void ShouldNotCreateWhenVersionIsNotValid()
