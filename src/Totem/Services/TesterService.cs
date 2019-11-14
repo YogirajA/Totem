@@ -268,13 +268,9 @@ namespace Totem.Services
             {
                 var itemSchema = propertySchemaObject.Items;
                 dynamic itemArray = JsonConvert.DeserializeObject(kv.Value.ToString());
-                if (itemArray is IEnumerable)
+                if (itemArray is IEnumerable array)
                 {
-                    var count = 0;
-                    foreach (var _ in itemArray)
-                    {
-                        count += 1;
-                    }
+                    var count = array.Cast<object>().Count();
                     if (propertySchemaObject.MinItems != 0 && count < propertySchemaObject.MinItems)
                     {
                         AddArrayMinLengthError(testMessageResult, kv.Key, propertySchemaObject.MinItems);
