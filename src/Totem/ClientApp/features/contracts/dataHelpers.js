@@ -1,6 +1,7 @@
 import _ from 'lodash';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import validator from 'validator';
+import moment from 'moment';
 
 export const reorderOptions = oldOptions => {
   // pull out the "Define new" option if it exists, and order the rest alphabetically
@@ -151,10 +152,11 @@ export const isValidJSON = msg => {
 };
 
 export const isDate = msg => {
-  if (Number.isNaN(Date.parse(msg))) {
-    return false;
+  const formats = [moment.ISO_8601, moment.defaultFormat, moment.defaultFormatUtc];
+  if (moment(msg, formats, true).isValid()) {
+    return true;
   }
-  return true;
+  return false;
 };
 
 export const isGUID = msg => {
@@ -162,6 +164,56 @@ export const isGUID = msg => {
     return true;
   }
   return false;
+};
+
+export const isNumber = msg => typeof msg === 'number';
+
+export const isFloat = msg => {
+  const minValue = 1.5e-45;
+  const maxValue = 3.4e38;
+
+  return (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  );
+};
+
+export const isDouble = msg => {
+  const minValue = 5.0e-324;
+  const maxValue = 1.7e308;
+
+  return (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  );
+};
+
+export const isInt32 = msg => {
+  const minValue = -2147483648;
+  const maxValue = 2147483647;
+  const options = {
+    max: maxValue
+  };
+
+  return (
+    isNumber(msg, options) && validator.isInt(msg.toString()) && msg >= minValue && msg <= maxValue
+  );
+};
+
+export const isInt64 = msg => {
+  const minValue = -9223372036854775808;
+  const maxValue = 9223372036854775807;
+  const options = {
+    max: maxValue
+  };
+
+  return (
+    isNumber(msg) && validator.isInt(msg.toString(), options) && msg >= minValue && msg <= maxValue
+  );
 };
 
 export const last = array => array[array.length - 1];

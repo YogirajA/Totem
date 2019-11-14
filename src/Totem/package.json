@@ -41,6 +41,7 @@
     "bootstrap": "^4.3.1",
     "jquery": "3.4.0",
     "lodash": "^4.17.15",
+    "moment": "^2.24.0",
     "validator": "^11.1.0",
     "vue": "2.6.10",
     "vue-multiselect": "^2.1.6"

@@ -8,7 +8,12 @@ import {
   findParent,
   isValidJSON,
   isDate,
-  isGUID
+  isGUID,
+  isFloat,
+  isDouble,
+  isInt32,
+  isInt64,
+  isNumber
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -251,6 +256,12 @@ describe('isDate', () => {
     const result = isDate(testString);
     expect(result).toBe(false);
   });
+
+  it('returns false when string number is not valid Date', () => {
+    const testString = '5.5';
+    const result = isDate(testString);
+    expect(result).toBe(false);
+  });
 });
 
 describe('isGUID', () => {
@@ -263,6 +274,112 @@ describe('isGUID', () => {
   it('returns false when string is not valid GUID', () => {
     const testString = 'not a guid';
     const result = isGUID(testString);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isNumber', () => {
+  it('returns true when parameter is a number', () => {
+    const testValue = 3;
+    const result = isNumber(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when value is not numeric', () => {
+    const testValue = 'not a number';
+    const result = isNumber(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when number is a string', () => {
+    const testValue = '3';
+    const result = isNumber(testValue);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isInt32', () => {
+  it('returns true when parameter is an int32 integer', () => {
+    const testValue = 4;
+    const result = isInt32(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when value is not an int32 integer', () => {
+    const testValue = 2147483657;
+    const result = isInt32(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when an int32 integer is a string', () => {
+    const testValue = '4';
+    const result = isInt32(testValue);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isInt64', () => {
+  it('returns true when parameter is an int64 integer', () => {
+    const testValue = 2147483648;
+    const result = isInt64(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when value is not an int64 integer', () => {
+    const testValue = 'not an int64';
+    const result = isInt64(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when an int64 integer is a string', () => {
+    const testValue = '2147483648';
+    const result = isInt64(testValue);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isFloat', () => {
+  it('returns true when value is a float', () => {
+    const testValue = 10.25;
+    const result = isFloat(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when value is not a float', () => {
+    const testValue = 'not a float';
+    const result = isFloat(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when a float is a string', () => {
+    const testValue = `10.25`;
+    const result = isFloat(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when value is a double', () => {
+    const testValue = 10.25e55;
+    const result = isFloat(testValue);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isDouble', () => {
+  it('returns true when value is a double', () => {
+    const testValue = 10.25e55;
+    const result = isDouble(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when value is not a double', () => {
+    const testValue = 'not a double';
+    const result = isDouble(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when a double is a string', () => {
+    const testValue = `10.25e34`;
+    const result = isDouble(testValue);
     expect(result).toBe(false);
   });
 });
