@@ -67,11 +67,11 @@ import {
   getExistingOptions,
   updateNestedProperty,
   findRow,
+  buildContractFromMessage,
   getPropertiesCopy,
   isObjectArray,
   updateProperties,
-  hasProperties,
-  buildContractFromMessage
+  hasProperties
 } from './features/contracts/contractParser';
 import {
   reorderOptions,
@@ -138,7 +138,8 @@ export default {
           defaultOptions.push({
             id: option.id,
             displayName: option.schemaName,
-            value: option
+            value: option,
+            isDefault: true
           });
         });
         existingOptions = existingOptions.concat(defaultOptions);
@@ -261,6 +262,20 @@ export default {
       this.updateSaveButtonState();
     },
 
+    addNewModelToOptions(model) {
+      this.options.push({
+        displayName: model.name,
+        id: this.options.length,
+        value: {
+          id: this.options.length,
+          schemaName: model.name,
+          schemaString: createSchemaString(model)
+        },
+        isObject: true
+      });
+      this.options = reorderOptions(this.options);
+    },
+
     saveField(object) {
       const field = deepCopy(object);
       const addingToAModel = this.isAddModelWindowVisible;
@@ -316,17 +331,7 @@ export default {
       } else {
         // Update the root object
         if (field.type === 'object') {
-          this.options.push({
-            displayName: field.name,
-            id: this.options.length,
-            value: {
-              id: this.options.length,
-              schemaName: field.name,
-              schemaString: createSchemaString(field)
-            },
-            isObject: true
-          });
-          this.options = reorderOptions(this.options);
+          this.addNewModelToOptions(field);
         }
 
         const parent = findParent(this.rows, field);
@@ -358,17 +363,7 @@ export default {
 
       if (updatedModel.isNewModel === true) {
         // Add the newly added model name to the dropdown options
-        this.options.push({
-          displayName: updatedModel.name,
-          id: this.options.length,
-          value: {
-            id: this.options.length,
-            schemaName: updatedModel.name,
-            schemaString: createSchemaString(updatedModel)
-          },
-          isObject: true
-        });
-        this.options = reorderOptions(this.options);
+        this.addNewModelToOptions(updatedModel);
       } else {
         const existingOption = this.options.find(option => option.displayName === model.name);
         const parent = findParent(this.rows, updatedModel);
@@ -474,6 +469,15 @@ export default {
       $('#contract-raw').scrollTop(0);
     },
 
+    addModelsToOptions(rows) {
+      rows.forEach(row => {
+        if (hasProperties(row)) {
+          this.addNewModelToOptions(row);
+          this.addModelsToOptions(getPropertiesCopy(row));
+        }
+      });
+    },
+
     importContract() {
       const message = $('#import-message')[0].value;
       const contractBasedOnMessage = buildContractFromMessage(message);
@@ -481,6 +485,10 @@ export default {
         JSON.stringify(contractBasedOnMessage),
         'contract-string-validation'
       );
+
+      this.options = this.options.filter(option => option.isDefault === true);
+      this.addModelsToOptions(this.rows);
+
       $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
       $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
       this.closeModal('importContract');

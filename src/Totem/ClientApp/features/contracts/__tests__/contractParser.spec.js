@@ -962,7 +962,7 @@ describe('buildContractFromMessage', () => {
         type: 'string',
         example: 'sample string'
       },
-      item3:  {
+      item3: {
         type: 'string',
         example: 'sample string'
       }
@@ -988,9 +988,11 @@ describe('buildContractFromMessage', () => {
         example: '2019-01-01T18:14:29Z'
       },
       guidprop: {
-        $ref: '#/Guid'
+        $ref: '#/Guid',
+        reference: 'Guid',
+        example: '01234567-abcd-0123-abcd-0123456789ab'
       },
-      stringprop:  {
+      stringprop: {
         type: 'string',
         example: 'sample string'
       }
@@ -1002,7 +1004,7 @@ describe('buildContractFromMessage', () => {
       minLength: 36,
       maxLength: 36,
       example: '01234567-abcd-0123-abcd-0123456789ab'
-    }
+    };
 
     expect(result.Contract.type).toEqual('object');
     expect(result.Guid).toEqual(expectedGuidReference);
@@ -1030,28 +1032,28 @@ describe('buildContractFromMessage', () => {
       item2: {
         type: 'object',
         properties: {
-          item3:  {
+          item3: {
             type: 'string',
             example: 'sample string'
           },
-          item4:  {
+          item4: {
             type: 'object',
             properties: {
-              item5:  {
+              item5: {
                 type: 'string',
                 example: 'sample string'
               }
             }
           }
         }
-      },
+      }
     };
 
     expect(result.Contract.type).toEqual('object');
     expect(result.Contract.properties).toEqual(expectedProperties);
   });
 
-  it('should handle arrays', () => {
+  it('should handle string arrays', () => {
     const messageString = `{
       "item1": "test",
       "item2": ["string1", "string2"]
@@ -1071,6 +1073,223 @@ describe('buildContractFromMessage', () => {
           example: 'sample string'
         },
         example: '["sample string"]'
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle int 32 arrays', () => {
+    const messageString = `{
+      "item1": 11,
+      "item2": [1,3],
+      "item3": { "item4": [1,3] }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'integer',
+        format: 'int32',
+        example: '5'
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'integer',
+          format: 'int32',
+          example: '5'
+        },
+        example: '[5]'
+      },
+      item3: {
+        type: 'object',
+        properties: {
+          item4: {
+            type: 'array',
+            example: `[5]`,
+            items: {
+              type: 'integer',
+              format: 'int32',
+              example: '5'
+            }
+          }
+        }
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle int 64 arrays', () => {
+    const messageString = `{
+      "item1": 23372036854775807,
+      "item2": [23372036854775807,3123],
+      "item3": { "item4": [23372036854775807,3123] }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'integer',
+        format: 'int64',
+        example: '2147483650'
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'integer',
+          format: 'int64',
+          example: '2147483650'
+        },
+        example: '[2147483650]'
+      },
+      item3: {
+        type: 'object',
+        properties: {
+          item4: {
+            type: 'array',
+            example: `[2147483650]`,
+            items: {
+              type: 'integer',
+              format: 'int64',
+              example: '2147483650'
+            }
+          }
+        }
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle float arrays', () => {
+    const messageString = `{
+      "item1": 11.1,
+      "item2": [1.3,3.4],
+      "item3": { "item4": [1.3,3.4] }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'number',
+        format: 'float',
+        example: '10.5'
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'number',
+          format: 'float',
+          example: '10.5'
+        },
+        example: '[10.5]'
+      },
+      item3: {
+        type: 'object',
+        properties: {
+          item4: {
+            type: 'array',
+            example: `[10.5]`,
+            items: {
+              type: 'number',
+              format: 'float',
+              example: '10.5'
+            }
+          }
+        }
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle double arrays', () => {
+    const messageString = `{
+      "item1": 11.1e222,
+      "item2": [1.3e233,3.4e55],
+      "item3": { "item4": [1.3e233,3.4e55] }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'number',
+        format: 'double',
+        example: '1.56e105'
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'number',
+          format: 'double',
+          example: '1.56e105'
+        },
+        example: '[1.56e105]'
+      },
+      item3: {
+        type: 'object',
+        properties: {
+          item4: {
+            type: 'array',
+            example: `[1.56e105]`,
+            items: {
+              type: 'number',
+              format: 'double',
+              example: '1.56e105'
+            }
+          }
+        }
+      }
+    };
+
+    expect(result.Contract.type).toEqual('object');
+    expect(result.Contract.properties).toEqual(expectedProperties);
+  });
+
+  it('should handle boolean arrays', () => {
+    const messageString = `{
+      "item1": false,
+      "item2": [true, false],
+      "item3": { "item4": [true, false] }
+    }`;
+
+    const result = buildContractFromMessage(messageString);
+
+    const expectedProperties = {
+      item1: {
+        type: 'boolean',
+        example: false
+      },
+      item2: {
+        type: 'array',
+        items: {
+          type: 'boolean',
+          example: false
+        },
+        example: '[false]'
+      },
+      item3: {
+        type: 'object',
+        properties: {
+          item4: {
+            type: 'array',
+            example: `[false]`,
+            items: {
+              type: 'boolean',
+              example: false
+            }
+          }
+        }
       }
     };
 

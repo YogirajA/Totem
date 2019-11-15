@@ -7,7 +7,8 @@ import {
   isDouble,
   isNumber,
   isInt32,
-  isInt64
+  isInt64,
+  isBool
 } from './dataHelpers';
 
 let currentRowCount = 0;
@@ -104,7 +105,9 @@ export const getPropertyObjectFromValue = field => {
   };
   if (isGUID(field)) {
     propObject = {
-      $ref: '#/Guid'
+      $ref: '#/Guid',
+      reference: 'Guid',
+      example: '01234567-abcd-0123-abcd-0123456789ab'
     };
   } else if (isNumber(field)) {
     propObject = {
@@ -142,6 +145,11 @@ export const getPropertyObjectFromValue = field => {
       format: 'date-time',
       example: '2019-01-01T18:14:29Z'
     };
+  } else if (isBool(field)) {
+    propObject = {
+      type: 'boolean',
+      example: false
+    };
   }
   return propObject;
 };
@@ -151,13 +159,15 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   const updatedParentObject = deepCopy(parentObject);
   Object.keys(messageObject).forEach(key => {
     if (Array.isArray(messageObject[key])) {
+      const itemsProps = getPropertyObjectFromValue(messageObject[key][0]);
+      const example =
+        itemsProps.type === 'string' || itemsProps.reference === 'Guid'
+          ? `"${itemsProps.example}"`
+          : itemsProps.example;
       const prop = {
         type: 'array',
-        example: '["sample string"]',
-        items: {
-          type: 'string',
-          example: 'sample string'
-        }
+        example: `[${example}]`,
+        items: itemsProps
       };
       updatedParentObject.properties[key] = prop;
     } else if (messageObject[key] instanceof Object) {
@@ -339,7 +349,9 @@ export const updateProperties = (schema, properties, isArray) => {
     // eslint-disable-next-line no-param-reassign
     isArray = isObjectArray(schema);
   }
+  // eslint-disable-next-line no-param-reassign
   schema.properties = isArray ? undefined : properties;
+  // eslint-disable-next-line no-param-reassign
   schema.items = isArray ? { type: 'object', properties } : undefined;
   /* eslint-enable */
 };
@@ -430,7 +442,9 @@ export const buildNewObject = (name, type, isArray, example, currentModel, modif
       }
     }
   }
-  if (example || example === '') {
+  if (type.displayName === 'Boolean' && example !== '') {
+    newObject.example = example.toString();
+  } else if (example || example === '') {
     newObject.example = example;
   }
   if (currentModel && currentModel.parentId !== undefined) {

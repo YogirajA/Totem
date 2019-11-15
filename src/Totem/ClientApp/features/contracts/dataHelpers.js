@@ -216,4 +216,8 @@ export const isInt64 = msg => {
   );
 };
 
+export const isBool = msg => {
+  return typeof msg === 'boolean';
+};
+
 export const last = array => array[array.length - 1];

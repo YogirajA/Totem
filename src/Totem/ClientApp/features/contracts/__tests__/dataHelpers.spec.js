@@ -13,7 +13,8 @@ import {
   isDouble,
   isInt32,
   isInt64,
-  isNumber
+  isNumber,
+  isBool
 } from '../dataHelpers';
 
 describe('Reorder Options', () => {
@@ -380,6 +381,26 @@ describe('isDouble', () => {
   it('returns false when a double is a string', () => {
     const testValue = `10.25e34`;
     const result = isDouble(testValue);
+    expect(result).toBe(false);
+  });
+});
+
+describe('isBool', () => {
+  it('returns true when string is a bool', () => {
+    const testValue = true;
+    const result = isBool(testValue);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when string is not a bool', () => {
+    const testValue = 'not a bool';
+    const result = isBool(testValue);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when a bool is a string', () => {
+    const testValue = `true`;
+    const result = isBool(testValue);
     expect(result).toBe(false);
   });
 });
