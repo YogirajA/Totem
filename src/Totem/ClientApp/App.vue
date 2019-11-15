@@ -138,7 +138,8 @@ export default {
           defaultOptions.push({
             id: option.id,
             displayName: option.schemaName,
-            value: option
+            value: option,
+            isDefault: true
           });
         });
         existingOptions = existingOptions.concat(defaultOptions);
@@ -468,6 +469,15 @@ export default {
       $('#contract-raw').scrollTop(0);
     },
 
+    addModelsToOptions(rows) {
+      rows.forEach(row => {
+        if (hasProperties(row)) {
+          this.addNewModelToOptions(row);
+          this.addModelsToOptions(getPropertiesCopy(row));
+        }
+      });
+    },
+
     importContract() {
       const message = $('#import-message')[0].value;
       const contractBasedOnMessage = buildContractFromMessage(message);
@@ -475,6 +485,10 @@ export default {
         JSON.stringify(contractBasedOnMessage),
         'contract-string-validation'
       );
+
+      this.options = this.options.filter(option => option.isDefault === true);
+      this.addModelsToOptions(this.rows);
+
       $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
       $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
       this.closeModal('importContract');
