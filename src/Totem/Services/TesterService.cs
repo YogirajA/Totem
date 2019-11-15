@@ -480,7 +480,7 @@ namespace Totem.Services
         
         private static void TryParseNumberArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
         {
-            var itemFormat = propertySchemaObject.Items.Format;
+            var itemFormat = propertySchemaObject.Items.GetFormat();
 
             foreach (var item in itemArray)
             {
@@ -497,13 +497,13 @@ namespace Totem.Services
                 if (itemFormat != null)
                 {
                     // Validate specific integer formats
-                    if (itemFormat == Format.Float.Value && !isFloat)
+                    if (itemFormat == Format.Float && !isFloat)
                     {
                         AddItemTypeError(testMessageResult, kv.Key, DataType.Number, Format.Float);
                         break;
                     }
 
-                    if (itemFormat == Format.Double.Value && !isDouble)
+                    if (itemFormat == Format.Double && !isDouble)
                     {
                         AddItemTypeError(testMessageResult, kv.Key, DataType.Number, Format.Double);
                         break;
