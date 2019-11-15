@@ -202,7 +202,6 @@ test('Delete all root fields', async t => {
     // eslint-disable-next-line no-await-in-loop
     await t.click(utils.deleteFieldBtn);
   }
-  /* eslint-enable */
 
   await t.expect(Selector('tr.treegrid-body-row').count).eql(0);
   await t.expect(Selector('#rootGrid .treegrid-empty-row').count).eql(1);

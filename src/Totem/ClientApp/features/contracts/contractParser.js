@@ -105,7 +105,9 @@ export const getPropertyObjectFromValue = field => {
   };
   if (isGUID(field)) {
     propObject = {
-      $ref: '#/Guid'
+      $ref: '#/Guid',
+      reference: 'Guid',
+      example: '01234567-abcd-0123-abcd-0123456789ab'
     };
   } else if (isNumber(field)) {
     propObject = {
@@ -157,13 +159,15 @@ export const buildPropertiesFromMessage = (parentObject, messageObject) => {
   const updatedParentObject = deepCopy(parentObject);
   Object.keys(messageObject).forEach(key => {
     if (Array.isArray(messageObject[key])) {
+      const itemsProps = getPropertyObjectFromValue(messageObject[key][0]);
+      const example =
+        itemsProps.type === 'string' || itemsProps.reference === 'Guid'
+          ? `"${itemsProps.example}"`
+          : itemsProps.example;
       const prop = {
         type: 'array',
-        example: '["sample string"]',
-        items: {
-          type: 'string',
-          example: 'sample string'
-        }
+        example: `[${example}]`,
+        items: itemsProps
       };
       updatedParentObject.properties[key] = prop;
     } else if (messageObject[key] instanceof Object) {
