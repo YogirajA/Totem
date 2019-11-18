@@ -1,4 +1,4 @@
-﻿@using Totem.Features.Contracts
+@using Totem.Features.Contracts
 @model TestMessage.ViewModel
 @inject SignInManager<IdentityUser> SignInManager
 
@@ -58,11 +58,17 @@
                 {
                     if (Model.IsValid)
                     {
-                        <h4 class="result-message success">Message is Valid. @Model.WarningMessage</h4>
+                        <h4 class="result-message success">Message is Valid.</h4>
+                        <div class="result-message warning">
+                            @Model.WarningMessage
+                        </div>
                     }
                     else
                     {
-                        <h4 class="result-message error">Message is Invalid. @Model.WarningMessage</h4>
+                        <h4 class="result-message error">Message is Invalid.</h4>
+                        <div class="result-message warning">
+                            @Model.WarningMessage
+                        </div>
                         <div class="result-message error">
                             @foreach (var item in Model.MessageErrors)
                             {
@@ -75,7 +81,7 @@
         </div>
     </div>
 </div>
-<div class="row">
+<div class="row footer">
     <div class="col-12">
         @if (SignInManager.IsSignedIn(User))
         {
