@@ -454,6 +454,11 @@ namespace Totem.Tests.Features.API
                 "Message is missing expected property \"Name\".",
                 "Message is missing expected property \"Timestamp\"."
             });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
+            });
         }
 
         public async Task ShouldBeInvalidWhenMessageIsInvalidWithFutureDeprecationDate()
@@ -481,6 +486,11 @@ namespace Totem.Tests.Features.API
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
                 "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
             });
         }
     }
