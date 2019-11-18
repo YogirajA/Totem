@@ -116,8 +116,6 @@ namespace Totem.Features.Contracts
 
                 RuleFor(m => m.Description).NotEmpty();
                 RuleFor(m => m.ContractString).NotEmpty().StringMustBeValidContract();
-                RuleFor(m => m.Namespace).NotEmpty();
-                RuleFor(m => m.Type).NotEmpty();
                 RuleFor(m => m.VersionNumber).NotEmpty().Must(BeAValidVersion).WithMessage("'Version Number' must follow semantic version system.");
                 RuleFor(m => m).MustAsync((m, cancellationToken) => ValidationExtensions.IsUniqueContract(m.Id, m.VersionNumber, dbContext, cancellationToken))
                     .WithMessage(m => $"Contract Id '{m.Id}' with Version '{m.VersionNumber}' already exist.");
