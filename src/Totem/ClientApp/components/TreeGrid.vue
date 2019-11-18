@@ -3,11 +3,7 @@
 <template>
   <div v-if="columns.length > 0">
     <div class="treegrid-header-wrapper">
-      <GridHeader
-        :is-ellipsis-menu-visible="isEllipsisMenuVisible"
-        @editManually="$emit('editManually')"
-        @showFieldWindow="showAddFieldModal"
-      />
+      <GridHeader :add-menu="menu" />
     </div>
     <div class="treegrid-body-wrapper">
       <GridBody />
@@ -19,23 +15,27 @@
 import GridHeader from './GridHeader';
 import GridBody from './GridBody';
 
-function getBodyData(data, isTreeType, childrenProp, isFold, level = 1) {
+function getBodyData(data, isTreeType, childrenProp, arrayItemsProp, isFold, level = 1) {
   let bodyData = [];
   data.forEach((row, index) => {
-    const children = row[childrenProp];
+    const arrayItems = row[arrayItemsProp];
+    const arrayChildren = arrayItems ? arrayItems[childrenProp] : undefined;
+    const children = arrayChildren || row[childrenProp];
     const childrenLen =
       Object.prototype.toString.call(children).slice(8, -1) === 'Array' ? children.length : 0;
     bodyData.push({
-      _level: level,
-      _isHide: isFold ? level !== 1 : false,
-      _isFold: isFold,
-      _childrenLen: childrenLen,
-      _normalIndex: index + 1,
+      level,
+      isHide: isFold ? level !== 1 : false,
+      isFold,
+      childrenLen,
+      normalIndex: index + 1,
       ...row
     });
     if (isTreeType) {
       if (childrenLen > 0) {
-        bodyData = bodyData.concat(getBodyData(children, true, childrenProp, isFold, level + 1));
+        bodyData = bodyData.concat(
+          getBodyData(children, true, childrenProp, arrayItemsProp, isFold, level + 1)
+        );
       }
     }
   });
@@ -46,7 +46,13 @@ function initialState(table) {
   return {
     bodyHeight: 'auto',
     treeProp: 'name',
-    bodyData: getBodyData(table.data, table.treeType, table.childrenProp, table.isFold)
+    bodyData: getBodyData(
+      table.data,
+      table.treeType,
+      table.childrenProp,
+      table.arrayItemsProp,
+      table.isFold
+    )
   };
 }
 
@@ -69,14 +75,14 @@ function initialColumns(table, clientWidth) {
       minWidthColumns.push({
         ...column,
         minWidth,
-        _index: index
+        index
       });
     } else {
       width = typeof column.width === 'number' ? column.width : parseInt(column.width, 10);
       otherColumns.push({
         ...column,
         width,
-        _index: index
+        index
       });
     }
     columnsWidth += minWidth || width;
@@ -88,11 +94,13 @@ function initialColumns(table, clientWidth) {
     const extraWidth = clientWidth - totalWidth;
     const averageExtraWidth = Math.floor(extraWidth / minWidthColumns.length);
     minWidthColumns.forEach(column => {
-      column.computedWidth = column.minWidth + averageExtraWidth;
+      const updatedColumn = column;
+      updatedColumn.computedWidth = column.minWidth + averageExtraWidth;
+      return updatedColumn;
     });
   }
   const tableColumns = otherColumns.concat(minWidthColumns);
-  tableColumns.sort((a, b) => a._index - b._index);
+  tableColumns.sort((a, b) => a.index - b.index);
   return tableColumns;
 }
 
@@ -123,6 +131,10 @@ export default {
       type: String,
       default: 'properties'
     },
+    arrayItemsProp: {
+      type: String,
+      default: 'items'
+    },
     isFold: {
       type: Boolean,
       default: false
@@ -135,11 +147,14 @@ export default {
       type: Boolean,
       default: true
     },
+    /* eslint-disable */
+    menu: Function,
     rowKey: Function,
     rowClassName: [String, Function],
     cellClassName: [String, Function],
     rowStyle: [Object, Function],
     cellStyle: [Object, Function]
+    /* eslint-enable */
   },
   data() {
     return {
@@ -159,9 +174,6 @@ export default {
       return {};
     },
     bodyClass() {
-      return {};
-    },
-    fieldModalData() {
       return {};
     }
   },
@@ -187,9 +199,6 @@ export default {
     handleEvent(type, $event) {
       const eventType = $event.type;
       return this.$emit(`${type}-${eventType}`, $event);
-    },
-    showAddFieldModal() {
-      this.$emit('showFieldWindow', this.fieldModalData);
     },
     measure() {
       this.$nextTick(() => {

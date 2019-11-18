@@ -1,5 +1,15 @@
 import $ from 'jquery';
-import { deepCopy } from './dataHelpers';
+import {
+  deepCopy,
+  isDate,
+  isGUID,
+  isFloat,
+  isDouble,
+  isNumber,
+  isInt32,
+  isInt64,
+  isBool
+} from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -13,6 +23,9 @@ export const convertPropertiesToArray = (obj, schema) => {
     const item = obj[property];
     if (item.properties) {
       item.properties = convertPropertiesToArray(item.properties, schema);
+    }
+    if (item.items && item.items.properties) {
+      item.items.properties = convertPropertiesToArray(item.items.properties, schema);
     }
     currentRowCount += 1;
     item.name = property;
@@ -63,16 +76,6 @@ export const parseContractArray = (contractString, validationFieldId) => {
   const { properties } = schema.Contract;
   const propertyArray = getModalRows(properties, schema);
 
-  // Hard-code the "required" fields for now
-  propertyArray.forEach(rootProperty => {
-    if (rootProperty.name.toLowerCase() === 'id') {
-      rootProperty.isLocked = true;
-    }
-    if (rootProperty.name.toLowerCase() === 'timestamp') {
-      rootProperty.isLocked = true;
-    }
-  });
-
   return propertyArray;
 };
 
@@ -84,11 +87,134 @@ export const findRow = (rowId, rows) => {
       result = a;
       return true;
     }
-    return Array.isArray(a.properties) && a.properties.some(searchForRow);
+
+    const properties = (a.items && a.items.properties) || a.properties;
+
+    return Array.isArray(properties) && properties.some(searchForRow);
   }
 
   rows.some(searchForRow);
   return result;
+};
+
+/* getPropertyObjectFromValue: builds and returns a property object from the property value */
+export const getPropertyObjectFromValue = field => {
+  let propObject = {
+    type: 'string',
+    example: 'sample string'
+  };
+  if (isGUID(field)) {
+    propObject = {
+      $ref: '#/Guid',
+      reference: 'Guid',
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  } else if (isNumber(field)) {
+    propObject = {
+      type: 'number',
+      example: '5.5'
+    };
+    if (isInt32(field)) {
+      propObject = {
+        type: 'integer',
+        format: 'int32',
+        example: '5'
+      };
+    } else if (isInt64(field)) {
+      propObject = {
+        type: 'integer',
+        format: 'int64',
+        example: '2147483650'
+      };
+    } else if (isFloat(field)) {
+      propObject = {
+        type: 'number',
+        format: 'float',
+        example: '10.5'
+      };
+    } else if (isDouble(field)) {
+      propObject = {
+        type: 'number',
+        format: 'double',
+        example: '1.56e105'
+      };
+    }
+  } else if (isDate(field)) {
+    propObject = {
+      type: 'string',
+      format: 'date-time',
+      example: '2019-01-01T18:14:29Z'
+    };
+  } else if (isBool(field)) {
+    propObject = {
+      type: 'boolean',
+      example: false
+    };
+  }
+  return propObject;
+};
+
+/* buildPropertiesFromMessage: build the properties for an object from the given message */
+export const buildPropertiesFromMessage = (parentObject, messageObject) => {
+  const updatedParentObject = deepCopy(parentObject);
+  Object.keys(messageObject).forEach(key => {
+    if (Array.isArray(messageObject[key])) {
+      const itemsProps = getPropertyObjectFromValue(messageObject[key][0]);
+      const example =
+        itemsProps.type === 'string' || itemsProps.reference === 'Guid'
+          ? `"${itemsProps.example}"`
+          : itemsProps.example;
+      const prop = {
+        type: 'array',
+        example: `[${example}]`,
+        items: itemsProps
+      };
+      updatedParentObject.properties[key] = prop;
+    } else if (messageObject[key] instanceof Object) {
+      const prop = {
+        type: 'object',
+        properties: {}
+      };
+      updatedParentObject.properties[key] = prop;
+      updatedParentObject.properties[key] = buildPropertiesFromMessage(
+        updatedParentObject.properties[key],
+        messageObject[key]
+      );
+    } else {
+      updatedParentObject.properties[key] = getPropertyObjectFromValue(messageObject[key]);
+    }
+  });
+  return updatedParentObject;
+};
+
+function handleCustomTypes(contractObject) {
+  const contract = contractObject;
+  if (JSON.stringify(contract.Contract).includes('#/Guid')) {
+    contract.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+}
+
+/* buildContractFromMessage: build a contract from the given message */
+export const buildContractFromMessage = message => {
+  const messageObject = JSON.parse(message);
+  const baseContractObject = {
+    Contract: {
+      type: 'object',
+      properties: {}
+    }
+  };
+  baseContractObject.Contract = buildPropertiesFromMessage(
+    baseContractObject.Contract,
+    messageObject
+  );
+  handleCustomTypes(baseContractObject);
+  return baseContractObject;
 };
 
 /* updateNestedProperty: finds the existing row by rowId and replaces it with the edited value */
@@ -109,6 +235,12 @@ export const updateNestedProperty = (editedRow, rows, isDelete) => {
       }
     } else if (row.properties !== undefined && !rowDeleted) {
       updatedRows[index].properties = updateNestedProperty(editedRow, row.properties, isDelete);
+    } else if (row.items && row.items.properties !== undefined && !rowDeleted) {
+      updatedRows[index].items.properties = updateNestedProperty(
+        editedRow,
+        row.items.properties,
+        isDelete
+      );
     }
   });
   return updatedRows;
@@ -123,6 +255,11 @@ export const buildNestedProperties = rows => {
     if (row.properties) {
       object[row.name].type = 'object';
       object[row.name].properties = buildNestedProperties(row.properties);
+    } else if (row.items && row.items.properties) {
+      object[row.name].type = 'array';
+      object[row.name].items = {};
+      object[row.name].items.type = 'object';
+      object[row.name].items.properties = buildNestedProperties(row.items.properties);
     } else if (row.$ref) {
       object[row.name].$ref = row.$ref;
       object[row.name].example = row.example;
@@ -158,6 +295,9 @@ export const createContractString = (rows, schema) => {
       newContractObject[model] = schema[model];
     }
   });
+
+  handleCustomTypes(newContractObject);
+
   return JSON.stringify(newContractObject);
 };
 
@@ -183,19 +323,57 @@ export const updateContractString = (updatedRow, rows, contractString, isDelete 
   return createContractString(updatedRows, schema);
 };
 
+/* getPropertiesCopy: gets properties copy from a schema object or aray of objects, otherwise empty array */
+export const getPropertiesCopy = schema => {
+  return deepCopy(schema.properties || (schema.items && schema.items.properties) || []);
+};
+
+/* hasProperties: return true or false if the schema object has properties */
+export const hasProperties = schema => {
+  return (schema.properties || (schema.items && schema.items.properties)) !== undefined;
+};
+
+/* isObjectArray: return true or false if the schema object is an array of objects */
+export const isObjectArray = schema => {
+  return (schema.items && schema.items.properties) !== undefined;
+};
+
+/* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
+export const updateProperties = (schema, properties, isArray) => {
+  /* eslint-disable */
+  if (properties === undefined) {
+    // eslint-disable-next-line no-param-reassign
+    properties = getPropertiesCopy(schema);
+  }
+  if (isArray === undefined) {
+    // eslint-disable-next-line no-param-reassign
+    isArray = isObjectArray(schema);
+  }
+  // eslint-disable-next-line no-param-reassign
+  schema.properties = isArray ? undefined : properties;
+  // eslint-disable-next-line no-param-reassign
+  schema.items = isArray ? { type: 'object', properties } : undefined;
+  /* eslint-enable */
+};
+
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
 export const createSchemaString = schema => {
+  const isObjArray = isObjectArray(schema);
   const cleanSchema = {
-    type: 'object',
-    properties: buildNestedProperties(schema.properties)
+    type: isObjArray ? 'array' : 'object'
   };
+  const properties = buildNestedProperties(
+    isObjArray ? schema.items.properties : schema.properties
+  );
+  cleanSchema.properties = isObjArray ? undefined : properties;
+  cleanSchema.items = isObjArray ? { properties } : undefined;
   return JSON.stringify(cleanSchema);
 };
 
 /* buildNestedOptions: used for recursively adding options to the option array for dropdown in case of nested objects */
 export const buildNestedOptions = (propertyArray, options) => {
   propertyArray.forEach(property => {
-    if (property.type === 'object') {
+    if (property.type === 'object' || (property.items && property.items.type === 'object')) {
       options.push({
         id: options.length + 1,
         displayName: property.name,
@@ -206,7 +384,10 @@ export const buildNestedOptions = (propertyArray, options) => {
         },
         isObject: true
       });
-      buildNestedOptions(property.properties, options);
+      buildNestedOptions(
+        (property.items && property.items.properties) || property.properties,
+        options
+      );
     }
   });
 };
@@ -226,28 +407,44 @@ export const getExistingOptions = contractString => {
 
 /* buildNewObject: when a field is saved, create a new object with the relevant data to
    pass back up to its parent */
-export const buildNewObject = (name, type, example, currentModel, modifiedContract) => {
+export const buildNewObject = (name, type, isArray, example, currentModel, modifiedContract) => {
   const newObject = { name };
   if (Number.isInteger(type.id)) {
+    const schema = JSON.parse(type.value.schemaString);
     // This data type was created by the client; known data types from the database have Guid ID's
-    newObject.properties = getModalRows(
-      JSON.parse(type.value.schemaString).properties,
-      JSON.parse(modifiedContract)
-    );
-    newObject.type = 'object';
+    const properties = getModalRows(getPropertiesCopy(schema), JSON.parse(modifiedContract));
+    updateProperties(newObject, properties, isArray);
+    newObject.type = isArray ? 'array' : 'object';
   } else {
     const properties = JSON.parse(type.value.schemaString);
 
-    Object.keys(properties).forEach(property => {
-      newObject[property] = properties[property];
-    });
+    if (isArray === true) {
+      newObject.type = 'array';
+      newObject.example = null;
+      newObject.items = {};
 
-    if (type.displayName === 'Guid') {
-      newObject.reference = 'Guid';
-      newObject.$ref = '#/Guid';
+      if (type.displayName === 'Guid') {
+        newObject.items.reference = 'Guid';
+        newObject.items.$ref = '#/Guid';
+      } else {
+        Object.keys(properties).forEach(property => {
+          newObject.items[property] = properties[property];
+        });
+      }
+    } else {
+      Object.keys(properties).forEach(property => {
+        newObject[property] = properties[property];
+      });
+
+      if (type.displayName === 'Guid') {
+        newObject.reference = 'Guid';
+        newObject.$ref = '#/Guid';
+      }
     }
   }
-  if (example || example === '') {
+  if (type.displayName === 'Boolean' && example !== '') {
+    newObject.example = example.toString();
+  } else if (example || example === '') {
     newObject.example = example;
   }
   if (currentModel && currentModel.parentId !== undefined) {
