@@ -1,5 +1,15 @@
 import $ from 'jquery';
-import { deepCopy } from './dataHelpers';
+import {
+  deepCopy,
+  isDate,
+  isGUID,
+  isFloat,
+  isDouble,
+  isNumber,
+  isInt32,
+  isInt64,
+  isBool
+} from './dataHelpers';
 
 let currentRowCount = 0;
 
@@ -87,6 +97,126 @@ export const findRow = (rowId, rows) => {
   return result;
 };
 
+/* getPropertyObjectFromValue: builds and returns a property object from the property value */
+export const getPropertyObjectFromValue = field => {
+  let propObject = {
+    type: 'string',
+    example: 'sample string'
+  };
+  if (isGUID(field)) {
+    propObject = {
+      $ref: '#/Guid',
+      reference: 'Guid',
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  } else if (isNumber(field)) {
+    propObject = {
+      type: 'number',
+      example: '5.5'
+    };
+    if (isInt32(field)) {
+      propObject = {
+        type: 'integer',
+        format: 'int32',
+        example: '5'
+      };
+    } else if (isInt64(field)) {
+      propObject = {
+        type: 'integer',
+        format: 'int64',
+        example: '2147483650'
+      };
+    } else if (isFloat(field)) {
+      propObject = {
+        type: 'number',
+        format: 'float',
+        example: '10.5'
+      };
+    } else if (isDouble(field)) {
+      propObject = {
+        type: 'number',
+        format: 'double',
+        example: '1.56e105'
+      };
+    }
+  } else if (isDate(field)) {
+    propObject = {
+      type: 'string',
+      format: 'date-time',
+      example: '2019-01-01T18:14:29Z'
+    };
+  } else if (isBool(field)) {
+    propObject = {
+      type: 'boolean',
+      example: false
+    };
+  }
+  return propObject;
+};
+
+/* buildPropertiesFromMessage: build the properties for an object from the given message */
+export const buildPropertiesFromMessage = (parentObject, messageObject) => {
+  const updatedParentObject = deepCopy(parentObject);
+  Object.keys(messageObject).forEach(key => {
+    if (Array.isArray(messageObject[key])) {
+      const itemsProps = getPropertyObjectFromValue(messageObject[key][0]);
+      const example =
+        itemsProps.type === 'string' || itemsProps.reference === 'Guid'
+          ? `"${itemsProps.example}"`
+          : itemsProps.example;
+      const prop = {
+        type: 'array',
+        example: `[${example}]`,
+        items: itemsProps
+      };
+      updatedParentObject.properties[key] = prop;
+    } else if (messageObject[key] instanceof Object) {
+      const prop = {
+        type: 'object',
+        properties: {}
+      };
+      updatedParentObject.properties[key] = prop;
+      updatedParentObject.properties[key] = buildPropertiesFromMessage(
+        updatedParentObject.properties[key],
+        messageObject[key]
+      );
+    } else {
+      updatedParentObject.properties[key] = getPropertyObjectFromValue(messageObject[key]);
+    }
+  });
+  return updatedParentObject;
+};
+
+function handleCustomTypes(contractObject) {
+  const contract = contractObject;
+  if (JSON.stringify(contract.Contract).includes('#/Guid')) {
+    contract.Guid = {
+      type: 'string',
+      pattern: '^(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})$',
+      minLength: 36,
+      maxLength: 36,
+      example: '01234567-abcd-0123-abcd-0123456789ab'
+    };
+  }
+}
+
+/* buildContractFromMessage: build a contract from the given message */
+export const buildContractFromMessage = message => {
+  const messageObject = JSON.parse(message);
+  const baseContractObject = {
+    Contract: {
+      type: 'object',
+      properties: {}
+    }
+  };
+  baseContractObject.Contract = buildPropertiesFromMessage(
+    baseContractObject.Contract,
+    messageObject
+  );
+  handleCustomTypes(baseContractObject);
+  return baseContractObject;
+};
+
 /* updateNestedProperty: finds the existing row by rowId and replaces it with the edited value */
 export const updateNestedProperty = (editedRow, rows, isDelete) => {
   const updatedRows = deepCopy(rows);
@@ -165,6 +295,9 @@ export const createContractString = (rows, schema) => {
       newContractObject[model] = schema[model];
     }
   });
+
+  handleCustomTypes(newContractObject);
+
   return JSON.stringify(newContractObject);
 };
 
@@ -207,14 +340,20 @@ export const isObjectArray = schema => {
 
 /* updateProperties: update the properties depending if the schema object type is an object or anrray of objects */
 export const updateProperties = (schema, properties, isArray) => {
+  /* eslint-disable */
   if (properties === undefined) {
+    // eslint-disable-next-line no-param-reassign
     properties = getPropertiesCopy(schema);
   }
   if (isArray === undefined) {
+    // eslint-disable-next-line no-param-reassign
     isArray = isObjectArray(schema);
   }
+  // eslint-disable-next-line no-param-reassign
   schema.properties = isArray ? undefined : properties;
+  // eslint-disable-next-line no-param-reassign
   schema.items = isArray ? { type: 'object', properties } : undefined;
+  /* eslint-enable */
 };
 
 /* createSchemaString: creates a contract string for new models, that don't need the full "Contract" w/ references included */
@@ -303,7 +442,9 @@ export const buildNewObject = (name, type, isArray, example, currentModel, modif
       }
     }
   }
-  if (example || example === '') {
+  if (type.displayName === 'Boolean' && example !== '') {
+    newObject.example = example.toString();
+  } else if (example || example === '') {
     newObject.example = example;
   }
   if (currentModel && currentModel.parentId !== undefined) {

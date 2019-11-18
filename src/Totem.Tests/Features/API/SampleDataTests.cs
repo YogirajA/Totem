@@ -104,6 +104,12 @@ namespace Totem.Tests.Features.API
             double.TryParse(sampleNumber, out _).ShouldBe(true);
         }
 
+        public void GeneratesProperBooleanSampleData()
+        {
+            var sampleBoolean = SampleData.GenerateSampleData(DataType.Boolean, null);
+            bool.TryParse(sampleBoolean, out _).ShouldBe(true);
+        }
+
         public void GeneratesProperStringSampleData()
         {
             var dateTimeString = SampleData.GenerateSampleData(DataType.String, Format.DateTime);
@@ -203,6 +209,21 @@ namespace Totem.Tests.Features.API
             foreach (var item in items)
             {
                 float.TryParse(item, out _).ShouldBe(true);
+            }
+        }
+
+        public void GeneratesProperBooleanArraySampleData()
+        {
+            var arrayItem = new SchemaObject()
+            {
+                Type = "Boolean"
+            };
+            var sampleData = SampleData.GenerateSampleData(DataType.Array, null, items: arrayItem);
+
+            var items = JsonConvert.DeserializeObject<List<string>>(sampleData);
+            foreach (var item in items)
+            {
+                bool.TryParse(item, out _).ShouldBe(true);
             }
         }
 

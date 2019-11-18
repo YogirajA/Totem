@@ -8,34 +8,33 @@
       :class-name="`modal-scrollable`"
     >
       <template v-slot:body>
-        <div class="container">
-          <div class="row">
-            <div class="form-group col-md-10">
-              <label for="modelName" class="control-label">Property Name</label>
-              <input
-                id="modelName"
-                v-model="modalFieldName"
-                class="form-control"
-                placeholder="Property Name"
-              />
-            </div>
-            <div class="form-check form-group col-md-2 mt-auto">
-              <input
-                id="isObjectArray"
-                v-model="isArray"
-                class="form-check-input"
-                type="checkbox"
-                @change="onCheckboxChange"
-              />
-              <label for="isObjectArray" class="control-label">Array</label>
-            </div>
+        <div class="row">
+          <div class="form-group col-10">
+            <label for="modelName" class="control-label">Property Name</label>
+            <input
+              id="modelName"
+              v-model="modalFieldName"
+              class="form-control"
+              placeholder="Property Name"
+              autocomplete="no"
+            />
+          </div>
+          <div class="form-check form-group col-2 mt-auto">
+            <input
+              id="isObjectArray"
+              v-model="isArray"
+              class="form-check-input"
+              type="checkbox"
+              @change="onCheckboxChange"
+            />
+            <label for="isObjectArray" class="control-label">Array</label>
           </div>
         </div>
         <ContractGrid
           id="nestedContractGrid"
           :rows="objectRows"
           :is-ellipsis-menu-visible="false"
-          @hideEllipsisMenu="true"
+          :is-import-button-visible="false"
           @showModelWindow="showModelWindow(...arguments)"
           @showFieldWindow="showFieldWindow(...arguments)"
           @editManually="this.$emit('showEditManuallyWindow')"
@@ -77,7 +76,13 @@
 <script>
 import ModalWindow from '../../components/ModalWindow.vue';
 import ContractGrid from './ContractGrid.vue';
-import { deepCopy, isNullOrWhiteSpace, last, findParent, findRowInTreeAndDelete } from './dataHelpers';
+import {
+  deepCopy,
+  isNullOrWhiteSpace,
+  last,
+  findParent,
+  findRowInTreeAndDelete
+} from './dataHelpers';
 import { updateProperties, getPropertiesCopy } from './contractParser';
 
 export default {
@@ -136,7 +141,10 @@ export default {
     modalRows: function setDisabled(rows) {
       this.objectRows = deepCopy(rows);
       const isAnyObjectEmpty = rows.some(obj => {
-        return (obj.type === 'object' || obj.items && obj.items.type === 'object') && getPropertiesCopy(obj).length === 0;
+        return (
+          (obj.type === 'object' || (obj.items && obj.items.type === 'object')) &&
+          getPropertiesCopy(obj).length === 0
+        );
       });
       this.successBtn.disabled =
         isNullOrWhiteSpace(this.modalFieldName) || rows.length === 0 || isAnyObjectEmpty;
@@ -210,16 +218,17 @@ export default {
     },
 
     showModelWindow(field) {
-      let parent = findParent(this.$parent.rows, field);
+      const model = field;
+      let parent = findParent(this.$parent.rows, model);
       if (parent === null) {
-        parent = findParent(this.$parent.modalRows, field);
+        parent = findParent(this.$parent.modalRows, model);
       }
-      field.parentId = parent == null ? null : parent.rowId;
-      this.editStack.push(deepCopy(field));
-      this.objectRows = getPropertiesCopy(field);
+      model.parentId = parent == null ? null : parent.rowId;
+      this.editStack.push(deepCopy(model));
+      this.objectRows = getPropertiesCopy(model);
       this.$parent.modalRows = deepCopy(this.objectRows);
-      this.modalFieldName = field.name;
-      this.$parent.parentName = field.name;
+      this.modalFieldName = model.name;
+      this.$parent.parentName = model.name;
     },
 
     showFieldWindow(field) {
@@ -239,7 +248,7 @@ export default {
     },
 
     onCheckboxChange() {
-      let model = last(this.editStack);
+      const model = last(this.editStack);
       model.type = this.isArray ? 'array' : 'object';
       updateProperties(model, undefined, this.isArray);
     }

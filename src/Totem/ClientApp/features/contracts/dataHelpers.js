@@ -1,4 +1,7 @@
 import _ from 'lodash';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import validator from 'validator';
+import moment from 'moment';
 
 export const reorderOptions = oldOptions => {
   // pull out the "Define new" option if it exists, and order the rest alphabetically
@@ -54,10 +57,11 @@ export const findRowInTreeAndUpdate = (tree, updatedModel) => {
       (row.rowId !== undefined && row.rowId === updatedModel.rowId) ||
       (row.modalRowId !== undefined && row.modalRowId === updatedModel.modalRowId)
     ) {
-      row.name = updatedModel.name;
-      row.modalRowId = updatedModel.modalRowId;
-      row.properties = updatedModel.properties;
-      row.items = updatedModel.items;
+      const model = row;
+      model.name = updatedModel.name;
+      model.modalRowId = updatedModel.modalRowId;
+      model.properties = updatedModel.properties;
+      model.items = updatedModel.items;
       rowUpdated = true;
       return true;
     }
@@ -136,6 +140,84 @@ export const findParent = (tree, childRow) => {
   }
 
   return parentRow;
+};
+
+export const isValidJSON = msg => {
+  try {
+    JSON.parse(msg);
+  } catch (e) {
+    return false;
+  }
+  return true;
+};
+
+export const isDate = msg => {
+  const formats = [moment.ISO_8601, moment.defaultFormat, moment.defaultFormatUtc];
+  if (moment(msg, formats, true).isValid()) {
+    return true;
+  }
+  return false;
+};
+
+export const isGUID = msg => {
+  if ((typeof msg === 'string' || msg instanceof String) && validator.isUUID(msg)) {
+    return true;
+  }
+  return false;
+};
+
+export const isNumber = msg => typeof msg === 'number';
+
+export const isFloat = msg => {
+  const minValue = 1.5e-45;
+  const maxValue = 3.4e38;
+
+  return (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  );
+};
+
+export const isDouble = msg => {
+  const minValue = 5.0e-324;
+  const maxValue = 1.7e308;
+
+  return (
+    isNumber(msg) &&
+    validator.isFloat(msg.toString()) &&
+    Math.abs(msg) >= minValue &&
+    Math.abs(msg) <= maxValue
+  );
+};
+
+export const isInt32 = msg => {
+  const minValue = -2147483648;
+  const maxValue = 2147483647;
+  const options = {
+    max: maxValue
+  };
+
+  return (
+    isNumber(msg, options) && validator.isInt(msg.toString()) && msg >= minValue && msg <= maxValue
+  );
+};
+
+export const isInt64 = msg => {
+  const minValue = -9223372036854775808;
+  const maxValue = 9223372036854775807;
+  const options = {
+    max: maxValue
+  };
+
+  return (
+    isNumber(msg) && validator.isInt(msg.toString(), options) && msg >= minValue && msg <= maxValue
+  );
+};
+
+export const isBool = msg => {
+  return typeof msg === 'boolean';
 };
 
 export const last = array => array[array.length - 1];

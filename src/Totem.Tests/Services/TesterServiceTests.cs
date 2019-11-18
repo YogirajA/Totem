@@ -282,6 +282,28 @@ namespace Totem.Tests.Services
             result.IsMessageValid.ShouldBeTrue();
         }
 
+        public void ShouldValidateBooleanType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Boolean", new SchemaObject
+                {
+                    Type = "Boolean"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Boolean",  "false"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeTrue();
+        }
+
         public void ShouldFailValidationForNonIntegerType()
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
@@ -324,6 +346,28 @@ namespace Totem.Tests.Services
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
             result.IsMessageValid.ShouldBeFalse("\"Not a number\" does not match the required data type for Number (Number).");
+        }
+
+        public void ShouldFailValidationForNonBooleanType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "Boolean", new SchemaObject
+                {
+                    Type = "Boolean"
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "Boolean",  "Not a boolean"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeFalse("\"Not a boolean\" does not match the required data type for Boolean.");
         }
 
         public void ShouldValidateArrayType()
@@ -382,6 +426,7 @@ namespace Totem.Tests.Services
         [Input("number", "double", "not a number")]
         [Input("number", "float", "not a number")]
         [Input("number", null, "not a number")]
+        [Input("boolean", null, "not a boolean")]
         public void ShouldFailValidationForArrayTypeWithIncorrectItemType(string dataType, string format, string itemString)
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
@@ -548,7 +593,7 @@ namespace Totem.Tests.Services
 
             var messageKeyDictionary = new CaseInsensitiveDictionary<object>
             {
-                { "Number",  "123456789012.34567"}
+                { "Number",  "1.56e105"}
             };
 
             var testerService = new TesterService();
@@ -578,7 +623,7 @@ namespace Totem.Tests.Services
 
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
-            result.IsMessageValid.ShouldBeFalse("\"123456789012.34567\" does not match the required format for Number (Float).");
+            result.IsMessageValid.ShouldBeFalse("\"10.5\" does not match the required format for Number (Float).");
         }
 
         public void ShouldValidateDateTimeFormat()
@@ -740,6 +785,33 @@ namespace Totem.Tests.Services
 
             result.IsMessageValid.ShouldBeFalse();
             result.MessageErrors[0].ShouldBe("\"not an object\" does not match the required data type for Object (Object).");
+        }
+
+        public void ShouldFailValidationForNonArrayType()
+        {
+            var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
+            {
+                { "TestArray", new SchemaObject
+                {
+                    Type = "Array",
+                    Items = new SchemaObject()
+                    {
+                        Type = "Integer"
+                    },
+                }}
+            };
+
+            var messageKeyDictionary = new CaseInsensitiveDictionary<object>
+            {
+                { "TestArray",  "123"}
+            };
+
+            var testerService = new TesterService();
+
+            var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
+
+            result.IsMessageValid.ShouldBeFalse();
+            result.MessageErrors[0].ShouldBe("\"123\" does not match the required data type for TestArray (array).");
         }
 
         public void ShouldNotFailValidationIfSchemaNotFound()

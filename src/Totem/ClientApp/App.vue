@@ -1,12 +1,11 @@
 <template>
   <div id="contract-list">
     <ContractGrid
-      ref="rootContractGrid"
       id="rootGrid"
+      ref="rootContractGrid"
       :rows="rows"
-      :hide-ellipsis-menu="false"
-      :edit-stack="editStack"
       @editManually="showEditManuallyWindow"
+      @importFromMessage="showImportWindow"
       @showFieldWindow="showFieldWindow(...arguments)"
       @showModelWindow="showModelWindow(...arguments)"
     />
@@ -16,6 +15,12 @@
       :contract-string="modifiedContract"
       @close="closeModal('editManually')"
       @updateData="updateContractManually"
+    />
+    <BuildContractFromMessageModalWindow
+      v-show="isImportWindowVisible"
+      title="Import Contract"
+      @close="closeModal('importContract')"
+      @importContract="importContract"
     />
     <AddModelModalWindow
       v-show="isAddModelWindowVisible"
@@ -51,6 +56,7 @@
 import $ from 'jquery';
 import _ from 'lodash';
 import EditContractModalWindow from './features/contracts/EditContractModalWindow.vue';
+import BuildContractFromMessageModalWindow from './features/contracts/BuildContractFromMessageModalWindow.vue';
 import AddNewFieldModalWindow from './features/contracts/AddNewFieldModalWindow.vue';
 import AddModelModalWindow from './features/contracts/AddModelModalWindow.vue';
 import ContractGrid from './features/contracts/ContractGrid.vue';
@@ -61,6 +67,7 @@ import {
   getExistingOptions,
   updateNestedProperty,
   findRow,
+  buildContractFromMessage,
   getPropertiesCopy,
   isObjectArray,
   updateProperties,
@@ -80,6 +87,7 @@ export default {
   components: {
     ContractGrid,
     EditContractModalWindow,
+    BuildContractFromMessageModalWindow,
     AddModelModalWindow,
     AddNewFieldModalWindow
   },
@@ -96,6 +104,7 @@ export default {
       isEditManuallyWindowVisible: false,
       isAddFieldWindowVisible: false,
       isAddModelWindowVisible: false,
+      isImportWindowVisible: false,
       disableDelete: false
     };
   },
@@ -129,7 +138,8 @@ export default {
           defaultOptions.push({
             id: option.id,
             displayName: option.schemaName,
-            value: option
+            value: option,
+            isDefault: true
           });
         });
         existingOptions = existingOptions.concat(defaultOptions);
@@ -144,7 +154,15 @@ export default {
     showEditManuallyWindow() {
       this.isAddFieldWindowVisible = false;
       this.isAddModelWindowVisible = false;
+      this.isImportWindowVisible = false;
       this.isEditManuallyWindowVisible = true;
+    },
+
+    showImportWindow() {
+      this.isAddFieldWindowVisible = false;
+      this.isAddModelWindowVisible = false;
+      this.isEditManuallyWindowVisible = false;
+      this.isImportWindowVisible = true;
     },
 
     showFieldWindow(field) {
@@ -176,6 +194,7 @@ export default {
         this.editStack.push({ parentId: null });
       }
       this.isEditManuallyWindowVisible = false;
+      this.isImportWindowVisible = false;
       this.isAddFieldWindowVisible = true;
     },
 
@@ -209,6 +228,7 @@ export default {
       this.editStack.push(deepCopy(model));
       this.modalRows = getPropertiesCopy(model);
       this.isEditManuallyWindowVisible = false;
+      this.isImportWindowVisible = false;
       this.isAddFieldWindowVisible = false;
       this.isAddModelWindowVisible = true;
     },
@@ -216,6 +236,8 @@ export default {
     closeModal(modal, alreadyAdjusted = false, setDescendingFalse = false) {
       if (modal === 'editManually') {
         this.isEditManuallyWindowVisible = false;
+      } else if (modal === 'importContract') {
+        this.isImportWindowVisible = false;
       } else if (modal === 'addField') {
         if (this.editStack.length > 0 && !alreadyAdjusted) {
           this.editStack.pop();
@@ -238,6 +260,20 @@ export default {
         }
       }
       this.updateSaveButtonState();
+    },
+
+    addNewModelToOptions(model) {
+      this.options.push({
+        displayName: model.name,
+        id: this.options.length,
+        value: {
+          id: this.options.length,
+          schemaName: model.name,
+          schemaString: createSchemaString(model)
+        },
+        isObject: true
+      });
+      this.options = reorderOptions(this.options);
     },
 
     saveField(object) {
@@ -295,24 +331,16 @@ export default {
       } else {
         // Update the root object
         if (field.type === 'object') {
-          this.options.push({
-            displayName: field.name,
-            id: this.options.length,
-            value: {
-              id: this.options.length,
-              schemaName: field.name,
-              schemaString: createSchemaString(field)
-            },
-            isObject: true
-          });
-          this.options = reorderOptions(this.options);
+          this.addNewModelToOptions(field);
         }
 
         const parent = findParent(this.rows, field);
         if (parent) {
-          let parentProperties = getPropertiesCopy(parent);
-          parentProperties[parentProperties.findIndex(prop => prop.rowId === field.rowId)] = deepCopy(field);
-          updateProperties(parent, parentProperties)
+          const parentProperties = getPropertiesCopy(parent);
+          parentProperties[
+            parentProperties.findIndex(prop => prop.rowId === field.rowId)
+          ] = deepCopy(field);
+          updateProperties(parent, parentProperties);
           const parentOption = this.options.find(option => option.displayName === parent.name);
           parentOption.displayName = parent.name;
           parentOption.value.schemaName = parent.name;
@@ -335,17 +363,7 @@ export default {
 
       if (updatedModel.isNewModel === true) {
         // Add the newly added model name to the dropdown options
-        this.options.push({
-          displayName: updatedModel.name,
-          id: this.options.length,
-          value: {
-            id: this.options.length,
-            schemaName: updatedModel.name,
-            schemaString: createSchemaString(updatedModel)
-          },
-          isObject: true
-        });
-        this.options = reorderOptions(this.options);
+        this.addNewModelToOptions(updatedModel);
       } else {
         const existingOption = this.options.find(option => option.displayName === model.name);
         const parent = findParent(this.rows, updatedModel);
@@ -356,9 +374,11 @@ export default {
           existingOption.value.schemaString = createSchemaString(updatedModel);
         }
         if (parent) {
-          let parentProperties = getPropertiesCopy(parent);
-          parentProperties[parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)] = deepCopy(updatedModel);
-          updateProperties(parent, parentProperties)
+          const parentProperties = getPropertiesCopy(parent);
+          parentProperties[
+            parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)
+          ] = deepCopy(updatedModel);
+          updateProperties(parent, parentProperties);
           const parentOption = this.options.find(option => option.displayName === parent.name);
           parentOption.displayName = parent.name;
           parentOption.value.schemaName = parent.name;
@@ -449,15 +469,47 @@ export default {
       $('#contract-raw').scrollTop(0);
     },
 
-    updateSaveButtonState() {
+    addModelsToOptions(rows) {
+      rows.forEach(row => {
+        if (hasProperties(row)) {
+          this.addNewModelToOptions(row);
+          this.addModelsToOptions(getPropertiesCopy(row));
+        }
+      });
+    },
+
+    importContract() {
+      const message = $('#import-message')[0].value;
+      const contractBasedOnMessage = buildContractFromMessage(message);
+      this.rows = parseContractArray(
+        JSON.stringify(contractBasedOnMessage),
+        'contract-string-validation'
+      );
+
+      this.options = this.options.filter(option => option.isDefault === true);
+      this.addModelsToOptions(this.rows);
+
+      $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
+      $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
+      this.closeModal('importContract');
       if (typeof setSaveButton === 'function') {
-          // setSaveButton is defined in Create.cshtml and Edit.cshtml
-          if (this.rows.length === 0 && setSaveButton.length > 0){
-            setSaveButton(true); // eslint-disable-line no-undef
-          } else {
-            setSaveButton(); // eslint-disable-line no-undef
-          }
+        // setSaveButton is defined in Edit.cshtml
+        setSaveButton(); // eslint-disable-line no-undef
       }
+      $('#contract-raw').scrollTop(0);
+    },
+
+    updateSaveButtonState() {
+      /* eslint-disable */
+      if (typeof setSaveButton === 'function') {
+        // setSaveButton is defined in Create.cshtml and Edit.cshtml
+        if (this.rows.length === 0 && setSaveButton.length > 0) {
+          setSaveButton(true);
+        } else {
+          setSaveButton();
+        }
+      }
+      /* eslint-enable */
     }
   }
 };

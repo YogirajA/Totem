@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Json;
 using System.Linq;
@@ -156,6 +157,11 @@ namespace Totem.Services
                 CheckNumberType(propertySchemaObject, kv, testMessageResult);
             }
 
+            if (dataType == DataType.Boolean)
+            {
+                CheckBooleanType(propertySchemaObject, kv, testMessageResult);
+            }
+
             if (dataType == DataType.String)
             {
                 CheckStringType(propertySchemaObject, kv, testMessageResult);
@@ -225,6 +231,18 @@ namespace Totem.Services
             }
         }
 
+        private static void CheckBooleanType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
+            TestMessageResult testMessageResult)
+        {
+            var isBool = bool.TryParse(kv.Value.ToString(), out _);
+            
+            // Validate number data type
+            if (!isBool)
+            {
+                AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, propertySchemaObject.Type);
+            }
+        }
+
         private static void CheckStringType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
             TestMessageResult testMessageResult)
         {
@@ -264,36 +282,44 @@ namespace Totem.Services
             {
                 var itemSchema = propertySchemaObject.Items;
                 dynamic itemArray = JsonConvert.DeserializeObject(kv.Value.ToString());
-                var count = 0;
-                foreach (var _ in itemArray)
-                {
-                    count += 1;
-                }
-                if (propertySchemaObject.MinItems != 0 && count < propertySchemaObject.MinItems)
-                {
-                    AddArrayMinLengthError(testMessageResult, kv.Key, propertySchemaObject.MinItems);
-                }
-
-                if (propertySchemaObject.MaxItems != 0 && count > propertySchemaObject.MaxItems)
-                {
-                    AddArrayMaxLengthError(testMessageResult, kv.Key, propertySchemaObject.MaxItems);
-                }
-
                 var dataType = itemSchema.GetDataType();
 
-                if (dataType == DataType.String)
+                if (itemArray is IEnumerable array)
                 {
-                    TryParseStringArray(propertySchemaObject, kv, itemArray, testMessageResult, itemSchema.Reference == "Guid");
+                    var count = array.Cast<object>().Count();
+                    if (propertySchemaObject.MinItems != 0 && count < propertySchemaObject.MinItems)
+                    {
+                        AddArrayMinLengthError(testMessageResult, kv.Key, propertySchemaObject.MinItems);
+                    }
+
+                    if (propertySchemaObject.MaxItems != 0 && count > propertySchemaObject.MaxItems)
+                    {
+                        AddArrayMaxLengthError(testMessageResult, kv.Key, propertySchemaObject.MaxItems);
+                    }
+
+                    if (dataType == DataType.String)
+                    {
+                        TryParseStringArray(propertySchemaObject, kv, itemArray, testMessageResult, itemSchema.Reference == "Guid");
+                    }
+
+                    if (dataType == DataType.Integer)
+                    {
+                        TryParseIntegerArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                    }
+
+                    if (dataType == DataType.Number)
+                    {
+                        TryParseNumberArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                    }
+                }
+                else
+                {
+                    AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, DataType.Array.Value);
                 }
 
-                if (dataType == DataType.Integer)
+                if (dataType == DataType.Boolean)
                 {
-                    TryParseIntegerArray(propertySchemaObject, kv, itemArray, testMessageResult);
-                }
-
-                if (dataType == DataType.Number)
-                {
-                    TryParseNumberArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                    TryParseBooleanArray(propertySchemaObject, kv, itemArray, testMessageResult);
                 }
             }
         }
@@ -448,8 +474,8 @@ namespace Totem.Services
                 }
             }
         }
-
-        private void TryParseNumberArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
+        
+        private static void TryParseNumberArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
         {
             var itemFormat = propertySchemaObject.Items.GetFormat();
 
@@ -479,6 +505,23 @@ namespace Totem.Services
                         AddItemTypeError(testMessageResult, kv.Key, DataType.Number, Format.Double);
                         break;
                     }
+                }
+            }
+        }
+
+        private void TryParseBooleanArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
+        {
+            var itemFormat = propertySchemaObject.Items.GetFormat();
+
+            foreach (var item in itemArray)
+            {
+                var isBool = bool.TryParse(item.ToString(), out bool _);
+
+                // Validate boolean data type
+                if (itemFormat == null && !isBool)
+                {
+                    AddItemTypeError(testMessageResult, kv.Key, DataType.Boolean);
+                    break;
                 }
             }
         }
