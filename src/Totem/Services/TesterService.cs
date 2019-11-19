@@ -377,13 +377,6 @@ namespace Totem.Services
                 $"The value for field \"{property}\" was not found.");
         }
 
-        private static void AddSchemaNotFoundError(TestMessageResult result, string property)
-        {
-            result.IsMessageValid = false;
-            result.MessageErrors.Add(
-                $"The schema for \"{property}\" was not found in the contract definition.");
-        }
-
         private static void AddRequiredError(TestMessageResult result, string key, string type, string requiredProperty)
         {
             result.IsMessageValid = false;
