@@ -165,10 +165,10 @@ export default {
       };
 
       this.isArray = last(this.editStack).items !== undefined;
-
+      this.isEditModal = last(this.editStack).rowId !== undefined;
       this.showFieldNameTextbox = false;
-      if (last(this.editStack).rowId !== undefined) {
-        this.isEditModal = true;
+
+      if (this.isEditModal) {
         this.computedModalTitle = 'Update Model';
         this.successBtn = {
           id: 'saveModelBtn',
