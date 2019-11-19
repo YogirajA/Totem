@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fixie.Internal;
 using Shouldly;
 using Totem.Features.Contracts;
 using static Totem.Tests.Testing;
@@ -65,7 +64,7 @@ namespace Totem.Tests.Features.Contracts
             var result = await Send(command);
 
             result.IsValid.ShouldBeTrue();
-            result.WarningMessage.ShouldBe($"This contract will be deprecated on {DateTime.Today.AddDays(5)}, please check for a new version.");
+            result.DeprecationWarningMessage.ShouldBe($"This contract will be deprecated on {DateTime.Today.AddDays(5)}, please check for a new version.");
             result.MessageErrors.ShouldBeEmpty();
         }
 
@@ -528,13 +527,16 @@ namespace Totem.Tests.Features.Contracts
             var result = await Send(command);
 
             result.IsValid.ShouldBeFalse();
-            result.MessageErrors.ShouldBe(new List<string>()
+            result.MessageErrors.ShouldBe(new List<string>
             {
-                "Message property \"FirstName\" is not part of the contract.",
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
-                "Message is missing expected property \"Timestamp\".",
-                "The schema for \"FirstName\" was not found in the contract definition."
+                "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
             });
         }
 
@@ -565,14 +567,17 @@ namespace Totem.Tests.Features.Contracts
             var result = await Send(command);
 
             result.IsValid.ShouldBeFalse();
-            result.WarningMessage.ShouldBe($"This contract will be deprecated on {DateTime.Today.AddDays(5)}, please check for a new version.");
+            result.DeprecationWarningMessage.ShouldBe($"This contract will be deprecated on {DateTime.Today.AddDays(5)}, please check for a new version.");
             result.MessageErrors.ShouldBe(new List<string>
             {
-                "Message property \"FirstName\" is not part of the contract.",
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
-                "Message is missing expected property \"Timestamp\".",
-                "The schema for \"FirstName\" was not found in the contract definition."
+                "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
             });
         }
     }

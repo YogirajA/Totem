@@ -60,14 +60,22 @@
                     {
                         <h4 class="result-message success">Message is Valid.</h4>
                         <div class="result-message warning">
-                            @Model.WarningMessage
+                            @Model.DeprecationWarningMessage
+                            @foreach (var item in Model.Warnings)
+                            {
+                                <div>@item</div>
+                            }
                         </div>
                     }
                     else
                     {
-                        <h4 class="result-message error">Message is Invalid.</h4>
+                        <h4 class="result-message error">Message is Invalid. </h4>
                         <div class="result-message warning">
-                            @Model.WarningMessage
+                            @Model.DeprecationWarningMessage
+                            @foreach (var item in Model.Warnings)
+                            {
+                                <div>@item</div>
+                            }
                         </div>
                         <div class="result-message error">
                             @foreach (var item in Model.MessageErrors)

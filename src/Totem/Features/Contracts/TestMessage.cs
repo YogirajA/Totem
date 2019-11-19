@@ -94,11 +94,10 @@ namespace Totem.Features.Contracts
                     {
                         isValid = false;
                     }
-
                     result.MessageErrors = testResult.MessageErrors;
+                    result.Warnings = testResult.Warnings;
                 }
-
-                result.WarningMessage = warningMessage;
+                result.DeprecationWarningMessage = warningMessage;
                 result.IsValid = isValid;
                 return result;
             }
@@ -115,10 +114,11 @@ namespace Totem.Features.Contracts
             [DisplayName("Properties")]
             public CaseInsensitiveDictionary<SchemaObject> ContractObject { get; set; }
             public string ContractString { get; set; }
-            public string WarningMessage { get; set; }
+            public string DeprecationWarningMessage { get; set; }
             public string TestMessage { get; set; }
             public bool IsValid { get; set; }
             public IList<string> MessageErrors { get; set; } = new List<string>();
+            public IList<string> Warnings { get; set; } = new List<string>();
         }
     }
 }
