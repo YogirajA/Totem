@@ -450,11 +450,14 @@ namespace Totem.Tests.Features.API
             result.IsValid.ShouldBeFalse();
             result.MessageErrors.ShouldBe(new List<string>
             {
-                "Message property \"FirstName\" is not part of the contract.",
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
-                "Message is missing expected property \"Timestamp\".",
-                "The schema for \"FirstName\" was not found in the contract definition."
+                "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
             });
         }
 
@@ -480,11 +483,14 @@ namespace Totem.Tests.Features.API
             result.WarningMessage.ShouldBe($"This contract will be deprecated on {DateTime.Today.AddDays(5)}, please check for a new version.");
             result.MessageErrors.ShouldBe(new List<string>
             {
-                "Message property \"FirstName\" is not part of the contract.",
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
-                "Message is missing expected property \"Timestamp\".",
-                "The schema for \"FirstName\" was not found in the contract definition."
+                "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
             });
         }
     }
