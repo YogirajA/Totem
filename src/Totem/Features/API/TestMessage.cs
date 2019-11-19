@@ -68,6 +68,7 @@ namespace Totem.Features.API
                     }
 
                     result.MessageErrors = testResult.MessageErrors;
+                    result.Warnings = testResult.Warnings;
                 }
 
                 result.IsValid = isValid;
@@ -97,6 +98,7 @@ namespace Totem.Features.API
             public string WarningMessage { get; set; }
             public bool IsValid { get; set; }
             public List<string> MessageErrors { get; set; } = new List<string>();
+            public List<string> Warnings { get; set; } = new List<string>();
         }
     }
 }

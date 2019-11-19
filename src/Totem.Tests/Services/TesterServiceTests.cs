@@ -169,7 +169,7 @@ namespace Totem.Tests.Services
             result.IsMessageValid.ShouldBeTrue();
         }
 
-        public void AreAllElementsInMessageContainedInContractShouldReturnInvalidContract()
+        public void AreAllElementsInMessageContainedInContractShouldReturnValidContractWithWarnings()
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
             {
@@ -188,8 +188,8 @@ namespace Totem.Tests.Services
             var testService = new TesterService();
 
             var result = testService.AreAllElementsInMessageContainedInContract(messageKeyDictionary, contractDictionary);
-
-            result.IsMessageValid.ShouldBeFalse("Message property \"Age\" is not part of the contract.");
+            result.IsMessageValid.ShouldBeTrue();
+            result.Warnings[0].ShouldBe("Message property \"Age\" is not part of the contract.");
         }
 
         public void AreAllElementsCorrectDataTypeShouldReturnValidContract()
@@ -814,7 +814,7 @@ namespace Totem.Tests.Services
             result.MessageErrors[0].ShouldBe("\"123\" does not match the required data type for TestArray (array).");
         }
 
-        public void ShouldFailValidationIfSchemaNotFound()
+        public void ShouldNotFailValidationIfSchemaNotFound()
         {
             var contractDictionary = new CaseInsensitiveDictionary<SchemaObject>
             {
@@ -833,8 +833,7 @@ namespace Totem.Tests.Services
 
             var result = testerService.DoAllMessageValuesMatchDataTypes(messageKeyDictionary, contractDictionary);
 
-            result.IsMessageValid.ShouldBeFalse();
-            result.MessageErrors[0].ShouldBe("The schema for \"LastName\" was not found in the contract definition.");
+            result.IsMessageValid.ShouldBeTrue();
         }
 
         public void ShouldFailValidationWhenMissingNestedProperty()
