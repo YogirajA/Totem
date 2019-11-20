@@ -374,7 +374,6 @@ export default {
         // Add the newly added model name to the dropdown options
         this.addNewModelToOptions(updatedModel);
       } else {
-        this.updateExistingOption(model.name, updatedModel);
         this.updateParent(updatedModel);
         this.options = reorderOptions(this.options);
       }
@@ -406,6 +405,7 @@ export default {
         $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
+        this.resetDefaultOptions();
         this.isDescending = false;
         this.closeModal('addModel', true, false);
       }
@@ -473,6 +473,11 @@ export default {
       });
     },
 
+    resetDefaultOptions() {
+      this.options = this.options.filter(option => option.isDefault === true);
+      this.addModelsToOptions(this.rows);
+    },
+
     importContract() {
       const message = $('#import-message')[0].value;
       const contractBasedOnMessage = buildContractFromMessage(message);
@@ -481,8 +486,7 @@ export default {
         'contract-string-validation'
       );
 
-      this.options = this.options.filter(option => option.isDefault === true);
-      this.addModelsToOptions(this.rows);
+      this.resetDefaultOptions();
 
       $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
       $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);
