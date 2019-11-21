@@ -276,6 +276,27 @@ export default {
       this.options = reorderOptions(this.options);
     },
 
+    updateExistingOption(optionName, model) {
+      const existingOption = this.options.find(option => option.displayName === optionName);
+      if (existingOption) {
+        existingOption.displayName = model.name;
+        existingOption.value.schemaName = model.name;
+        existingOption.value.schemaString = createSchemaString(model);
+        this.options = reorderOptions(this.options);
+      }
+    },
+
+    updateParent(field) {
+      const parent = findParent(this.rows, field);
+      if (parent) {
+        const parentProperties = getPropertiesCopy(parent);
+        const rowIndex = parentProperties.findIndex(prop => prop.rowId === field.rowId);
+        parentProperties[rowIndex] = deepCopy(field);
+        updateProperties(parent, parentProperties);
+        this.updateExistingOption(parent.name, parent);
+      }
+    },
+
     saveField(object) {
       const field = deepCopy(object);
       const addingToAModel = this.isAddModelWindowVisible;
@@ -334,19 +355,7 @@ export default {
           this.addNewModelToOptions(field);
         }
 
-        const parent = findParent(this.rows, field);
-        if (parent) {
-          const parentProperties = getPropertiesCopy(parent);
-          parentProperties[
-            parentProperties.findIndex(prop => prop.rowId === field.rowId)
-          ] = deepCopy(field);
-          updateProperties(parent, parentProperties);
-          const parentOption = this.options.find(option => option.displayName === parent.name);
-          parentOption.displayName = parent.name;
-          parentOption.value.schemaName = parent.name;
-          parentOption.value.schemaString = createSchemaString(parent);
-          this.options = reorderOptions(this.options);
-        }
+        this.updateParent(field);
 
         this.modifiedContract = updateContractString(field, this.rows, this.modifiedContract);
         $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
@@ -365,25 +374,7 @@ export default {
         // Add the newly added model name to the dropdown options
         this.addNewModelToOptions(updatedModel);
       } else {
-        const existingOption = this.options.find(option => option.displayName === model.name);
-        const parent = findParent(this.rows, updatedModel);
-
-        if (existingOption) {
-          existingOption.displayName = updatedModel.name;
-          existingOption.value.schemaName = updatedModel.name;
-          existingOption.value.schemaString = createSchemaString(updatedModel);
-        }
-        if (parent) {
-          const parentProperties = getPropertiesCopy(parent);
-          parentProperties[
-            parentProperties.findIndex(prop => prop.rowId === updatedModel.rowId)
-          ] = deepCopy(updatedModel);
-          updateProperties(parent, parentProperties);
-          const parentOption = this.options.find(option => option.displayName === parent.name);
-          parentOption.displayName = parent.name;
-          parentOption.value.schemaName = parent.name;
-          parentOption.value.schemaString = createSchemaString(parent);
-        }
+        this.updateParent(updatedModel);
         this.options = reorderOptions(this.options);
       }
       this.editStack.pop();
@@ -399,7 +390,10 @@ export default {
           // Existing model row ID not found, so add as a new row
           this.modalRows.push(updatedModel);
         }
-        this.currentParentName = last(this.editStack).name;
+
+        this.currentParentName = updatedModel.parentName
+          ? updatedModel.parentName
+          : last(this.editStack).name;
         updateProperties(last(this.editStack), deepCopy(this.modalRows));
       } else {
         // update root contract
@@ -411,6 +405,7 @@ export default {
         $('#contract-raw')[0].value = JSON.stringify(JSON.parse(this.modifiedContract), null, 2);
         $('#ModifiedContract_ContractString')[0].value = this.modifiedContract;
         this.rows = parseContractArray(this.modifiedContract, 'contract-string-validation');
+        this.resetDefaultOptions();
         this.isDescending = false;
         this.closeModal('addModel', true, false);
       }
@@ -478,6 +473,11 @@ export default {
       });
     },
 
+    resetDefaultOptions() {
+      this.options = this.options.filter(option => option.isDefault === true);
+      this.addModelsToOptions(this.rows);
+    },
+
     importContract() {
       const message = $('#import-message')[0].value;
       const contractBasedOnMessage = buildContractFromMessage(message);
@@ -486,8 +486,7 @@ export default {
         'contract-string-validation'
       );
 
-      this.options = this.options.filter(option => option.isDefault === true);
-      this.addModelsToOptions(this.rows);
+      this.resetDefaultOptions();
 
       $('#contract-raw')[0].value = JSON.stringify(contractBasedOnMessage, null, 2);
       $('#ModifiedContract_ContractString')[0].value = JSON.stringify(contractBasedOnMessage);

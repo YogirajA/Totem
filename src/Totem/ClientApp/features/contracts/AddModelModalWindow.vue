@@ -210,7 +210,10 @@ export default {
 
     close() {
       if (this.editStack.length > 0) {
-        this.editStack.pop();
+        const lastNestedModel = this.editStack.pop();
+        if (this.editStack.length > 0) {
+          last(this.editStack).name = lastNestedModel.parentName;
+        }
         this.$emit('close', 'addModel', false, false);
       } else {
         this.$emit('close', 'addModel', false, true);
@@ -224,6 +227,7 @@ export default {
         parent = findParent(this.$parent.modalRows, model);
       }
       model.parentId = parent == null ? null : parent.rowId;
+      model.parentName = this.modalFieldName;
       this.editStack.push(deepCopy(model));
       this.objectRows = getPropertiesCopy(model);
       this.$parent.modalRows = deepCopy(this.objectRows);
@@ -233,7 +237,9 @@ export default {
 
     showFieldWindow(field) {
       let deepField = {};
-      this.modalFieldName = this.parentName;
+      if (this.parentName !== this.modalFieldName) {
+        last(this.editStack).name = this.modalFieldName;
+      }
       if (field !== undefined) {
         deepField = deepCopy(field);
       }
