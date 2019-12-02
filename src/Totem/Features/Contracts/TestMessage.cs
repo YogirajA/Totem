@@ -45,6 +45,7 @@ namespace Totem.Features.Contracts
         {
             public Guid ContractId { get; set; }
             public string VersionNumber { get; set; }
+            public bool AllowSubset { get; set; }
             public string SampleMessage { get; set; }
         }
 
@@ -88,7 +89,7 @@ namespace Totem.Features.Contracts
 
                 if (isValid)
                 {
-                    var testResult = _testerService.Execute(contract.ContractString, request.SampleMessage);
+                    var testResult = _testerService.Execute(contract.ContractString, request.SampleMessage, request.AllowSubset);
 
                     if (!testResult.IsMessageValid)
                     {
@@ -109,6 +110,8 @@ namespace Totem.Features.Contracts
             public Guid ContractId { get; set; }
             [DisplayName("Version Number")]
             public string VersionNumber { get; set; }
+            [DisplayName("Allow Subset")]
+            public string AllowSubset { get; set; }
             [DisplayName("Description")]
             public string ContractDescription { get; set; }
             [DisplayName("Properties")]
