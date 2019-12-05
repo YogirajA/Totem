@@ -253,3 +253,9 @@ html .ui-dialog-titlebar-close.ui-button.ui-state-disabled:active {
   padding: 0;
   margin-top: 8px;
 }
+
+textarea.json-message {
+  background-color: #EEEEEE;
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
+  font-size: 13px;
+}
