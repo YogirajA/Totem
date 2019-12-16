@@ -14,8 +14,9 @@ namespace Totem.Services
         private static readonly List<TestMessageResult> TestCases = new List<TestMessageResult>();
         private static bool _isContractValid = true;
         private static string _contractErrorMessage = "";
+        public const string ParentOfSymbol = "-->";
 
-        public TestMessageResult Execute(string contract, string message)
+        public TestMessageResult Execute(string contract, string message, bool allowSubset = false)
         {
             var schemaDictionary = SchemaObject.BuildSchemaDictionary(contract, HandleReferenceError, HandleFailure);
 
@@ -57,13 +58,17 @@ namespace Totem.Services
             {
                 TestCases.Clear();
                 TestCases.Add(AreAllElementsInMessageContainedInContract(messageDictionary, contractDictionary));
-                TestCases.Add(AreAllElementsInContractContainedInMessage(messageDictionary, contractDictionary));
-                TestCases.Add(DoAllMessageValuesMatchDataTypes(messageDictionary, contractDictionary));
+                if (!allowSubset)
+                {
+                    TestCases.Add(AreAllElementsInContractContainedInMessage(messageDictionary, contractDictionary));
+                }
+                TestCases.Add(DoAllMessageValuesMatchDataTypes(messageDictionary, contractDictionary, allowSubset));
             }
 
             return new TestMessageResult
             {
                 IsMessageValid = TestCases.All(x => x.IsMessageValid),
+                Warnings = TestCases.SelectMany(x => x.Warnings).ToList(),
                 MessageErrors = TestCases.SelectMany(x => x.MessageErrors).ToList()
             };
         }
@@ -100,8 +105,8 @@ namespace Totem.Services
             {
                 if (contractDictionary.Keys.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase)) continue;
 
-                result.IsMessageValid = false;
-                result.MessageErrors.Add($"Message property \"{kv.Key}\" is not part of the contract.");
+                result.IsMessageValid = true;
+                result.Warnings.Add($"Message property \"{kv.Key}\" is not part of the contract.");
             }
 
             return result;
@@ -122,7 +127,8 @@ namespace Totem.Services
             return result;
         }
 
-        public TestMessageResult DoAllMessageValuesMatchDataTypes(CaseInsensitiveDictionary<object> messageKeyDictionary, CaseInsensitiveDictionary<SchemaObject> contractDictionary)
+        public TestMessageResult DoAllMessageValuesMatchDataTypes(CaseInsensitiveDictionary<object> messageKeyDictionary,
+            CaseInsensitiveDictionary<SchemaObject> contractDictionary, bool allowSubset = false)
         {
             var testMessageResult = new TestMessageResult();
 
@@ -134,11 +140,7 @@ namespace Totem.Services
 
                 if (propertySchemaObject != null)
                 {
-                    ChecksForMessage(propertySchemaObject, kv, testMessageResult);
-                }
-                else
-                {
-                    AddSchemaNotFoundError(testMessageResult, kv.Key);
+                    ChecksForMessage(propertySchemaObject, kv, testMessageResult, allowSubset);
                 }
             }
 
@@ -146,7 +148,7 @@ namespace Totem.Services
         }
 
         private void ChecksForMessage(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
-            TestMessageResult testMessageResult)
+            TestMessageResult testMessageResult, bool allowSubset)
         {
             var dataType = propertySchemaObject.GetDataType();
 
@@ -158,6 +160,11 @@ namespace Totem.Services
             if (dataType == DataType.Number)
             {
                 CheckNumberType(propertySchemaObject, kv, testMessageResult);
+            }
+
+            if (dataType == DataType.Boolean)
+            {
+                CheckBooleanType(propertySchemaObject, kv, testMessageResult);
             }
 
             if (dataType == DataType.String)
@@ -172,7 +179,7 @@ namespace Totem.Services
 
             if (dataType == DataType.Object)
             {
-                CheckObjectType(propertySchemaObject, kv, testMessageResult);
+                CheckObjectType(propertySchemaObject, kv, testMessageResult, allowSubset);
             }
         }
 
@@ -229,6 +236,18 @@ namespace Totem.Services
             }
         }
 
+        private static void CheckBooleanType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
+            TestMessageResult testMessageResult)
+        {
+            var isBool = bool.TryParse(kv.Value.ToString(), out _);
+            
+            // Validate number data type
+            if (!isBool)
+            {
+                AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, propertySchemaObject.Type);
+            }
+        }
+
         private static void CheckStringType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
             TestMessageResult testMessageResult)
         {
@@ -268,13 +287,11 @@ namespace Totem.Services
             {
                 var itemSchema = propertySchemaObject.Items;
                 dynamic itemArray = JsonConvert.DeserializeObject(kv.Value.ToString());
-                if (itemArray is IEnumerable)
+                var dataType = itemSchema.GetDataType();
+
+                if (itemArray is IEnumerable array)
                 {
-                    var count = 0;
-                    foreach (var _ in itemArray)
-                    {
-                        count += 1;
-                    }
+                    var count = array.Cast<object>().Count();
                     if (propertySchemaObject.MinItems != 0 && count < propertySchemaObject.MinItems)
                     {
                         AddArrayMinLengthError(testMessageResult, kv.Key, propertySchemaObject.MinItems);
@@ -284,8 +301,6 @@ namespace Totem.Services
                     {
                         AddArrayMaxLengthError(testMessageResult, kv.Key, propertySchemaObject.MaxItems);
                     }
-
-                    var dataType = itemSchema.GetDataType();
 
                     if (dataType == DataType.String)
                     {
@@ -306,11 +321,16 @@ namespace Totem.Services
                 {
                     AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, DataType.Array.Value);
                 }
+
+                if (dataType == DataType.Boolean)
+                {
+                    TryParseBooleanArray(propertySchemaObject, kv, itemArray, testMessageResult);
+                }
             }
         }
 
         private void CheckObjectType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
-            TestMessageResult testMessageResult)
+            TestMessageResult testMessageResult, bool allowSubset)
         {
             CaseInsensitiveDictionary<object> innerObject = null;
             try
@@ -329,12 +349,15 @@ namespace Totem.Services
                     if (innerObject != null && innerObject.ContainsKey(innerProperty.Key))
                     {
                         ChecksForMessage(innerProperty.Value,
-                            new KeyValuePair<string, object>($"{kv.Key}-->{innerProperty.Key}",
-                                innerObject[innerProperty.Key]), testMessageResult);
+                            new KeyValuePair<string, object>($"{kv.Key}{ParentOfSymbol}{innerProperty.Key}",
+                                innerObject[innerProperty.Key]), testMessageResult, allowSubset);
                     }
                     else
                     {
-                        AddNotFoundError(testMessageResult, $"{kv.Key}-->{innerProperty.Key}");
+                        if (!allowSubset)
+                        {
+                            AddNotFoundError(testMessageResult, $"{kv.Key}{ParentOfSymbol}{innerProperty.Key}");
+                        }
                     }
                 }
             }
@@ -360,13 +383,6 @@ namespace Totem.Services
             result.IsMessageValid = false;
             result.MessageErrors.Add(
                 $"The value for field \"{property}\" was not found.");
-        }
-
-        private static void AddSchemaNotFoundError(TestMessageResult result, string property)
-        {
-            result.IsMessageValid = false;
-            result.MessageErrors.Add(
-                $"The schema for \"{property}\" was not found in the contract definition.");
         }
 
         private static void AddRequiredError(TestMessageResult result, string key, string type, string requiredProperty)
@@ -459,8 +475,8 @@ namespace Totem.Services
                 }
             }
         }
-
-        private void TryParseNumberArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
+        
+        private static void TryParseNumberArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
         {
             var itemFormat = propertySchemaObject.Items.GetFormat();
 
@@ -494,6 +510,23 @@ namespace Totem.Services
             }
         }
 
+        private void TryParseBooleanArray(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv, dynamic itemArray, TestMessageResult testMessageResult)
+        {
+            var itemFormat = propertySchemaObject.Items.GetFormat();
+
+            foreach (var item in itemArray)
+            {
+                var isBool = bool.TryParse(item.ToString(), out bool _);
+
+                // Validate boolean data type
+                if (itemFormat == null && !isBool)
+                {
+                    AddItemTypeError(testMessageResult, kv.Key, DataType.Boolean);
+                    break;
+                }
+            }
+        }
+
         public bool TryParseJSON(string json, out JsonValue jsonObject)
         {
             try
@@ -512,6 +545,7 @@ namespace Totem.Services
         {
             public bool IsMessageValid { get; set; } = true;
             public List<string> MessageErrors { get; set; } = new List<string>();
+            public List<string> Warnings { get; set; } = new List<string>();
         }
     }
 }

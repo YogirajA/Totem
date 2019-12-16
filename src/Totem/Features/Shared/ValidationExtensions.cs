@@ -141,6 +141,11 @@ namespace Totem.Features.Shared
                         {
                             context.AddFailure($"The definition of \"{propertyName}\" is incorrect. \"{type}\" data type requires a 'Properties' object.");
                         }
+                        else if
+                            (propertyObject.Properties.Count == 0)
+                        {
+                            context.AddFailure($"The definition of \"{propertyName}\" is incorrect. \"{type}\" data type requires at least one nested property. It can not be empty.");
+                        }
                         else
                         {
                             CheckProperties(propertyObject.Properties, context);
@@ -199,6 +204,16 @@ namespace Totem.Features.Shared
                     var isExampleNumber = double.TryParse(example, out _) || float.TryParse(example, out _);
                     // Validate example is number data type
                     if (!isExampleNumber)
+                    {
+                        AddExampleError(context, example, propertyName, type);
+                    }
+                }
+
+                if (dataType == DataType.Boolean)
+                {
+                    var isExampleBool = bool.TryParse(example, out _);
+                    // Validate example is boolean data type
+                    if (!isExampleBool)
                     {
                         AddExampleError(context, example, propertyName, type);
                     }

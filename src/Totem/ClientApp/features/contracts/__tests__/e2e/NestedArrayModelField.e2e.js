@@ -787,6 +787,103 @@ test('Cancel edits to a nested field in the model', async t => {
     .eql(false);
 });
 
+test('Parent model name edits persist after opening a field modal', async t => {
+  await addNewNestedModelAtRoot(t);
+
+  const rowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = rowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  // Edit the model name
+  await t.typeText(utils.modelName, 'testModelEdits', { replace: true });
+
+  const nestedFieldRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('testProperty');
+  const nestedFieldEditFieldBtn = nestedFieldRowToEdit.find('.edit-action');
+  await t.click(nestedFieldEditFieldBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+  await t.expect(utils.inputFieldExample.value).eql('123');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+
+  await t.click(utils.cancelFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModelEdits');
+});
+
+test('Parent model name edits persist after opening a model modal', async t => {
+  await addNewNestedModelAtRoot(t);
+
+  const rowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = rowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  // Edit the model name
+  await t.typeText(utils.modelName, 'testModelEdits', { replace: true });
+
+  const nestedModelRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('nestedModel');
+  const nestedModelEditFieldBtn = nestedModelRowToEdit.find('.edit-action');
+  await t.click(nestedModelEditFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+
+  await t.click(utils.cancelModelBtn);
+
+  await t.expect(utils.modelName.value).eql('testModelEdits');
+});
+
+test('Parent model name edits persist after edits to a nested model', async t => {
+  await addNewNestedModelAtRoot(t);
+
+  const rowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = rowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  // Edit the model name
+  await t.typeText(utils.modelName, 'testModelEdits', { replace: true });
+
+  const nestedModelRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('nestedModel');
+  const nestedModelEditFieldBtn = nestedModelRowToEdit.find('.edit-action');
+  await t.click(nestedModelEditFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+
+  // Edit the child model name
+  await t.typeText(utils.modelName, 'editedNestedModel', { replace: true });
+  const childModelFieldRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('testProperty');
+  const nestedFieldEditFieldBtn = childModelFieldRowToEdit.find('.edit-action');
+  await t.click(nestedFieldEditFieldBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+  await t.expect(utils.inputFieldExample.value).eql('123');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('Integer');
+
+  await t.click(utils.cancelFieldBtn);
+
+  await t.click(utils.saveModelBtn);
+
+  await t.expect(nestedModelRowToEdit.exists).eql(false);
+
+  const editedNestedModelRow = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('editedNestedModel');
+  await t.expect(editedNestedModelRow.exists).eql(true);
+  await t.expect(utils.modelName.value).eql('testModelEdits');
+});
+
 test('Cancel add new model to an already nested model', async t => {
   await addNewNestedModelAtRoot(t);
   const initialRowCount = await Selector('tr.treegrid-body-row').count;
@@ -905,4 +1002,195 @@ test('Change the type of a child field to a model', async t => {
     .contains('object')
     .expect(new3xNestedPropertyRow.exists)
     .eql(true);
+});
+
+test('Edit a child model of a prior nested model and add a new model using the prior nested model with the child edits', async t => {
+  await addNewNestedModelAtRoot(t);
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+  // Add a new field based on previous model
+  await t.click(utils.addNewFieldBtn);
+
+  await t.typeText(utils.inputFieldName, 'testSecondModel');
+  await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
+
+  await t.click(utils.saveFieldBtn);
+
+  // Edit the nested field of the original model from the root and save
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('nestedModel');
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+  await t.typeText(utils.modelName, 'editedNestedModel', { replace: true });
+  await t.click(utils.saveModelBtn);
+
+  // Add a third field based on the previous model
+  await t.click(utils.addNewFieldBtn);
+
+  await t.typeText(utils.inputFieldName, 'testThirdModel');
+  await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
+
+  await t.click(utils.saveFieldBtn);
+
+  const testModelField = Selector('tr.treegrid-body-row').withText('testModel');
+  const testSecondModelField = Selector('tr.treegrid-body-row').withText('testSecondModel');
+  const testThirdModelField = Selector('tr.treegrid-body-row').withText('testThirdModel');
+  const nestedRows = await Selector('tr.treegrid-body-row').withText('testProperty');
+  const nestedModelRows = await Selector('tr.treegrid-body-row').withText('nestedModel');
+  const editedNestedModelRows = await Selector('tr.treegrid-body-row').withText(
+    'editedNestedModel'
+  );
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 6)
+    .expect(testModelField.exists)
+    .eql(true)
+    .expect(testSecondModelField.exists)
+    .eql(true)
+    .expect(testThirdModelField.exists)
+    .eql(true)
+    .expect(nestedRows.exists)
+    .eql(true)
+    .expect(nestedRows.count)
+    .eql(3)
+    .expect(nestedModelRows.exists)
+    .eql(true)
+    .expect(nestedModelRows.count)
+    .eql(1)
+    .expect(editedNestedModelRows.exists)
+    .eql(true)
+    .expect(editedNestedModelRows.count)
+    .eql(2);
+});
+
+test('Edit a primitive child field of a prior nested model and add a new model using the prior nested model with the child edits', async t => {
+  await addNewNestedModelAtRoot(t);
+  await addNewFieldsToParentModel(t);
+  // Save the container model
+  await t.click(utils.saveModelBtn);
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+  // Add a new field based on previous model
+  await t.click(utils.addNewFieldBtn);
+
+  await t.typeText(utils.inputFieldName, 'testSecondModel');
+  await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
+
+  await t.click(utils.saveFieldBtn);
+
+  // Edit the primitive nested field of the original model from the root and save
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('newTestProperty');
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('newTestProperty');
+  await t.expect(utils.inputFieldExample.value).eql('2019-01-01T18:14:29Z');
+  await t.expect(utils.inputType.getVue(({ props }) => props.value.displayName)).eql('DateTime');
+
+  await t.typeText(utils.inputFieldName, 'editedNewTestProperty', { replace: true });
+  await t.click(utils.inputType).click(Selector('li').withText('Integer'));
+
+  await t.click(utils.saveFieldBtn);
+
+  // Add a third field based on the previous model
+  await t.click(utils.addNewFieldBtn);
+
+  await t.typeText(utils.inputFieldName, 'testThirdModel');
+  await t.click(utils.inputType).click(Selector('li').withText('testModel'));
+  await t.expect(utils.inputFieldExample.hasAttribute('disabled')).ok();
+
+  await t.click(utils.saveFieldBtn);
+
+  const testModelField = Selector('tr.treegrid-body-row').withText('testModel');
+  const testSecondModelField = Selector('tr.treegrid-body-row').withText('testSecondModel');
+  const testThirdModelField = Selector('tr.treegrid-body-row').withText('testThirdModel');
+  const nestedRows = await Selector('tr.treegrid-body-row').withText('testProperty');
+  const nestedModelRows = await Selector('tr.treegrid-body-row').withText('nestedModel');
+  const newTestPropertyRows = await Selector('tr.treegrid-body-row').withText('newTestProperty');
+  const editedNewTestPropertyRows = await Selector('tr.treegrid-body-row').withText(
+    'editedNewTestProperty'
+  );
+
+  await t
+    .expect(Selector('tr.treegrid-body-row').count)
+    .eql(initialRowCount + 8)
+    .expect(testModelField.exists)
+    .eql(true)
+    .expect(testSecondModelField.exists)
+    .eql(true)
+    .expect(testThirdModelField.exists)
+    .eql(true)
+    .expect(nestedRows.exists)
+    .eql(true)
+    .expect(nestedRows.count)
+    .eql(3)
+    .expect(nestedModelRows.exists)
+    .eql(true)
+    .expect(nestedModelRows.count)
+    .eql(3)
+    .expect(newTestPropertyRows.exists)
+    .eql(true)
+    .expect(newTestPropertyRows.count)
+    .eql(1)
+    .expect(editedNewTestPropertyRows.exists)
+    .eql(true)
+    .expect(editedNewTestPropertyRows.count)
+    .eql(2);
+});
+
+test('Options should be updated after editing multiple nested object names', async t => {
+  await addNewNestedModelAtRoot(t);
+  const initialRowCount = await Selector('tr.treegrid-body-row').count;
+
+  const objectRowToEdit = Selector('tr.treegrid-body-row').withText('testModel');
+  const editFieldBtn = objectRowToEdit.find('.edit-action');
+  await t.click(editFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('testModel');
+
+  await t.typeText(utils.modelName, 'editTestModel', { replace: true });
+
+  const nestedModelRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('nestedModel');
+  const nestedModelEditFieldBtn = nestedModelRowToEdit.find('.edit-action');
+  await t.click(nestedModelEditFieldBtn);
+
+  await t.expect(utils.modelName.value).eql('nestedModel');
+
+  await t.typeText(utils.modelName, 'editNestedModel', { replace: true });
+
+  const nestedPropertyRowToEdit = Selector('#nestedContractGrid')
+    .find('tr.treegrid-body-row')
+    .withText('testProperty');
+  const nestedPropertyEditFieldBtn = nestedPropertyRowToEdit.find('.edit-action');
+  await t.click(nestedPropertyEditFieldBtn);
+
+  await t.expect(utils.inputFieldName.value).eql('testProperty');
+
+  await t.typeText(utils.inputFieldName, 'editTestProperty', { replace: true });
+
+  // Save the nested property
+  await t.click(utils.saveFieldBtn);
+  // Save the nested model
+  await t.click(utils.saveModelBtn);
+  // Save the parent model
+  await t.click(utils.saveModelBtn);
+
+  await t.click(utils.addNewFieldBtn);
+
+  await t.click(utils.inputType).click(Selector('li').withText('editTestModel'));
+  await t
+    .expect(utils.inputType.getVue(({ props }) => props.value.displayName))
+    .eql('editTestModel');
+
+  await t.click(utils.inputType).click(Selector('li').withText('editNestedModel'));
+  await t
+    .expect(utils.inputType.getVue(({ props }) => props.value.displayName))
+    .eql('editNestedModel');
+
+  await t.expect(Selector('tr.treegrid-body-row').count).eql(initialRowCount);
 });

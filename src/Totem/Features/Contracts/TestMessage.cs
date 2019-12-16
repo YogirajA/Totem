@@ -45,6 +45,7 @@ namespace Totem.Features.Contracts
         {
             public Guid ContractId { get; set; }
             public string VersionNumber { get; set; }
+            public bool AllowSubset { get; set; }
             public string SampleMessage { get; set; }
         }
 
@@ -88,17 +89,16 @@ namespace Totem.Features.Contracts
 
                 if (isValid)
                 {
-                    var testResult = _testerService.Execute(contract.ContractString, request.SampleMessage);
+                    var testResult = _testerService.Execute(contract.ContractString, request.SampleMessage, request.AllowSubset);
 
                     if (!testResult.IsMessageValid)
                     {
                         isValid = false;
                     }
-
                     result.MessageErrors = testResult.MessageErrors;
+                    result.Warnings = testResult.Warnings;
                 }
-
-                result.WarningMessage = warningMessage;
+                result.DeprecationWarningMessage = warningMessage;
                 result.IsValid = isValid;
                 return result;
             }
@@ -110,15 +110,18 @@ namespace Totem.Features.Contracts
             public Guid ContractId { get; set; }
             [DisplayName("Version Number")]
             public string VersionNumber { get; set; }
+            [DisplayName("Allow Subset")]
+            public string AllowSubset { get; set; }
             [DisplayName("Description")]
             public string ContractDescription { get; set; }
             [DisplayName("Properties")]
             public CaseInsensitiveDictionary<SchemaObject> ContractObject { get; set; }
             public string ContractString { get; set; }
-            public string WarningMessage { get; set; }
+            public string DeprecationWarningMessage { get; set; }
             public string TestMessage { get; set; }
             public bool IsValid { get; set; }
             public IList<string> MessageErrors { get; set; } = new List<string>();
+            public IList<string> Warnings { get; set; } = new List<string>();
         }
     }
 }

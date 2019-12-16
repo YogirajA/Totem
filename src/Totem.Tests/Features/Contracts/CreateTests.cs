@@ -224,8 +224,7 @@ namespace Totem.Tests.Features.Contracts
                 VersionNumber = versionNumber
             };
 
-            command.ShouldNotValidate(
-                "'Version Number' must follow semantic version system.");
+            command.ShouldNotValidate("'Version Number' must follow semantic version system.");
         }
 
         public void ShouldNotCreateWhenVersionIsNotValid()
@@ -964,6 +963,99 @@ namespace Totem.Tests.Features.Contracts
             command.ShouldNotValidate("The definition of \"LevelThree\" is incorrect. It is an array data type and requires an Items sub-property.");
         }
 
+        public void ShouldNotCreateWhenAnObjectHasNoPropertiesObject()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""object"",
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("Contract must be defined as a valid OpenAPI schema.",
+                "The definition of \"LevelOne\" is incorrect. \"object\" data type requires a 'Properties' object."
+            );
+        }
+
+        public void ShouldNotCreateWhenAnObjectHasZeroProperties()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command()
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Age"": {
+                                ""type"": ""integer"",
+                                ""format"": ""int32"",
+                                ""example"": ""30""
+                            },
+                            ""LevelOne"": {
+                                ""type"": ""object"",
+                                ""properties"": {
+                                }
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The definition of \"LevelOne\" is incorrect. \"object\" data type requires at least one nested property. It can not be empty.");
+
+        }
+
         public void ShouldNotCreateWhenNestedArrayOfObjectsDoesNotHaveItems()
         {
             var newContract = SampleContract();
@@ -1585,6 +1677,46 @@ namespace Totem.Tests.Features.Contracts
             };
 
             command.ShouldNotValidate("The example 'not-a-number-example' for 'Height' does not match the required data type or format 'number'.");
+        }
+
+        public void ShouldNotCreateWhenNonBooleanTypeExampleForBooleanType()
+        {
+            var newContract = SampleContract();
+            var command = new Create.Command
+            {
+                Description = newContract.Description,
+                ContractString = @"{
+                    ""Contract"": {
+                        ""type"": ""object"",
+                        ""properties"": {
+                            ""Id"": {
+                                ""$ref"": ""#/Guid""
+                            },
+                            ""Timestamp"": {
+                                ""type"": ""string"",
+                                ""format"": ""date-time"",
+                                ""example"": ""2019-05-12T18:14:29Z""
+                            },
+                            ""Name"": {
+                                ""type"": ""string"",
+                                ""example"": ""John Doe""
+                            },
+                            ""Under 21"": {
+                                ""type"": ""boolean"",
+                                ""example"": ""not-a-boolean-example""
+                            }
+                        }
+                    },
+                    ""Guid"": {
+                        ""type"": ""string""
+                    }
+                }",
+                Namespace = newContract.Namespace,
+                Type = newContract.Type,
+                VersionNumber = newContract.VersionNumber
+            };
+
+            command.ShouldNotValidate("The example 'not-a-boolean-example' for 'Under 21' does not match the required data type or format 'boolean'.");
         }
 
         public void ShouldNotCreateWhenNonDateTimeExampleForDateTimeFormat()

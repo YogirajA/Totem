@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Totem.Features.API;
 using Newtonsoft.Json;
 using Shouldly;
+using Totem.Services;
 using static Totem.Tests.Testing;
 using static Totem.Tests.TestDataGenerator;
 
@@ -450,11 +451,14 @@ namespace Totem.Tests.Features.API
             result.IsValid.ShouldBeFalse();
             result.MessageErrors.ShouldBe(new List<string>
             {
-                "Message property \"FirstName\" is not part of the contract.",
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
-                "Message is missing expected property \"Timestamp\".",
-                "The schema for \"FirstName\" was not found in the contract definition."
+                "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
             });
         }
 
@@ -480,11 +484,103 @@ namespace Totem.Tests.Features.API
             result.WarningMessage.ShouldBe($"This contract will be deprecated on {DateTime.Today.AddDays(5)}, please check for a new version.");
             result.MessageErrors.ShouldBe(new List<string>
             {
-                "Message property \"FirstName\" is not part of the contract.",
                 "Message is missing expected property \"Id\".",
                 "Message is missing expected property \"Name\".",
-                "Message is missing expected property \"Timestamp\".",
-                "The schema for \"FirstName\" was not found in the contract definition."
+                "Message is missing expected property \"Timestamp\"."
+            });
+
+            result.Warnings.ShouldBe(new List<string>
+            {
+                "Message property \"FirstName\" is not part of the contract."
+            });
+        }
+
+        public async Task ShouldBeValidWhenMessageMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractString);
+
+            // Not including "Age" field
+            const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\"}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = addedContract.Id,
+                Message = JsonConvert.DeserializeObject(sampleMessage),
+                AllowSubset = true
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeTrue();
+            result.MessageErrors.ShouldBeEmpty();
+        }
+
+        public async Task ShouldBeInvalidWhenMessageMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractString);
+
+            // Not including "Age" field
+            const string sampleMessage = "{\"id\": \"a21b2109-bd23-4205-ba53-b8df0fdd36bf\", \"Timestamp\": \"2019-07-23\",\"Name\":\"Saagar\"}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = addedContract.Id,
+                Message = JsonConvert.DeserializeObject(sampleMessage)
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeFalse();
+            result.MessageErrors.ShouldBe(new List<string>
+            {
+                @"Message is missing expected property ""Age""."
+            });
+        }
+
+        public async Task ShouldBeValidWhenMessageWithObjectsMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractStringWithObject);
+
+            // Not including "Age" field
+            // Not including "Fullname => Lastname" field
+            const string sampleMessage = @"{""Fullname"": {""Firstname"": ""sample string""}, ""Id"": ""01234567-abcd-0123-abcd-0123456789ab"", ""Timestamp"": ""2019-01-01T18:14:29Z""}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = addedContract.Id,
+                Message = JsonConvert.DeserializeObject(sampleMessage),
+                AllowSubset = true
+            };
+
+            var result = await Send(command);
+
+            result.IsValid.ShouldBeTrue();
+            result.MessageErrors.ShouldBeEmpty();
+        }
+
+        public async Task ShouldBeInvalidWhenMessageWithObjectsMatchesSubsetContract()
+        {
+            var addedContract = await AlreadyInDatabaseContract(x => x.ContractString = SampleContractStringWithObject);
+
+            // Not including "Age" field
+            // Not including "Fullname => Lastname" field
+            const string sampleMessage = @"{""Fullname"": {""Firstname"": ""sample string""}, ""Id"": ""01234567-abcd-0123-abcd-0123456789ab"", ""Timestamp"": ""2019-01-01T18:14:29Z""}";
+
+            var command = new TestMessage.Command
+            {
+                ContractId = addedContract.Id,
+                Message = JsonConvert.DeserializeObject(sampleMessage)
+            };
+
+            var result = await Send(command);
+
+            const string separator = TesterService.ParentOfSymbol;
+
+            result.IsValid.ShouldBeFalse();
+            result.MessageErrors.ShouldBe(new List<string>
+            {
+                @"Message is missing expected property ""Age"".",
+                $@"The value for field ""Fullname{separator}Lastname"" was not found."
             });
         }
     }

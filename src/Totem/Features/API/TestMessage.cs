@@ -17,6 +17,7 @@ namespace Totem.Features.API
         {
             public Guid ContractId { get; set; }
             public dynamic Message { get; set; }
+            public bool AllowSubset { get; set; }
         }
 
         public class CommandHandler : IRequestHandler<Command, Result>
@@ -60,7 +61,7 @@ namespace Totem.Features.API
 
                 if (isValid)
                 {
-                    var testResult = _testerService.Execute(contract.ContractString, message);
+                    var testResult = _testerService.Execute(contract.ContractString, message, request.AllowSubset);
 
                     if (!testResult.IsMessageValid)
                     {
@@ -68,6 +69,7 @@ namespace Totem.Features.API
                     }
 
                     result.MessageErrors = testResult.MessageErrors;
+                    result.Warnings = testResult.Warnings;
                 }
 
                 result.IsValid = isValid;
@@ -97,6 +99,7 @@ namespace Totem.Features.API
             public string WarningMessage { get; set; }
             public bool IsValid { get; set; }
             public List<string> MessageErrors { get; set; } = new List<string>();
+            public List<string> Warnings { get; set; } = new List<string>();
         }
     }
 }

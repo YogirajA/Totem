@@ -41,10 +41,14 @@
                 </div>
                 <div class="pull-left">
                     <form asp-controller="Contracts" asp-action="TestMessage">
-                        <input type="hidden" asp-for="ContractId" name="ContractId"/>
-                        <input type="hidden" asp-for="VersionNumber" name="VersionNumber"/>
+                        <input type="hidden" asp-for="ContractId" name="ContractId" />
+                        <input type="hidden" asp-for="VersionNumber" name="VersionNumber" />
                         <div class="form-group flex-container">
-                            <textarea name="sampleMessage" asp-for="TestMessage" class="flex-expand tall"></textarea>
+                            <textarea name="sampleMessage" asp-for="TestMessage" class="flex-expand tall sample-message"></textarea>
+                        </div>
+                        <div class="form-group form-check">
+                            <input class="form-check-input" asp-for="AllowSubset" type="checkbox" />
+                            <label class="form-check-label" asp-for="AllowSubset"></label>
                         </div>
                         <div class="form-group button-list">
                             <button asp-for="TestMessage" type="submit" class="btn btn-primary">Submit</button>
@@ -54,20 +58,28 @@
                 </div>
             </div>
             <div class="col-12">
-                @if (!String.IsNullOrEmpty(Model.TestMessage))
+                @if (!string.IsNullOrEmpty(Model.TestMessage))
                 {
                     if (Model.IsValid)
                     {
                         <h4 class="result-message success">Message is Valid.</h4>
                         <div class="result-message warning">
-                            @Model.WarningMessage
+                            @Model.DeprecationWarningMessage
+                            @foreach (var item in Model.Warnings)
+                            {
+                                <div>@item</div>
+                            }
                         </div>
                     }
                     else
                     {
-                        <h4 class="result-message error">Message is Invalid.</h4>
+                        <h4 class="result-message error">Message is Invalid. </h4>
                         <div class="result-message warning">
-                            @Model.WarningMessage
+                            @Model.DeprecationWarningMessage
+                            @foreach (var item in Model.Warnings)
+                            {
+                                <div>@item</div>
+                            }
                         </div>
                         <div class="result-message error">
                             @foreach (var item in Model.MessageErrors)
@@ -106,7 +118,7 @@
                         data: JSON.stringify(contract),
                         contentType: "application/json",
                         success: function(data) {
-                            $('#TestMessage').val(data.body);
+                            $('#TestMessage').val(prettifyMessage(data.body));
                         }
                     });
                 });
@@ -116,5 +128,10 @@
                     $('.result-message').remove();
                 });
         });
+
+        function prettifyMessage(message) {
+            var obj = JSON.parse(message);
+            return JSON.stringify(obj, undefined, 2);
+        }
     </script>
 }
