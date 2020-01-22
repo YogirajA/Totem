@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using System.Diagnostics;
 using System.Reflection;
 using System.Linq;
@@ -40,7 +40,7 @@ namespace Totem
 
             var featureFolderOptions = new FeatureFolderOptions();
 
-            services.AddMvc()
+            services.AddMvc(option=> option.EnableEndpointRouting = false)
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddFeatureFolders(featureFolderOptions)
                 .WithRazorPagesRoot($"/{featureFolderOptions.FeatureFolderName}")
