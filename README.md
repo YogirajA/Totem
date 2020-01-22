@@ -13,7 +13,9 @@ Totem is a tool for testing the contract (message format) used by both producers
 
 ## Features
 
-![Create Contract](media/Create-Contract.png)
+<kbd>
+  <img src="media/Create-Contract.png" title="Create Contract"/>
+</kbd>
 
 **The UI allows:**
 
@@ -31,7 +33,9 @@ Totem is a tool for testing the contract (message format) used by both producers
 - Testing validity of contract schemas with sample messages
   - 'Fill with sample text' will pre-populate message with sample text to submit and validate against
 
-![Test Message](media/Test-Message.png)
+<kbd>
+  <img src="media/Test-Message.png" title="Test Message"/>
+</kbd>
 
 ### Testing contracts manually via Postman
 
