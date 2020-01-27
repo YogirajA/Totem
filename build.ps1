@@ -19,10 +19,10 @@ function publish($project) {
 main {
     validate-target "default" "rebuild" "ci" "migratetest" "testexample"
 
-    $targetFramework = "netcoreapp2.1"
+    $targetFramework = "netcoreapp3.1"
     $configuration = 'Release'
     $product = "Totem"
-    $yearInitiated = 2019
+    $yearInitiated = 2020
     $owner = "Headspring"
     $publish = "$(resolve-path .)/publish"
 
