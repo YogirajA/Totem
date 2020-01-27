@@ -212,13 +212,14 @@ namespace Totem.Services
         private static void CheckNumberType(SchemaObject propertySchemaObject, KeyValuePair<string, object> kv,
             TestMessageResult testMessageResult)
         {
-            var isDouble = double.TryParse(kv.Value.ToString(), out _);
-            var isFloat = float.TryParse(kv.Value.ToString(), out _);
+            var stringVal = kv.Value.ToString();
+            var isDouble = double.TryParse(stringVal, out var doubleVal) && double.IsFinite(doubleVal);
+            var isFloat = float.TryParse(stringVal, out var floatVal) && float.IsFinite(floatVal);
             
             // Validate number data type
             if (!isDouble && !isFloat)
             {
-                AddTypeError(testMessageResult, kv.Value.ToString(), kv.Key, propertySchemaObject.Type);
+                AddTypeError(testMessageResult, stringVal, kv.Key, propertySchemaObject.Type);
             }
 
             if (propertySchemaObject.Format != null)
@@ -227,11 +228,11 @@ namespace Totem.Services
                 // Validate specific number formats
                 if (format == Format.Float && !isFloat)
                 {
-                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.Float);
+                    AddFormatError(testMessageResult, stringVal, kv.Key, Format.Float);
                 }
                 else if (format == Format.Double && !isDouble)
                 {
-                    AddFormatError(testMessageResult, kv.Value.ToString(), kv.Key, Format.Double);
+                    AddFormatError(testMessageResult, stringVal, kv.Key, Format.Double);
                 }
             }
         }
