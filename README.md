@@ -177,7 +177,7 @@ To test the validity of messages as a producer/consumer through the Totem API, w
 - **Git**
 - **Visual Studio 2017**
 - **Node v11.14.0/NPM v6.9.0** - If you have a different version of Node/NPM installed, I recommend using [NVM for Windows](https://github.com/coreybutler/nvm-windows) to manage Node/NPM versions
-- **[.NET Core 3.1.101 SDK](https://dotnet.microsoft.com/download/dotnet-core/thank-you/sdk-3.1.101-windows-x64-installer)**
+- **[.NET Core 3.1.301 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1)**
 - **[SSMS](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-2017)** (optional, but handy)
 - **SMTP Server** For user account management and password recovery (the default configuration for development environment works with Papercut https://github.com/ChangemakerStudios/Papercut)
 
