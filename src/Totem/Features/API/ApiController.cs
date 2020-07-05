@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using MediatR;
@@ -29,7 +30,10 @@ namespace Totem.Features.API
                     return new TestMessageResult(HttpStatusCode.OK);
                 }
 
-                var errors = string.Join(" ", result.MessageErrors.ToArray());
+                var es = result.MessageErrors;
+                es.AddRange(result.Warnings);
+                var errors = string.Join(" ", es);
+                
                 return new TestMessageResult(HttpStatusCode.BadRequest, $"Message does not match contract: {errors}");
             }
             catch

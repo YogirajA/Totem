@@ -42,7 +42,17 @@ namespace SalesOrderApp
             };
 
             var stringContent = new StringContent(JsonConvert.SerializeObject(placeOrderMessage), Encoding.UTF8, "application/json");
-            var response = await Client.PostAsync(_totemSettings.TestMessageApiUrl, stringContent);
+
+            HttpResponseMessage response = null;
+            try
+            {
+                response = await Client.PostAsync(_totemSettings.TestMessageApiUrl, stringContent);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
 
             await DisplayErrors(response);
             response.EnsureSuccessStatusCode();
@@ -141,7 +151,11 @@ namespace SalesOrderApp
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
             var responseString = await response.Content.ReadAsStringAsync();
-            responseString.ShouldContain("Message property \\\"InvalidField\\\" is not part of the contract.");
+            var messagePropertyInvalidfieldIsNotPartOfTheContract = "Message property \\\"InvalidField\\\" is not part of the contract.";
+
+            var r = responseString.Contains(messagePropertyInvalidfieldIsNotPartOfTheContract);
+
+            responseString.ShouldContain(messagePropertyInvalidfieldIsNotPartOfTheContract);
         }
     }
 
