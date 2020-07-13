@@ -36,6 +36,7 @@ main {
     task "Clean" { dotnet clean --configuration $configuration /nologo } src
     task "Restore (Database Migration)" { dotnet restore --packages ./packages/ } src/Totem.DatabaseMigration
     task "Restore (Solution)" { dotnet restore } src
+    task "npm install" {npm.cmd install} 
     task "Build" { dotnet build --configuration $configuration --no-restore /nologo } src
 
     if ($target -eq "default") {
