@@ -11,7 +11,7 @@
     "wait": "wait-on tcp:4000",
     "e2eparallel": "npm-run-all --parallel \"runtest\" --serial \"wait\" \"e2etest\"",
     "e2e": "npm run e2eparallel && npm run killapp",
-    "test": "jest && npm run e2e",
+    "test": "jest",
     "lint": "eslint --ext .js,.vue ClientApp"
   },
   "jest": {
