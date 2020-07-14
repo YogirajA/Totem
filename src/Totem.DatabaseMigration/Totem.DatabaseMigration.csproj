@@ -5,11 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="roundhouse" Version="1.0.4" />
+    <PackageReference Include="roundhouse" Version="1.2.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="packages/roundhouse/0.9.1/tools/rh.exe" CopyToPublishDirectory="Always">
+    <None Include="packages/roundhouse/*.*.*/tools/rh.exe" CopyToPublishDirectory="Always">
       <Link>rh.exe</Link>
     </None>
     <None Include="Scripts/**/*.*" CopyToPublishDirectory="Always" />
