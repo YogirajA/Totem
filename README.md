@@ -3,6 +3,10 @@
 <h4 align="center">Don't break your consumers - Test your microservices contracts</h4>
 Totem is a tool for testing the contract (message format) used by both producers and consumers; primarily for messaging used in distributed systems (like microservices). Once deployed, the Totem API will allow for automated message testing for both providers and consumers, and a GUI for manual testing by developers. Users can also view existing contracts through the GUI.
 
+## Build
+
+![CI](https://github.com/HeadspringLabs/Totem/workflows/CI/badge.svg)
+
 ## Usage
 
 1. Deploy Totem somewhere accessible to your project's build server
