@@ -1,0 +1,33 @@
+name: AzureDeployment
+
+on:
+  push:
+    branches: [ feature/devops-e2e-deployment ]
+  pull_request:
+    branches: [ feature/devops-e2e-deployment ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101        
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name:  AzureDB
+      uses: azure/appconfiguration-sync@v1
+      with:
+          configurationFile: 'src/Totem/appsettings.json'
+          format: 'json'
+          # Replace <ConnectionString> with the name of the secret in your repository
+          connectionString: ${{ secrets.AZUREDB_CONNECTIONSTRING }}
+          separator: ':' 
+    - name: Build and Test
+      run: ./build.ps1
+      shell: pwsh
