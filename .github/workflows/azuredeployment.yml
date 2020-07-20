@@ -27,5 +27,5 @@ jobs:
       env:
           ConnectionStrings.Database: ${{ secrets.AZUREDB_CONNECTIONSTRING }}
     - name: Build and Test
-      run: ./build.ps1
+      run: ./deploy.ps1
       shell: pwsh
