@@ -47,19 +47,19 @@ main {
     task  "SQLLocalDB" {SqlLocalDB.exe start}
 
     if ($target -eq "default") {
-        task "Update DEV/TEST Databases" { update-database DEV TEST } src/Totem.DatabaseMigration
+        task "Update DEV/TEST Databases" { update-database DEV } src/Totem.DatabaseMigration
     }
     elseif ($target -eq "rebuild") {
-        task "Rebuild DEV/TEST Databases" { rebuild-database DEV TEST } src/Totem.DatabaseMigration
+        task "Rebuild DEV/TEST Databases" { rebuild-database DEV } src/Totem.DatabaseMigration
     }
     elseif ($target -eq "ci") {
-        task "Rebuild TEST Database" { rebuild-database TEST } src/Totem.DatabaseMigration
+        task "Rebuild TEST Database" { rebuild-database } src/Totem.DatabaseMigration
     }
     elseif ($target -eq "migratetest") {
-        task "Update TEST Database" { update-database TEST } src/Totem.DatabaseMigration
+        task "Update TEST Database" { update-database } src/Totem.DatabaseMigration
     }
 
-    task "Test" { dotnet test --configuration $configuration --no-build } src/Totem.Tests
+    <# task "Test" { dotnet test --configuration $configuration --no-build } src/Totem.Tests
 	
     if ($target -eq "testexample") {
         task "Seed DB with example data" { seed-database-for-examples DEV } src/Totem.DatabaseMigration
@@ -72,8 +72,11 @@ main {
             task "Closing Totem" { start 'taskkill' -verb runas -argumentlist "/F /PID $procId /T" }
         } 
     }
+    
+    task "Removing variables" { gci Env: | where Name -clike 'NPM_CONFIG_*' | remove-item}
 
     task "Javascript Test" { npm run test --prefix src/Totem/ }
+    #>
 
     if ($target -eq "ci") {
         delete-directory $publish
