@@ -8,10 +8,11 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
-
     steps:
+    - name: Install 7Zip PowerShell Module
+      shell: powershell
+      run: Install-Module 7Zip4PowerShell -Force -Verbose  
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -29,3 +30,12 @@ jobs:
     - name: Build and Test
       run: ./deploy.ps1
       shell: pwsh
+    - name: Zip publish
+      shell: pwsh
+      run: powershell Compress-7Zip .\publish\Totem\ -ArchiveFileName .\publish\Totem.zip -Format Zip   
+    - name: 'Run Azure webapp deploy action using publish profile credentials'
+      uses: azure/webapps-deploy@v2
+      with: 
+          app-name: HSTotem
+          publish-profile: ${{ secrets.AZUREAPPSERVICE }}
+          package: './publish/Totem.zip'

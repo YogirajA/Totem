@@ -78,9 +78,7 @@ main {
     task "Javascript Test" { npm run test --prefix src/Totem/ }
     #>
 
-    if ($target -eq "ci") {
-        delete-directory $publish
-        publish Totem
-        publish Totem.DatabaseMigration
-    }
+    delete-directory $publish
+    publish Totem
+    publish Totem.DatabaseMigration
 }
