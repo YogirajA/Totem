@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ feature/devops-e2e-deployment, develop, main ]
   pull_request:
-    branches: [ develop, main ]
+    branches: [ feature/devops-e2e-deployment, develop, main ]
 
 jobs:
   build:
@@ -20,6 +20,9 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+    - name: Test For branch name
+      if: contains(github.ref, 'feature')
+      run: echo "I only run if the branch has feature in its name!"  
     - name: Build and Test
       run: ./build.ps1 ci
       shell: pwsh
