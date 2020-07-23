@@ -8,9 +8,8 @@ on:
 
 jobs:
   build:
-
+    name: build and create release for main
     runs-on: windows-latest
-
     steps:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
@@ -23,3 +22,18 @@ jobs:
     - name: Build and Test
       run: ./build.ps1 ci
       shell: pwsh
+    - name: Create Release
+      id: create_release
+      if: contains(github.ref, 'feature') #should be main
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Changes in this Release
+          - First Change
+          - Second Change
+        draft: True
+        prerelease: false
