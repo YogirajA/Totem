@@ -19,6 +19,10 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+      run: |
+        latesttag=$(git describe --tags)
+        echo checking out ${latesttag}
+        git checkout ${latesttag}
     - name:  AzureDB
       uses:  microsoft/variable-substitution@v1 
       with:
