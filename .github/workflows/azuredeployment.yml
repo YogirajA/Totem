@@ -35,7 +35,7 @@ jobs:
     - name: Build and Test
       run: |
         $latesttag=$(git describe --tags)
-        ./deploy.ps1 default 1.4 $latesttag-alpha
+        ./deploy.ps1 default 1.4 $latesttag
       shell: pwsh
     - name: Zip publish
       shell: pwsh
