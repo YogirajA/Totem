@@ -1,4 +1,4 @@
-param($target="default", [int]$buildNumber)
+param($target="default",$majorminor, [int]$buildNumber)
 
 . .\build-helpers
 
@@ -27,7 +27,7 @@ main {
     }
 
     task ".NET Environment" { dotnet --info }
-    task "Project Properties" { project-properties "1.0" $buildNumber } src
+    task "Project Properties" { project-properties $majorminor $buildNumber } src
     task "Clean" { dotnet clean --configuration $configuration /nologo } src
     task "Restore (Database Migration)" { dotnet restore --packages ./packages/ } src/Totem.DatabaseMigration
     task "Restore (Solution)" { dotnet restore } src
@@ -40,7 +40,7 @@ main {
     task "Switch directlry back to root" {Set-Location ..\.. }
     task "Build" { dotnet build --configuration $configuration --no-restore /nologo } src
  
-    task "Update DEV/TEST Databases" { update-database DEV } src/Totem.DatabaseMigration
+    task "Update DEV Databases" { update-database DEV } src/Totem.DatabaseMigration
 
     delete-directory $publish
     publish Totem
