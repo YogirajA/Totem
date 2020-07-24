@@ -1,4 +1,4 @@
-param($target="default",$majorminor, $buildNumber)
+param($target="default",$majorminor, [int]$buildNumber)
 
 . .\build-helpers
 
