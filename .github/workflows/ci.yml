@@ -29,8 +29,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       with:
-        tag_name: 1.4.${{ github.run_id }}-alpha
-        release_name: Release 1.4.${{ github.run_id }}-alpha
+        tag_name: ${{ github.run_id }}
+        release_name: Release ${{ github.run_id }}
         body: |
           Changes in this Release
           - First Change
