@@ -31,7 +31,7 @@ jobs:
       uses: thefringeninja/action-minver@2.0.0-preview1
       with:
         # Optional. Specifies the minimum version to use when no tags exist.
-        minimum-major-minor: 1.4.0
+        minimum-major-minor: 1.4
     - name: output
       run: |
         echo ${{ steps.version.outputs.version }}
@@ -55,3 +55,5 @@ jobs:
           app-name: HSTotem
           publish-profile: ${{ secrets.AZUREAPPSERVICE }}
           package: './publish/Totem.zip'
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2
