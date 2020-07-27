@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ feature/devops-e2e-deployment, develop, main ]
   pull_request:
-    branches: [ develop, main ]
+    branches: [ feature/devops-e2e-deployment, develop, main ]
 
 jobs:
   build:
@@ -29,8 +29,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       with:
-        tag_name: ${{ github.run_id }}
-        release_name: Release ${{ github.run_id }}
+        tag_name: 1.4.${{ github.run_number }}-apha
+        release_name: Release ${{ github.run_number }}
         body: |
           Changes in this Release
           - First Change
