@@ -42,9 +42,7 @@ jobs:
       env:
           ConnectionStrings.Database: ${{ secrets.AZUREDB_CONNECTIONSTRING }}
     - name: Build and Test
-      run: |
-        $latesttag=$(git describe --tags)
-        ./deploy.ps1 default 1.4 $latesttag
+      run: ./deploy.ps1 default
       shell: pwsh
     - name: Zip publish
       shell: pwsh

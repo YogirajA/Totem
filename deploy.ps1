@@ -27,7 +27,7 @@ main {
     }
 
     task ".NET Environment" { dotnet --info }
-    task "Project Properties" { project-properties $majorminor $buildNumber } src
+   # task "Project Properties" { project-properties $majorminor $buildNumber } src
     task "Clean" { dotnet clean --configuration $configuration /nologo } src
     task "Restore (Database Migration)" { dotnet restore --packages ./packages/ } src/Totem.DatabaseMigration
     task "Restore (Solution)" { dotnet restore } src
