@@ -2,10 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ feature/devops-e2e-deployment, develop, main ]
+    branches: [bug/*, feature/*, develop, main ]
   pull_request:
-    branches: [ feature/devops-e2e-deployment, develop, main ]
-
+    branches: [develop, main ]
 jobs:
   build:
     name: build and create release for main
@@ -24,7 +23,7 @@ jobs:
       shell: pwsh
     - name: Create Release
       id: create_release
-      if: contains(github.ref, 'feature') #should be main
+      if: contains(github.ref, 'main')
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

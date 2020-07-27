@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0  
-        ref: feature/devops-e2e-deployment    
+        ref: main    
     - name: Checkout release tag
       run: |
         $latesttag=$(git describe --tags)
