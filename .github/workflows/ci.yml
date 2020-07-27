@@ -2,15 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ develop ]
+    branches: [bug/*, feature/*, develop, main ]
   pull_request:
-    branches: [ develop ]
-
+    branches: [develop, main ]
 jobs:
   build:
-
+    name: build and create release for main
     runs-on: windows-latest
-
     steps:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
@@ -23,3 +21,16 @@ jobs:
     - name: Build and Test
       run: ./build.ps1 ci
       shell: pwsh
+    - name: Create Release
+      id: create_release
+      if: contains(github.ref, 'main')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      with:
+        tag_name: 1.4.${{ github.run_number }}-apha
+        release_name: Release ${{ github.run_number }}
+        body: |
+          Changes in this Release
+          - First Change
+        draft: True

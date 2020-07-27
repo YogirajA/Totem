@@ -7,6 +7,12 @@ Totem is a tool for testing the contract (message format) used by both producers
 
 ![CI](https://github.com/HeadspringLabs/Totem/workflows/CI/badge.svg)
 
+## Deployment
+
+- Main branch is released periodically to Azure.
+- ![AzureDeployment](https://github.com/HeadspringLabs/Totem/workflows/AzureDeployment/badge.svg)
+- https://hstotem.azurewebsites.net
+
 ## Usage
 
 1. Deploy Totem somewhere accessible to your project's build server
