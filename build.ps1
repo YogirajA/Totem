@@ -36,7 +36,15 @@ main {
     task "Clean" { dotnet clean --configuration $configuration /nologo } src
     task "Restore (Database Migration)" { dotnet restore --packages ./packages/ } src/Totem.DatabaseMigration
     task "Restore (Solution)" { dotnet restore } src
+    task "Switch directory for NPM install" {Set-Location .\src\Totem }
+    task "Npm clean install" { 
+        Remove-Item  node_modules -Recurse -ErrorAction Ignore
+
+        npm install
+    }
+    task "Switch directlry back to root" {Set-Location ..\.. }
     task "Build" { dotnet build --configuration $configuration --no-restore /nologo } src
+    task  "SQLLocalDB" {SqlLocalDB.exe start}
 
     if ($target -eq "default") {
         task "Update DEV/TEST Databases" { update-database DEV TEST } src/Totem.DatabaseMigration
