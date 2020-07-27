@@ -103,7 +103,8 @@ namespace Totem.Services
 
             foreach (var kv in messageKeyDictionary)
             {
-                if (contractDictionary.Keys.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase)) continue;
+                if (contractDictionary.Keys.Contains(kv.Key, StringComparer.InvariantCultureIgnoreCase))
+                    continue;
 
                 result.IsMessageValid = true;
                 result.Warnings.Add($"Message property \"{kv.Key}\" is not part of the contract.");

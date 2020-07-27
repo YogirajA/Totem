@@ -38,7 +38,7 @@ namespace Totem.Features.API
                 var contract = await _db.Contract.SingleAsync(x => x.Id == request.ContractId, cancellationToken);
                 string warningMessage = null;
                 var isValid = true;
-                var message = JsonConvert.SerializeObject(request.Message);
+                var message = request.Message.ToString();
                 var result = new Result
                 {
                     Contract = _mapper.Map<ContractDto>(contract),
