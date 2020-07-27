@@ -30,11 +30,11 @@ namespace Totem.Features.API
                     return new TestMessageResult(HttpStatusCode.OK);
                 }
 
-                var es = result.MessageErrors;
-                es.AddRange(result.Warnings);
-                var errors = string.Join(" ", es);
+                var messageErrors = result.MessageErrors;
+                messageErrors.AddRange(result.Warnings);
+                var inlined = string.Join(" ", messageErrors);
                 
-                return new TestMessageResult(HttpStatusCode.BadRequest, $"Message does not match contract: {errors}");
+                return new TestMessageResult(HttpStatusCode.BadRequest, $"Message does not match contract: {inlined}");
             }
             catch
             {
