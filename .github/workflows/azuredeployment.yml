@@ -1,0 +1,57 @@
+name: AzureDeployment
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Install 7Zip PowerShell Module
+      shell: powershell
+      run: Install-Module 7Zip4PowerShell -Force -Verbose  
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101  
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  
+        ref: main    
+    - name: Checkout release tag
+      run: |
+        $latesttag=$(git describe --tags)
+        echo checking out $latesttag
+        git checkout $latesttag
+      shell: pwsh
+    - name: run minver
+      id: version
+      uses: thefringeninja/action-minver@2.0.0-preview1
+      with:
+        # Optional. Specifies the minimum version to use when no tags exist.
+        minimum-major-minor: 1.4
+    - name: output
+      run: |
+        echo ${{ steps.version.outputs.version }}
+    - name:  AzureDB
+      uses:  microsoft/variable-substitution@v1 
+      with:
+          files: 'src/Totem/appsettings.json'
+      env:
+          ConnectionStrings.Database: ${{ secrets.AZUREDB_CONNECTIONSTRING }}
+    - name: Build and Test
+      run: ./deploy.ps1 default
+      shell: pwsh
+    - name: Zip publish
+      shell: pwsh
+      run: powershell Compress-7Zip .\publish\Totem\ -ArchiveFileName .\publish\Totem.zip -Format Zip   
+    - name: 'Run Azure webapp deploy action using publish profile credentials'
+      uses: azure/webapps-deploy@v2
+      with: 
+          app-name: HSTotem
+          publish-profile: ${{ secrets.AZUREAPPSERVICE }}
+          package: './publish/Totem.zip'
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2
